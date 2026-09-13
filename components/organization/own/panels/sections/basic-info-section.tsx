@@ -1,0 +1,248 @@
+"use client";
+
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Globe, Mail, Pencil, X, Check } from "lucide-react";
+
+import Input from "@/components/ui/form/input";
+import Textarea from "@/components/ui/form/textarea";
+import { Button } from "@/components/ui/Button";
+import Card from "@/components/ui/card";
+
+import { OrganizationDetail } from "@/lib/types/organization/organization-detail.type";
+import {
+  basicInfoSchema,
+  type BasicInfoValues,
+} from "@/lib/schemas/organization.schema";
+import { FIELD_TYPES, InputFieldConfig } from "@/lib/types/form.type";
+
+interface BasicInformationProps {
+  organization: OrganizationDetail;
+}
+
+const defaultValues: BasicInfoValues = {
+  name: "",
+  email: "",
+  website: "",
+  description: "",
+};
+
+const inputFields: InputFieldConfig<BasicInfoValues>[] = [
+  {
+    fieldType: FIELD_TYPES.INPUT,
+    name: "name",
+    label: "Organization Name",
+    placeholder: "Acme Studio",
+    type: "text",
+  },
+  {
+    fieldType: FIELD_TYPES.INPUT,
+    name: "email",
+    label: "Email",
+    placeholder: "hello@acme.com",
+    optional: true,
+    type: "email",
+    iconPosition: "right",
+  },
+  {
+    fieldType: FIELD_TYPES.INPUT,
+    name: "website",
+    label: "Website",
+    placeholder: "https://acme.com",
+    optional: true,
+    type: "text",
+    iconPosition: "right",
+  },
+  {
+    fieldType: FIELD_TYPES.TEXTAREA,
+    name: "description",
+    label: "Description",
+    placeholder: "What does your organization do?",
+    optional: true,
+    rows: 3,
+  },
+];
+
+export default function BasicInformation({
+  organization,
+}: BasicInformationProps) {
+  const [isEditing, setIsEditing] = useState(false);
+
+  const [displayInfo, setDisplayInfo] = useState({
+    name: organization.organization_name,
+    email: organization.email ?? "",
+    website: organization.website ?? "",
+    description: organization.organization_desc ?? "",
+  });
+
+  const {
+    control,
+    handleSubmit,
+    reset,
+    formState: { dirtyFields },
+  } = useForm<BasicInfoValues>({
+    resolver: zodResolver(basicInfoSchema),
+    defaultValues: {
+      ...defaultValues,
+      ...displayInfo,
+    },
+  });
+
+  function startEditing() {
+    reset(displayInfo);
+    setIsEditing(true);
+  }
+
+  function cancelEditing() {
+    reset(displayInfo);
+    setIsEditing(false);
+  }
+
+  function onSave(values: BasicInfoValues) {
+    const changedFields = Object.keys(dirtyFields) as Array<
+      keyof BasicInfoValues
+    >;
+
+    if (changedFields.length === 0) {
+      setIsEditing(false);
+      return;
+    }
+
+    const patch = changedFields.reduce<Partial<BasicInfoValues>>((acc, key) => {
+      acc[key] = values[key];
+      return acc;
+    }, {});
+
+    // TODO: PATCH /organizations/:id
+    console.log("PATCH payload", patch);
+
+    setDisplayInfo((prev) => ({
+      ...prev,
+      ...patch,
+    }));
+
+    reset({
+      ...displayInfo,
+      ...patch,
+    });
+
+    setIsEditing(false);
+  }
+
+  return (
+    <Card
+      title="Basic Information"
+      subtitle="General information about your organization."
+      headerActions={
+        isEditing ? (
+          <div className="flex items-center gap-2">
+            <Button type="button" variant="secondary" onClick={cancelEditing}>
+              <X size={14} className="mr-1.5" />
+              Cancel
+            </Button>
+
+            <Button type="button" onClick={handleSubmit(onSave)}>
+              <Check size={14} className="mr-1.5" />
+              Save
+            </Button>
+          </div>
+        ) : (
+          <Button type="button" variant="secondary" onClick={startEditing}>
+            <Pencil size={14} className="mr-1.5" />
+            Edit
+          </Button>
+        )
+      }
+    >
+      {isEditing ? (
+        <form
+          onSubmit={handleSubmit(onSave)}
+          className="grid gap-5 sm:grid-cols-2"
+        >
+          {inputFields.map((field) => {
+            if (field.fieldType === FIELD_TYPES.INPUT) {
+              return (
+                <Input
+                  key={field.name}
+                  name={field.name}
+                  control={control}
+                  label={field.label}
+                  placeholder={field.placeholder}
+                  optional={field.optional}
+                  type={field.type}
+                  icon={field.icon}
+                  iconPosition={field.iconPosition}
+                />
+              );
+            }
+
+            return (
+              <Textarea
+                key={field.name}
+                name={field.name}
+                control={control}
+                label={field.label}
+                placeholder={field.placeholder}
+                optional={field.optional}
+                rows={field.rows}
+                className="sm:col-span-2"
+              />
+            );
+          })}
+        </form>
+      ) : (
+        <div className="grid gap-5 sm:grid-cols-2">
+          <InformationField
+            label="Organization Name"
+            value={displayInfo.name}
+          />
+
+          <InformationField
+            label="Email"
+            value={displayInfo.email || "Not provided"}
+            icon={<Mail size={14} />}
+          />
+
+          <InformationField
+            label="Website"
+            value={displayInfo.website || "Not provided"}
+            icon={<Globe size={14} />}
+          />
+
+          <InformationField
+            label="Description"
+            value={displayInfo.description || "No description provided"}
+            className="sm:col-span-2"
+          />
+        </div>
+      )}
+    </Card>
+  );
+}
+
+interface InformationFieldProps {
+  label: string;
+  value: string;
+  icon?: React.ReactNode;
+  className?: string;
+}
+
+function InformationField({
+  label,
+  value,
+  icon,
+  className,
+}: InformationFieldProps) {
+  return (
+    <div className={className}>
+      <p className="text-xs font-medium text-ink-muted">{label}</p>
+
+      <div className="mt-1 flex items-center gap-1.5">
+        {icon && <span className="text-ink-faint">{icon}</span>}
+
+        <p className="text-sm text-ink">{value}</p>
+      </div>
+    </div>
+  );
+}

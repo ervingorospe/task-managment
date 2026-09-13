@@ -1,0 +1,89 @@
+"use client";
+
+import { useCallback } from "react";
+import { useStepForm } from "@/hooks/use-step-form";
+import { useStepper } from "@/providers/stepper.provider";
+import InviteManager from "@/components/organization/member/invite-manager";
+import { invitesSchema } from "@/lib/schemas/organization.schema";
+import { useOrganizationDefaults } from "@/providers/organization-defaults.provider";
+import { MemberInviteDetail } from "@/lib/types/organization/member-invite-detail.type";
+import { RoleDetail } from "@/lib/types/organization/role-detail.type";
+
+export default function InvitePeopleStep() {
+  const { roles: defaultRoles } = useOrganizationDefaults();
+  const { watch, setValue } = useStepForm(invitesSchema, {
+    invites: [],
+  });
+
+  const { formData } = useStepper();
+
+  const invites = (watch("invites") as MemberInviteDetail[] | undefined) ?? [];
+
+  const roles = (formData.roles as RoleDetail[] | undefined) ?? defaultRoles;
+
+  const addInvites = useCallback(
+    (emails: string[]) => {
+      const existing = new Set(
+        invites.map((invite) => invite.email.toLowerCase()),
+      );
+
+      const newInvites: MemberInviteDetail[] = emails
+        .filter((email) => !existing.has(email.toLowerCase()))
+        .map((email) => ({
+          id: Date.now(),
+          email,
+          role_id: 3,
+        }));
+
+      if (newInvites.length === 0) return;
+
+      setValue("invites", [...invites, ...newInvites], {
+        shouldValidate: true,
+        shouldDirty: true,
+      });
+    },
+    [invites, setValue],
+  );
+
+  const removeInvite = useCallback(
+    (id: number) => {
+      setValue(
+        "invites",
+        invites.filter((invite) => invite.id !== id),
+        {
+          shouldValidate: true,
+          shouldDirty: true,
+        },
+      );
+    },
+    [invites, setValue],
+  );
+
+  const changeInviteRole = useCallback(
+    (inviteId: number, roleId: number) => {
+      setValue(
+        "invites",
+        invites.map((invite) =>
+          invite.id === inviteId ? { ...invite, role_id: roleId } : invite,
+        ),
+        {
+          shouldValidate: true,
+          shouldDirty: true,
+        },
+      );
+    },
+    [invites, setValue],
+  );
+
+  return (
+    <InviteManager
+      title="Invite People"
+      subtitle="Invite your team members to join the organization."
+      invites={invites}
+      roles={roles}
+      onAdd={addInvites}
+      onRemove={removeInvite}
+      onChangeRole={changeInviteRole}
+    />
+  );
+}
