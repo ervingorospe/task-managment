@@ -7,8 +7,8 @@ export default function ProjectsPage() {
       </p>
       <div className="mt-6 rounded border border-dashed border-line p-10 text-center">
         <p className="text-sm text-ink-muted">
-          No projects yet. This view will list projects once the Project
-          module is wired up.
+          No projects yet. This view will list projects once the Project module
+          is wired up. testing
         </p>
       </div>
     </div>
