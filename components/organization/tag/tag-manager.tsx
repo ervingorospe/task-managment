@@ -5,6 +5,8 @@ import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import TagList from "./tag-list";
 import { TagDetail } from "@/lib/types/organization/tag-detail.type";
+import { PERMISSIONS } from "@/lib/data/permissions";
+import { Can } from "@/components/auth/can";
 
 interface TagManagerProps {
   title?: string;
@@ -50,44 +52,46 @@ export default function TagManager({
   }
 
   return (
-    <div className="space-y-5">
-      <div>
-        <h2 className="text-base font-semibold text-ink">{title}</h2>
+    <Can action={PERMISSIONS.TAG_VIEW}>
+      <div className="space-y-5">
+        <div>
+          <h2 className="text-base font-semibold text-ink">{title}</h2>
 
-        <p className="mt-1 text-sm text-ink-muted">{subtitle}</p>
-      </div>
-
-      <div>
-        <div className="flex gap-2">
-          <input
-            type="text"
-            value={inputValue}
-            onChange={(e) => {
-              setInputValue(e.target.value);
-
-              if (error) {
-                setError(null);
-              }
-            }}
-            onKeyDown={handleKeyDown}
-            placeholder="e.g. On Hold"
-            className="flex-1 rounded border border-line bg-surface px-3 py-2 text-sm text-ink placeholder:text-ink-faint focus:border-accent-text"
-          />
-
-          <Button type="button" variant="secondary" onClick={handleAdd}>
-            <Plus size={15} className="mr-1.5" />
-            Add
-          </Button>
+          <p className="mt-1 text-sm text-ink-muted">{subtitle}</p>
         </div>
 
-        {error && <p className="mt-1 text-xs text-danger">{error}</p>}
-      </div>
+        <Can action={PERMISSIONS.TAG_ADD}>
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={inputValue}
+              onChange={(e) => {
+                setInputValue(e.target.value);
 
-      <TagList
-        tags={tags}
-        onUpdateTagColor={updateTagColor}
-        onRemoveTag={onDeleteTag}
-      />
-    </div>
+                if (error) {
+                  setError(null);
+                }
+              }}
+              onKeyDown={handleKeyDown}
+              placeholder="e.g. On Hold"
+              className="flex-1 rounded border border-line bg-surface px-3 py-2 text-sm text-ink placeholder:text-ink-faint focus:border-accent-text"
+            />
+
+            <Button type="button" variant="secondary" onClick={handleAdd}>
+              <Plus size={15} className="mr-1.5" />
+              Add
+            </Button>
+          </div>
+
+          {error && <p className="mt-1 text-xs text-danger">{error}</p>}
+        </Can>
+
+        <TagList
+          tags={tags}
+          onUpdateTagColor={updateTagColor}
+          onRemoveTag={onDeleteTag}
+        />
+      </div>
+    </Can>
   );
 }

@@ -6,6 +6,8 @@ import { Trash2 } from "lucide-react";
 import List from "@/components/ui/list";
 import { ColorPicker } from "@/components/ui/color-picker";
 import { TagDetail } from "@/lib/types/organization/tag-detail.type";
+import { PERMISSIONS } from "@/lib/data/permissions";
+import { Can } from "@/components/auth/can";
 
 interface TagListProps {
   tags: TagDetail[];
@@ -45,14 +47,16 @@ const TagListItem = memo(function TagListItem({
           />
 
           {!tag.isDefault && (
-            <button
-              type="button"
-              onClick={() => onRemoveTag(tag.id)}
-              className="shrink-0 rounded p-1.5 text-ink-faint hover:bg-danger-subtle hover:text-danger"
-              aria-label={`Delete ${tag.tag_name} tag`}
-            >
-              <Trash2 size={15} />
-            </button>
+            <Can action={PERMISSIONS.TAG_REMOVE}>
+              <button
+                type="button"
+                onClick={() => onRemoveTag(tag.id)}
+                className="shrink-0 rounded p-1.5 text-ink-faint hover:bg-danger-subtle hover:text-danger"
+                aria-label={`Delete ${tag.tag_name} tag`}
+              >
+                <Trash2 size={15} />
+              </button>
+            </Can>
           )}
         </div>
       }
@@ -66,15 +70,17 @@ export default function TagList({
   onRemoveTag,
 }: TagListProps) {
   return (
-    <List>
-      {tags.map((tag) => (
-        <TagListItem
-          key={tag.id}
-          tag={tag}
-          onUpdateTagColor={onUpdateTagColor}
-          onRemoveTag={onRemoveTag}
-        />
-      ))}
-    </List>
+    <Can action={PERMISSIONS.TAG_VIEW}>
+      <List>
+        {tags.map((tag) => (
+          <TagListItem
+            key={tag.id}
+            tag={tag}
+            onUpdateTagColor={onUpdateTagColor}
+            onRemoveTag={onRemoveTag}
+          />
+        ))}
+      </List>
+    </Can>
   );
 }

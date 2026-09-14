@@ -3,6 +3,8 @@
 import { useState, type KeyboardEvent } from "react";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { PERMISSIONS } from "@/lib/data/permissions";
+import { Can } from "@/components/auth/can";
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -57,7 +59,7 @@ export function EmailChipInput({ onAdd }: EmailChipInputProps) {
   }
 
   return (
-    <div>
+    <Can action={PERMISSIONS.MEMBER_INVITE}>
       <div className="flex flex-wrap items-center gap-1.5 rounded border border-line bg-surface px-2 py-1.5 focus-within:border-accent-text">
         {chips.map((email) => (
           <span
@@ -100,6 +102,6 @@ export function EmailChipInput({ onAdd }: EmailChipInputProps) {
       >
         Add
       </Button>
-    </div>
+    </Can>
   );
 }

@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import { RoleFormValues } from "@/lib/schemas/organization.schema";
 import RoleList from "@/components/organization/role/role-list";
 import type { RoleDetail } from "@/lib/types/organization/role-detail.type";
+import { Can } from "@/components/auth/can";
+import { PERMISSIONS } from "@/lib/data/permissions";
 
 const RoleFormModal = dynamic(
   () =>
@@ -64,28 +66,38 @@ export default function RoleManager({
   }
 
   return (
-    <div className="space-y-5">
-      <div className="flex items-start justify-between">
-        <div>
-          <h2 className="text-base font-semibold text-ink">{title}</h2>
-          <p className="mt-1 text-sm text-ink-muted">{subtitle}</p>
+    <Can action={PERMISSIONS.ROLE_VIEW}>
+      <div className="space-y-5">
+        <div className="flex items-start justify-between">
+          <div>
+            <h2 className="text-base font-semibold text-ink">{title}</h2>
+            <p className="mt-1 text-sm text-ink-muted">{subtitle}</p>
+          </div>
+          <Can allOf={[PERMISSIONS.ROLE_VIEW, PERMISSIONS.ROLE_ADD]}>
+            <Button variant="secondary" onClick={openCreateModal}>
+              <Plus size={15} className="mr-1.5" />
+              Add role
+            </Button>
+          </Can>
         </div>
-        <Button variant="secondary" onClick={openCreateModal}>
-          <Plus size={15} className="mr-1.5" />
-          Add role
-        </Button>
-      </div>
 
-      <RoleList roles={roles} onEdit={openEditModal} onDelete={onDeleteRole} />
-
-      {formModalOpen && (
-        <RoleFormModal
-          open={formModalOpen}
-          onClose={closeFormModal}
-          onSubmit={handleSubmit}
-          role={editingRole}
+        <RoleList
+          roles={roles}
+          onEdit={openEditModal}
+          onDelete={onDeleteRole}
         />
-      )}
-    </div>
+
+        {formModalOpen && (
+          <Can anyOf={[PERMISSIONS.ROLE_ADD, PERMISSIONS.ROLE_UPDATE]}>
+            <RoleFormModal
+              open={formModalOpen}
+              onClose={closeFormModal}
+              onSubmit={handleSubmit}
+              role={editingRole}
+            />
+          </Can>
+        )}
+      </div>
+    </Can>
   );
 }

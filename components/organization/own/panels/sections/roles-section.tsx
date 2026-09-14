@@ -6,6 +6,8 @@ import RoleManager from "@/components/organization/role/role-manager";
 import { lazyNamed } from "@/lib/helper/lazy-named";
 import type { RoleDetail } from "@/lib/types/organization/role-detail.type";
 import { resolveRules } from "@/lib/helper/resolve-rules";
+import { Can } from "@/components/auth/can";
+import { PERMISSIONS } from "@/lib/data/permissions";
 
 const ConfirmDialog = lazyNamed(
   () => import("@/components/ui/confirm-dialog"),
@@ -99,21 +101,23 @@ export default function RolesSection({
       />
 
       {deletingRole && (
-        <ConfirmDialog
-          open={deletingRole !== null}
-          onClose={() => setDeletingRole(null)}
-          onConfirm={handleConfirmDelete}
-          title={`Delete "${deletingRole.role_name}" role?`}
-          confirmLabel="Delete role"
-          description={
-            <>
-              This role will be permanently deleted and can&apos;t be recovered
-              from this screen. Any members currently assigned this role will
-              automatically be moved to the{" "}
-              <span className="font-medium text-ink">Member</span> role.
-            </>
-          }
-        />
+        <Can action={PERMISSIONS.ROLE_REMOVE}>
+          <ConfirmDialog
+            open={deletingRole !== null}
+            onClose={() => setDeletingRole(null)}
+            onConfirm={handleConfirmDelete}
+            title={`Delete "${deletingRole.role_name}" role?`}
+            confirmLabel="Delete role"
+            description={
+              <>
+                This role will be permanently deleted and can&apos;t be
+                recovered from this screen. Any members currently assigned this
+                role will automatically be moved to the{" "}
+                <span className="font-medium text-ink">Member</span> role.
+              </>
+            }
+          />
+        </Can>
       )}
     </section>
   );

@@ -13,8 +13,8 @@ export const PERMISSIONS = {
   // Member Rules
   MEMBER_INVITE: "member.invite",
   MEMBER_REMOVE: "member.remove",
+  MEMBER_UPDATE_ROLE: "member.update.role",
   MEMBER_VIEW_MEMBERS: "member.view.members",
-  MEMBER_VIEW_ADMINS: "member.view.admins",
   MEMBER_VIEW_OWNER: "member.view.owner",
   MEMBER_VIEW_CLIENTS: "member.view.clients",
   MEMBER_SET_ACTIVE: "member.set.active",

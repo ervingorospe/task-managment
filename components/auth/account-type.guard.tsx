@@ -17,7 +17,7 @@ export function AccountTypeGuard({
   const { currentUser } = useAuth();
 
   if (!currentUser || currentUser.account_type !== accountType) {
-    notFound();
+    return null;
   }
 
   return <>{children}</>;

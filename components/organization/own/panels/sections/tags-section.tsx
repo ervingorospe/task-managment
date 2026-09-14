@@ -4,6 +4,8 @@ import { useState } from "react";
 import TagManager from "@/components/organization/tag/tag-manager";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { TagDetail } from "@/lib/types/organization/tag-detail.type";
+import { Can } from "@/components/auth/can";
+import { PERMISSIONS } from "@/lib/data/permissions";
 
 interface TagsSectionProps {
   tags: TagDetail[];
@@ -57,14 +59,16 @@ export default function TagsSection({
         updateTagColor={updateTagColor}
       />
 
-      <ConfirmDialog
-        open={deletingTagId !== null}
-        onClose={() => setDeletingTagId(null)}
-        onConfirm={handleConfirmDelete}
-        title="Remove tag?"
-        confirmLabel="Remove tag"
-        description="Are you sure you want to remove this tag?"
-      />
+      <Can action={PERMISSIONS.TAG_REMOVE}>
+        <ConfirmDialog
+          open={deletingTagId !== null}
+          onClose={() => setDeletingTagId(null)}
+          onConfirm={handleConfirmDelete}
+          title="Remove tag?"
+          confirmLabel="Remove tag"
+          description="Are you sure you want to remove this tag?"
+        />
+      </Can>
     </section>
   );
 }

@@ -6,6 +6,8 @@ import {
 import { OrganizationDefaultsProvider } from "@/providers/organization-defaults.provider";
 import { CreateOrganizationClient } from "@/components/organization/create/create-organization-client";
 import BackButton from "@/components/ui/back-button";
+import { AccountTypeGuard } from "@/components/auth/account-type.guard";
+import { ACCOUNT_TYPE } from "@/lib/constants/accoun-type.constant";
 
 // Server Component — fetches once, before anything reaches the browser.
 // No "use client" here; the interactive stepper lives one level down.
@@ -19,14 +21,16 @@ export default async function CreateOrganizationPage() {
     ]);
 
   return (
-    <OrganizationDefaultsProvider
-      roles={defaultRoles}
-      permissionOptions={permissionOptions}
-      tags={defaultTags}
-      ruleCategories={ruleCategories}
-    >
-      <BackButton />
-      <CreateOrganizationClient />
-    </OrganizationDefaultsProvider>
+    <AccountTypeGuard accountType={ACCOUNT_TYPE.OWNER}>
+      <OrganizationDefaultsProvider
+        roles={defaultRoles}
+        permissionOptions={permissionOptions}
+        tags={defaultTags}
+        ruleCategories={ruleCategories}
+      >
+        <BackButton />
+        <CreateOrganizationClient />
+      </OrganizationDefaultsProvider>
+    </AccountTypeGuard>
   );
 }

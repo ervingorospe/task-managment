@@ -12,6 +12,8 @@ import { lazyNamed } from "@/lib/helper/lazy-named";
 import { MemberDetail } from "@/lib/types/organization/member-detail.type";
 import { RoleDetail } from "@/lib/types/organization/role-detail.type";
 import { getMemberName, getMemberEmail } from "@/lib/helper/member-name";
+import { PERMISSIONS } from "@/lib/data/permissions";
+import { Can } from "@/components/auth/can";
 
 const ConfirmDialog = lazyNamed(
   () => import("@/components/ui/confirm-dialog"),
@@ -157,57 +159,61 @@ export default function MembersSection({
     : null;
 
   return (
-    <Card
-      title="Current Members"
-      subtitle="People who currently belong to this organization."
-    >
-      <MemberListToolbar
-        search={search}
-        onSearchChange={handleSearchChange}
-        sortField={sortField}
-        onSortFieldChange={setSortField}
-      />
-
-      <MemberListSection
-        members={paginated}
-        roles={roles}
-        onToggleActive={(member) =>
-          setPendingAction({ type: "toggle", member })
-        }
-        onRemove={(member) => setPendingAction({ type: "remove", member })}
-        onChangeRole={setActiveRoleMember}
-      />
-
-      <Pagination
-        page={currentPage}
-        totalPages={totalPages}
-        totalItems={sorted.length}
-        pageSize={pageSize}
-        onPageChange={setPage}
-        onPageSizeChange={handlePageSizeChange}
-      />
-
-      {dialogCopy && (
-        <ConfirmDialog
-          open={pendingAction !== null}
-          onClose={() => setPendingAction(null)}
-          onConfirm={handleConfirm}
-          title={dialogCopy.title}
-          confirmLabel={dialogCopy.confirmLabel}
-          description={dialogCopy.description}
-          danger={dialogCopy.danger}
+    <Can action={PERMISSIONS.MEMBER_VIEW_MEMBERS}>
+      <Card
+        title="Current Members"
+        subtitle="People who currently belong to this organization."
+      >
+        <MemberListToolbar
+          search={search}
+          onSearchChange={handleSearchChange}
+          sortField={sortField}
+          onSortFieldChange={setSortField}
         />
-      )}
 
-      {activeRoleMember && (
-        <SetRoleModal
-          open={activeRoleMember !== null}
-          onClose={() => setActiveRoleMember(null)}
+        <MemberListSection
+          members={paginated}
           roles={roles}
-          currentRoleId={activeRoleMember.role_id}
-          onConfirm={handleConfirmRoleChange}
+          onToggleActive={(member) =>
+            setPendingAction({ type: "toggle", member })
+          }
+          onRemove={(member) => setPendingAction({ type: "remove", member })}
+          onChangeRole={setActiveRoleMember}
         />
-      )}
-    </Card>
+
+        <Pagination
+          page={currentPage}
+          totalPages={totalPages}
+          totalItems={sorted.length}
+          pageSize={pageSize}
+          onPageChange={setPage}
+          onPageSizeChange={handlePageSizeChange}
+        />
+
+        {dialogCopy && (
+          <Can action={PERMISSIONS.MEMBER_REMOVE}>
+            <ConfirmDialog
+              open={pendingAction !== null}
+              onClose={() => setPendingAction(null)}
+              onConfirm={handleConfirm}
+              title={dialogCopy.title}
+              confirmLabel={dialogCopy.confirmLabel}
+              description={dialogCopy.description}
+              danger={dialogCopy.danger}
+            />
+          </Can>
+        )}
+
+        {activeRoleMember && (
+          <SetRoleModal
+            open={activeRoleMember !== null}
+            onClose={() => setActiveRoleMember(null)}
+            roles={roles}
+            currentRoleId={activeRoleMember.role_id}
+            onConfirm={handleConfirmRoleChange}
+          />
+        )}
+      </Card>
+    </Can>
   );
 }

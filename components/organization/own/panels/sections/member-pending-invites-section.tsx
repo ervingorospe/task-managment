@@ -6,6 +6,8 @@ import Card from "@/components/ui/card";
 import { lazyNamed } from "@/lib/helper/lazy-named";
 import { MemberInviteDetail } from "@/lib/types/organization/member-invite-detail.type";
 import { RoleDetail } from "@/lib/types/organization/role-detail.type";
+import { PERMISSIONS } from "@/lib/data/permissions";
+import { Can } from "@/components/auth/can";
 
 const ConfirmDialog = lazyNamed(
   () => import("@/components/ui/confirm-dialog"),
@@ -80,7 +82,7 @@ export default function MemberPendingInvites({
   }
 
   return (
-    <>
+    <Can action={PERMISSIONS.MEMBER_INVITE}>
       <Card
         title="Pending Invitations"
         subtitle="Invitations that have not been accepted yet."
@@ -116,6 +118,6 @@ export default function MemberPendingInvites({
           danger
         />
       )}
-    </>
+    </Can>
   );
 }
