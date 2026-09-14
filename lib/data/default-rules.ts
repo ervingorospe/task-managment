@@ -1,3 +1,5 @@
+/// to be remove
+
 export const rules = [
   {
     id: 1,
@@ -40,6 +42,13 @@ export const rules = [
     action: "member.remove",
     name: "Remove Members",
     desc: "Can remove a member from the organization.",
+    categoryId: 2,
+  },
+  {
+    id: 36,
+    action: "member.update.role",
+    name: "Update Member's Role",
+    desc: "Can update member's role.",
     categoryId: 2,
   },
   {

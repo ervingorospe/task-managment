@@ -3,6 +3,7 @@
 // a raw string, catching typos at compile time instead of failing silently
 // as "permission denied."
 
+// DONT'T REMOVE VERY IMPORTANT
 export const PERMISSIONS = {
   // Tag Rules
   TAG_VIEW: "tag.view",

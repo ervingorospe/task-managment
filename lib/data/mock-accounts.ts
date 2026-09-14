@@ -1,3 +1,5 @@
+// to be remove
+
 import type { CurrentUser } from "@/lib/types/user/current-user.type";
 import type { UserMembership } from "@/lib/types/user/user-membership.type";
 import type { UserOrganization } from "@/lib/types/user/user-organization.type";

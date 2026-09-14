@@ -1,3 +1,5 @@
+// to be remove
+
 import { TagDetail } from "../types/organization/tag-detail.type";
 
 export const mockDefaultTags: TagDetail[] = [

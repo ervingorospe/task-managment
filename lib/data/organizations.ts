@@ -39,6 +39,7 @@ export interface PermissionOption {
   categoryId: number;
 }
 
+// functions get be use transfer to lib/api/
 export async function getDefaultRoles(): Promise<RoleDetail[]> {
   // TODO: GET /organizations/defaults/roles
   return mockDefaultRoles;

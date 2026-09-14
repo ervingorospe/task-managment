@@ -6,6 +6,8 @@
 // as flat tables the client joins itself — worth deciding once we do the
 // type pass.
 
+// to be remove
+
 import { rules } from "@/lib/data/default-rules";
 
 const now = "2026-01-15T09:00:00.000Z";

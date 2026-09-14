@@ -1,3 +1,5 @@
+// to be remove
+
 export const rulesCategories = [
   { id: 1, name: "Tag" },
   { id: 2, name: "Member" },
