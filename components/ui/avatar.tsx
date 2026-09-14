@@ -1,17 +1,21 @@
+import Image from "next/image";
 import clsx from "clsx";
 
 type AvatarSize = "sm" | "md" | "lg";
 
-const sizeMap: Record<AvatarSize, { box: string; text: string }> = {
-  sm: { box: "h-6 w-6", text: "text-[10px]" },
-  md: { box: "h-8 w-8", text: "text-sm" },
-  lg: { box: "h-11 w-11", text: "text-base" },
+const sizeMap: Record<
+  AvatarSize,
+  { box: string; text: string; pixels: number }
+> = {
+  sm: { box: "h-6 w-6", text: "text-[10px]", pixels: 24 },
+  md: { box: "h-8 w-8", text: "text-sm", pixels: 32 },
+  lg: { box: "h-11 w-11", text: "text-base", pixels: 44 },
 };
 
 interface AvatarProps {
   firstName: string;
   lastName?: string;
-  src?: string; // if provided, renders an image instead of initials
+  src?: string;
   size?: AvatarSize;
   className?: string;
 }
@@ -23,14 +27,19 @@ export default function Avatar({
   size = "md",
   className,
 }: AvatarProps) {
-  const { box, text } = sizeMap[size];
+  const { box, text, pixels } = sizeMap[size];
+
   const initials = `${firstName[0] ?? ""}${lastName[0] ?? ""}`.toUpperCase();
+
+  const name = `${firstName} ${lastName}`.trim();
 
   if (src) {
     return (
-      <img
+      <Image
         src={src}
-        alt={`${firstName} ${lastName}`.trim()}
+        alt={name}
+        width={pixels}
+        height={pixels}
         className={clsx(box, "rounded-full object-cover", className)}
       />
     );
@@ -44,6 +53,7 @@ export default function Avatar({
         "flex items-center justify-center rounded-full bg-ink font-medium leading-none text-accent",
         className,
       )}
+      aria-label={name}
     >
       {initials}
     </div>

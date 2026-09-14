@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, type ChangeEvent } from "react";
+import { useEffect, useMemo, useState, type ChangeEvent } from "react";
 import { useForm } from "react-hook-form";
 import { ChevronDown, RefreshCcw } from "lucide-react";
 
@@ -58,6 +58,14 @@ export default function OrganizationInfoSection({
     [timezones],
   );
 
+  useEffect(() => {
+    return () => {
+      if (logo?.startsWith("blob:")) {
+        URL.revokeObjectURL(logo);
+      }
+    };
+  }, [logo]);
+
   function handleLogoChange(e: ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
 
@@ -65,7 +73,13 @@ export default function OrganizationInfoSection({
 
     const url = URL.createObjectURL(file);
 
-    setLogo(url);
+    setLogo((previous) => {
+      if (previous?.startsWith("blob:")) {
+        URL.revokeObjectURL(previous);
+      }
+
+      return url;
+    });
 
     // TODO: upload the file and PATCH /organizations/:id { logo }
   }
@@ -115,6 +129,7 @@ export default function OrganizationInfoSection({
         <div className="flex items-center gap-4">
           <div className="flex h-14 w-14 items-center justify-center overflow-hidden rounded border border-line bg-canvas">
             {logo ? (
+              // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={logo}
                 alt="Organization logo"
@@ -201,6 +216,7 @@ export default function OrganizationInfoSection({
             </Button>
           </div>
 
+          {/* Pending Ownership Transfer */}
           {pendingTransfer && (
             <div className="mt-2 flex items-center justify-between gap-4 rounded border border-line bg-canvas px-3 py-2">
               <p className="text-xs text-ink-muted">
@@ -223,6 +239,7 @@ export default function OrganizationInfoSection({
         </div>
       </div>
 
+      {/* Change Owner Modal */}
       {ownerModalOpen && (
         <ChangeOwnerModal
           open={ownerModalOpen}
@@ -231,6 +248,7 @@ export default function OrganizationInfoSection({
         />
       )}
 
+      {/* Cancel Ownership Transfer Confirmation */}
       {pendingTransfer && (
         <ConfirmDialog
           open={cancelTransferModalOpen}

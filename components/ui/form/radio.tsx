@@ -1,12 +1,12 @@
 "use client";
 
-import { ComponentProps, ReactNode } from "react";
+import type { ComponentProps, ReactNode } from "react";
 import {
-  Control,
-  FieldPath,
-  FieldPathValue,
-  FieldValues,
   useController,
+  type Control,
+  type FieldPath,
+  type FieldPathValue,
+  type FieldValues,
 } from "react-hook-form";
 
 type RadioProps<
@@ -25,32 +25,34 @@ type RadioProps<
   onCheckedChange?: (checked: boolean) => void;
 };
 
-export default function Radio<T extends FieldValues>({
-  name,
-  control,
+interface RadioContentProps {
+  value: string | number;
+  label?: ReactNode;
+  description?: ReactNode;
+  disabled?: boolean;
+  className?: string;
+  checked: boolean;
+  onChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  onBlur?: (event: React.FocusEvent<HTMLInputElement>) => void;
+  ref?: React.Ref<HTMLInputElement>;
+  inputProps: Omit<
+    ComponentProps<"input">,
+    "name" | "type" | "defaultValue" | "value"
+  >;
+}
+
+function RadioContent({
   value,
   label,
   description,
-  checked,
-  onCheckedChange,
   disabled,
   className,
+  checked,
   onChange,
   onBlur,
-  ...props
-}: RadioProps<T>) {
-  const controller =
-    name && control
-      ? useController({
-          name,
-          control,
-        })
-      : null;
-
-  const isChecked = controller
-    ? controller.field.value === value
-    : (checked ?? false);
-
+  ref,
+  inputProps,
+}: RadioContentProps) {
   return (
     <div>
       <label
@@ -62,24 +64,14 @@ export default function Radio<T extends FieldValues>({
           .join(" ")}
       >
         <input
-          {...props}
-          ref={controller?.field.ref}
+          {...inputProps}
+          ref={ref}
           type="radio"
           value={String(value)}
-          checked={isChecked}
+          checked={checked}
           disabled={disabled}
-          onChange={(event) => {
-            if (event.target.checked) {
-              controller?.field.onChange(value);
-              onCheckedChange?.(true);
-            }
-
-            onChange?.(event);
-          }}
-          onBlur={(event) => {
-            controller?.field.onBlur();
-            onBlur?.(event);
-          }}
+          onChange={onChange}
+          onBlur={onBlur}
           className={[
             "mt-0.5 h-4 w-4 border-line",
             "accent-accent",
@@ -106,12 +98,99 @@ export default function Radio<T extends FieldValues>({
           </div>
         )}
       </label>
+    </div>
+  );
+}
 
-      {controller?.fieldState.error?.message && (
-        <p className="mt-1 text-xs text-danger">
-          {controller.fieldState.error.message}
-        </p>
+function ControlledRadio<T extends FieldValues>({
+  name,
+  control,
+  value,
+  label,
+  description,
+  disabled,
+  className,
+  onCheckedChange,
+  onChange,
+  onBlur,
+  ...props
+}: RadioProps<T>) {
+  const { field, fieldState } = useController({
+    name: name!,
+    control: control!,
+  });
+
+  const isChecked = field.value === value;
+
+  return (
+    <div>
+      <RadioContent
+        value={value}
+        label={label}
+        description={description}
+        disabled={disabled}
+        className={className}
+        checked={isChecked}
+        ref={field.ref}
+        inputProps={props}
+        onChange={(event) => {
+          if (event.target.checked) {
+            field.onChange(value);
+            onCheckedChange?.(true);
+          }
+
+          onChange?.(event);
+        }}
+        onBlur={(event) => {
+          field.onBlur();
+          onBlur?.(event);
+        }}
+      />
+
+      {fieldState.error?.message && (
+        <p className="mt-1 text-xs text-danger">{fieldState.error.message}</p>
       )}
     </div>
   );
+}
+
+function UncontrolledRadio<T extends FieldValues>({
+  value,
+  label,
+  description,
+  checked = false,
+  onCheckedChange,
+  disabled,
+  className,
+  onChange,
+  onBlur,
+  ...props
+}: RadioProps<T>) {
+  return (
+    <RadioContent
+      value={value}
+      label={label}
+      description={description}
+      disabled={disabled}
+      className={className}
+      checked={checked}
+      inputProps={props}
+      onChange={(event) => {
+        if (event.target.checked) {
+          onCheckedChange?.(true);
+        }
+
+        onChange?.(event);
+      }}
+      onBlur={onBlur}
+    />
+  );
+}
+
+export default function Radio<T extends FieldValues>(props: RadioProps<T>) {
+  if (props.name && props.control) {
+    return <ControlledRadio {...props} />;
+  }
+
+  return <UncontrolledRadio {...props} />;
 }

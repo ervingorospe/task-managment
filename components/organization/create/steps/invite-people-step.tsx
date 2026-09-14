@@ -9,15 +9,19 @@ import { useOrganizationDefaults } from "@/providers/organization-defaults.provi
 import { MemberInviteDetail } from "@/lib/types/organization/member-invite-detail.type";
 import { RoleDetail } from "@/lib/types/organization/role-detail.type";
 
+const EMPTY_INVITES: MemberInviteDetail[] = [];
+
 export default function InvitePeopleStep() {
   const { roles: defaultRoles } = useOrganizationDefaults();
+
   const { watch, setValue } = useStepForm(invitesSchema, {
-    invites: [],
+    invites: EMPTY_INVITES,
   });
 
   const { formData } = useStepper();
 
-  const invites = (watch("invites") as MemberInviteDetail[] | undefined) ?? [];
+  const invites =
+    (watch("invites") as MemberInviteDetail[] | undefined) ?? EMPTY_INVITES;
 
   const roles = (formData.roles as RoleDetail[] | undefined) ?? defaultRoles;
 
