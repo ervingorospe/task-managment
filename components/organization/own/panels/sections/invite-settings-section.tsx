@@ -3,7 +3,7 @@
 import { useForm } from "react-hook-form";
 
 import Card from "@/components/ui/card";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 import Select from "@/components/ui/form/select";
 import { ChevronDown } from "lucide-react";
 

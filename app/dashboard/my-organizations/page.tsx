@@ -1,9 +1,11 @@
 import Link from "next/link";
 import { ChevronRight, Plus } from "lucide-react";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 import List from "@/components/ui/list";
 import Avatar from "@/components/ui/avatar";
 import { getOwnedOrganizations } from "@/lib/data/organizations";
+import { AccountTypeGuard } from "@/components/auth/account-type.guard";
+import { ACCOUNT_TYPE } from "@/lib/constants/accoun-type.constant";
 
 // Server Component — no "use client". Data is fetched here, on the server,
 // before the page ever reaches the browser.
@@ -12,7 +14,7 @@ export default async function MyOrganizationsPage() {
   const hasOrganizations = organizations.length > 0;
 
   return (
-    <div>
+    <AccountTypeGuard accountType={ACCOUNT_TYPE.OWNER}>
       <div className="flex items-start justify-between">
         <div>
           <h1 className="text-lg font-semibold text-ink">My Organizations</h1>
@@ -72,6 +74,6 @@ export default async function MyOrganizationsPage() {
           ))}
         </List>
       )}
-    </div>
+    </AccountTypeGuard>
   );
 }

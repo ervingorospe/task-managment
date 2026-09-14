@@ -7,6 +7,7 @@ import {
 import { OrganizationDefaultsProvider } from "@/providers/organization-defaults.provider";
 import OrganizationTabs from "@/components/organization/own/organization-tabs"; // adjust to your actual component name
 import BackButton from "@/components/ui/back-button";
+import { OwnerGuard } from "@/components/auth/owner-guard";
 
 interface OrganizationPageProps {
   params: Promise<{ slug: string }>;
@@ -28,14 +29,16 @@ export default async function OrganizationPage({
   }
 
   return (
-    <OrganizationDefaultsProvider
-      roles={organization.roles}
-      permissionOptions={permissionOptions}
-      ruleCategories={ruleCategories}
-      tags={organization.tags}
-    >
-      <BackButton />
-      <OrganizationTabs organization={organization} />
-    </OrganizationDefaultsProvider>
+    <OwnerGuard ownerId={organization.owner_id}>
+      <OrganizationDefaultsProvider
+        roles={organization.roles}
+        permissionOptions={permissionOptions}
+        ruleCategories={ruleCategories}
+        tags={organization.tags}
+      >
+        <BackButton />
+        <OrganizationTabs organization={organization} />
+      </OrganizationDefaultsProvider>
+    </OwnerGuard>
   );
 }

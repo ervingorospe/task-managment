@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form";
 import { ChevronDown, RefreshCcw } from "lucide-react";
 
 import Card from "@/components/ui/card";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 import Avatar from "@/components/ui/avatar";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import Select from "@/components/ui/form/select";

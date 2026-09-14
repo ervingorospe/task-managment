@@ -7,7 +7,7 @@ import { Globe, Mail, Pencil, X, Check } from "lucide-react";
 
 import Input from "@/components/ui/form/input";
 import Textarea from "@/components/ui/form/textarea";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 import Card from "@/components/ui/card";
 
 import { OrganizationDetail } from "@/lib/types/organization/organization-detail.type";

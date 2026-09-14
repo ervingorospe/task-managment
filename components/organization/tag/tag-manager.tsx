@@ -2,7 +2,7 @@
 
 import { useState, type KeyboardEvent } from "react";
 import { Plus } from "lucide-react";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 import TagList from "./tag-list";
 import { TagDetail } from "@/lib/types/organization/tag-detail.type";
 

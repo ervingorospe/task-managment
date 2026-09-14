@@ -4,7 +4,8 @@ import { createContext, useContext, useState, type ReactNode } from "react";
 import type { CurrentUser } from "@/lib/types/user/current-user.type";
 import type { UserMembership } from "@/lib/types/user/user-membership.type";
 import { mockAccounts } from "@/lib/data/mock-accounts";
-
+import type { Rule } from "@/lib/types/rule/rule.type";
+import type { Permission } from "@/lib/data/permissions";
 interface LoginResult {
   success: boolean;
   error?: string;
@@ -86,8 +87,14 @@ export function useAuth() {
 // Real permission check now — reads the active membership's resolved
 // Rule[] directly. Superadmin's role already contains every Rule (built
 // that way in default-roles.ts), so there's no "*" wildcard to special-case.
-export function usePermission(action: string) {
+
+// Plain function, not a hook — safe to call conditionally or in loops.
+export function hasPermission(rules: Rule[], action: Permission): boolean {
+  return rules.some((rule) => rule.action === action);
+}
+
+export function usePermission(action: Permission) {
   const { activeMembership } = useAuth();
   if (!activeMembership) return false;
-  return activeMembership.role.rules.some((rule) => rule.action === action);
+  return hasPermission(activeMembership.role.rules, action);
 }

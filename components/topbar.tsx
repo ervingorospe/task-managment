@@ -11,6 +11,8 @@ import {
   LogOut,
   Building2,
 } from "lucide-react";
+import { AccountTypeGuard } from "@/components/auth/account-type.guard";
+import { ACCOUNT_TYPE } from "@/lib/constants/accoun-type.constant";
 
 export function Topbar() {
   const { currentUser, activeMembership, switchOrganization, logout } =
@@ -68,9 +70,12 @@ export function Topbar() {
           <Dropdown.DropdownItem href="/dashboard/settings">
             <Settings size={15} /> Settings
           </Dropdown.DropdownItem>
-          <Dropdown.DropdownItem href="/dashboard/my-organizations">
-            <Building2 size={15} /> Organization
-          </Dropdown.DropdownItem>
+          <AccountTypeGuard accountType={ACCOUNT_TYPE.OWNER}>
+            <Dropdown.DropdownItem href="/dashboard/my-organizations">
+              <Building2 size={15} /> Organization
+            </Dropdown.DropdownItem>
+          </AccountTypeGuard>
+
           <Dropdown.DropdownSeparator />
           <Dropdown.DropdownItem danger onClick={logout}>
             <LogOut size={15} /> Log out

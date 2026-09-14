@@ -3,7 +3,7 @@
 import { useState } from "react";
 import dynamic from "next/dynamic";
 import { Plus } from "lucide-react";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 import { RoleFormValues } from "@/lib/schemas/organization.schema";
 import RoleList from "@/components/organization/role/role-list";
 import type { RoleDetail } from "@/lib/types/organization/role-detail.type";
