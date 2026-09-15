@@ -2,7 +2,6 @@
 
 import { AccountType } from "@/lib/constants/accoun-type.constant";
 import { useAuth } from "@/providers/auth-provider";
-import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
 
 interface AccountTypeGuardProps {

@@ -17,6 +17,8 @@ import {
 } from "@/lib/schemas/organization.schema";
 import { FIELD_TYPES, InputFieldConfig } from "@/lib/types/form.type";
 import Link from "next/link";
+import { AccountTypeGuard } from "@/components/auth/account-type.guard";
+import { ACCOUNT_TYPE } from "@/lib/constants/accoun-type.constant";
 interface BasicInformationProps {
   organization: OrganizationDetail;
 }
@@ -136,61 +138,67 @@ export default function BasicInformation({
       subtitle="General information about your organization."
       headerActions={
         isEditing ? (
-          <div className="flex items-center gap-2">
-            <Button type="button" variant="secondary" onClick={cancelEditing}>
-              <X size={14} className="mr-1.5" />
-              Cancel
-            </Button>
+          <AccountTypeGuard accountType={ACCOUNT_TYPE.OWNER}>
+            <div className="flex items-center gap-2">
+              <Button type="button" variant="secondary" onClick={cancelEditing}>
+                <X size={14} className="mr-1.5" />
+                Cancel
+              </Button>
 
-            <Button type="button" onClick={handleSubmit(onSave)}>
-              <Check size={14} className="mr-1.5" />
-              Save
-            </Button>
-          </div>
+              <Button type="button" onClick={handleSubmit(onSave)}>
+                <Check size={14} className="mr-1.5" />
+                Save
+              </Button>
+            </div>
+          </AccountTypeGuard>
         ) : (
-          <Button type="button" variant="secondary" onClick={startEditing}>
-            <Pencil size={14} className="mr-1.5" />
-            Edit
-          </Button>
+          <AccountTypeGuard accountType={ACCOUNT_TYPE.OWNER}>
+            <Button type="button" variant="secondary" onClick={startEditing}>
+              <Pencil size={14} className="mr-1.5" />
+              Edit
+            </Button>
+          </AccountTypeGuard>
         )
       }
     >
       {isEditing ? (
-        <form
-          onSubmit={handleSubmit(onSave)}
-          className="grid gap-5 sm:grid-cols-2"
-        >
-          {inputFields.map((field) => {
-            if (field.fieldType === FIELD_TYPES.INPUT) {
+        <AccountTypeGuard accountType={ACCOUNT_TYPE.OWNER}>
+          <form
+            onSubmit={handleSubmit(onSave)}
+            className="grid gap-5 sm:grid-cols-2"
+          >
+            {inputFields.map((field) => {
+              if (field.fieldType === FIELD_TYPES.INPUT) {
+                return (
+                  <Input
+                    key={field.name}
+                    name={field.name}
+                    control={control}
+                    label={field.label}
+                    placeholder={field.placeholder}
+                    optional={field.optional}
+                    type={field.type}
+                    icon={field.icon}
+                    iconPosition={field.iconPosition}
+                  />
+                );
+              }
+
               return (
-                <Input
+                <Textarea
                   key={field.name}
                   name={field.name}
                   control={control}
                   label={field.label}
                   placeholder={field.placeholder}
                   optional={field.optional}
-                  type={field.type}
-                  icon={field.icon}
-                  iconPosition={field.iconPosition}
+                  rows={field.rows}
+                  className="sm:col-span-2"
                 />
               );
-            }
-
-            return (
-              <Textarea
-                key={field.name}
-                name={field.name}
-                control={control}
-                label={field.label}
-                placeholder={field.placeholder}
-                optional={field.optional}
-                rows={field.rows}
-                className="sm:col-span-2"
-              />
-            );
-          })}
-        </form>
+            })}
+          </form>
+        </AccountTypeGuard>
       ) : (
         <div className="grid gap-5 sm:grid-cols-2">
           <InformationField

@@ -86,6 +86,7 @@ export default function MemberPendingInvites({
       <Card
         title="Pending Invitations"
         subtitle="Invitations that have not been accepted yet."
+        desc={`${pendingInvites.length} invited`}
       >
         {pendingInvites.length > 0 ? (
           <PendingInviteList

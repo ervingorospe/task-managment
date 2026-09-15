@@ -163,6 +163,7 @@ export default function MembersSection({
       <Card
         title="Current Members"
         subtitle="People who currently belong to this organization."
+        desc={`${members.length} members`}
       >
         <MemberListToolbar
           search={search}

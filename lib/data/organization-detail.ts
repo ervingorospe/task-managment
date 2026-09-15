@@ -25,7 +25,6 @@ const mockOrganizationDetails: Record<string, any> = {
     organization_desc:
       "A small studio building tools for independent creators.",
     email: "hello@acmestudio.com",
-    website: "https://acmestudio.com",
     owner_id: 1,
     createdAt: now,
     updatedAt: now,
@@ -111,14 +110,10 @@ const mockOrganizationDetails: Record<string, any> = {
         rules: rulesForRole([
           "ticket.create",
           "ticket.update",
-          "ticket.remove",
           "ticket.view.included",
           "ticket.change.status",
           "ticket.change.owner",
           "ticket.assign",
-          "project.create",
-          "project.update",
-          "project.remove",
           "project.change.status",
           "project.invite",
           "project.update.tags",

@@ -12,7 +12,7 @@ interface RoleListProps {
 
 export default function RoleList({ roles, onEdit, onDelete }: RoleListProps) {
   return (
-    <List>
+    <List className="max-h-[620px] overflow-y-auto">
       {roles.map((role) => (
         <RoleListItem
           key={role.id}

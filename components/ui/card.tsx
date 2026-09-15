@@ -1,6 +1,7 @@
 type CardProps = {
   title?: string;
   subtitle?: string;
+  desc?: string;
   headerActions?: React.ReactNode;
   footerActions?: React.ReactNode;
   children: React.ReactNode;
@@ -9,6 +10,7 @@ type CardProps = {
 export default function Card({
   title,
   subtitle,
+  desc,
   headerActions,
   footerActions,
   children,
@@ -24,6 +26,9 @@ export default function Card({
 
             {subtitle ? (
               <p className="mt-1 text-sm text-ink-muted">{subtitle}</p>
+            ) : null}
+            {desc ? (
+              <p className="mt-1 text-xs text-ink-faint">{desc}</p>
             ) : null}
           </div>
 

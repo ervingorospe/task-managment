@@ -83,7 +83,7 @@ export const mockAccounts: MockAccount[] = [
     },
   },
   {
-    email: "priya@acmestudio.com",
+    email: "mem@g.com",
     password: "123",
     user: {
       id: 3,
@@ -97,7 +97,7 @@ export const mockAccounts: MockAccount[] = [
     },
   },
   {
-    email: "alex@clientco.com",
+    email: "cl@g.com",
     password: "123",
     user: {
       id: 4,

@@ -71,7 +71,7 @@ export default function TagList({
 }: TagListProps) {
   return (
     <Can action={PERMISSIONS.TAG_VIEW}>
-      <List>
+      <List className="max-h-[620px] overflow-y-auto">
         {tags.map((tag) => (
           <TagListItem
             key={tag.id}
