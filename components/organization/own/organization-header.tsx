@@ -11,7 +11,7 @@ export default function OrganizationHeader({
   return (
     <div className="flex items-center gap-4">
       <Avatar
-        firstName={organization.organization_name}
+        firstName={organization.organizationName}
         src={organization.settings.logo}
         size="lg"
         className="rounded-lg"
@@ -19,11 +19,11 @@ export default function OrganizationHeader({
 
       <div className="min-w-0">
         <h1 className="text-lg font-semibold text-ink">
-          {organization.organization_name}
+          {organization.organizationName}
         </h1>
 
         <p className="mt-1 max-w-2xl text-sm text-ink-muted">
-          {organization.organization_desc}
+          {organization.organizationDesc}
         </p>
       </div>
     </div>

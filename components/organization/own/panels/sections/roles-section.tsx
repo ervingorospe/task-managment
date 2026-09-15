@@ -35,19 +35,19 @@ export default function RolesSection({
   function addRole(values: RoleFormValues): string | undefined {
     if (
       roles.some(
-        (r) => r.role_name.toLowerCase() === values.role_name.toLowerCase(),
+        (r) => r.roleName.toLowerCase() === values.roleName.toLowerCase(),
       )
     ) {
-      return `A role named "${values.role_name}" already exists`;
+      return `A role named "${values.roleName}" already exists`;
     }
 
     const newRole: RoleDetail = {
       id: Date.now(),
-      role_name: values.role_name,
-      role_desc: values.role_desc ?? "",
+      roleName: values.roleName,
+      roleDesc: values.roleDesc ?? "",
       rules: resolveRules(values.rules),
       isDefault: false,
-      org_id: Number(orgId),
+      orgId: Number(orgId),
       isDeleted: false,
       isLocked: false,
     };
@@ -62,10 +62,10 @@ export default function RolesSection({
       roles.some(
         (r) =>
           r.id !== id &&
-          r.role_name.toLowerCase() === values.role_name.toLowerCase(),
+          r.roleName.toLowerCase() === values.roleName.toLowerCase(),
       )
     ) {
-      return `A role named "${values.role_name}" already exists`;
+      return `A role named "${values.roleName}" already exists`;
     }
 
     setRoles((prev) =>
@@ -73,8 +73,8 @@ export default function RolesSection({
         r.id === id
           ? {
               ...r,
-              role_name: values.role_name,
-              role_desc: values.role_desc ?? "",
+              roleName: values.roleName,
+              roleDesc: values.roleDesc ?? "",
               rules: resolveRules(values.rules),
             }
           : r,
@@ -109,7 +109,7 @@ export default function RolesSection({
             open={deletingRole !== null}
             onClose={() => setDeletingRole(null)}
             onConfirm={handleConfirmDelete}
-            title={`Delete "${deletingRole.role_name}" role?`}
+            title={`Delete "${deletingRole.roleName}" role?`}
             confirmLabel="Delete role"
             description={
               <>

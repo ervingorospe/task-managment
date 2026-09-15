@@ -30,7 +30,7 @@ const TagListItem = memo(function TagListItem({
     <List.ListItem
       title={
         <span className="flex items-center gap-2">
-          {tag.tag_name}
+          {tag.tagName}
 
           {tag.isDefault && (
             <span className="rounded-sm bg-canvas px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-ink-faint">
@@ -52,7 +52,7 @@ const TagListItem = memo(function TagListItem({
                 type="button"
                 onClick={() => onRemoveTag(tag.id)}
                 className="shrink-0 rounded p-1.5 text-ink-faint hover:bg-danger-subtle hover:text-danger"
-                aria-label={`Delete ${tag.tag_name} tag`}
+                aria-label={`Delete ${tag.tagName} tag`}
               >
                 <Trash2 size={15} />
               </button>

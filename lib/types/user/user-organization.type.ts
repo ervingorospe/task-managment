@@ -5,10 +5,10 @@ import type { OrganizationDetail } from "../organization/organization-detail.typ
 export type UserOrganization = Pick<
   OrganizationDetail,
   | "id"
-  | "organization_name"
-  | "organization_desc"
+  | "organizationName"
+  | "organizationDesc"
   | "email"
   | "website"
-  | "owner_id"
+  | "ownerId"
   | "settings"
 >;

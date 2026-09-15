@@ -29,7 +29,7 @@ export default function OrganizationSettings({
         <RulesSection />
         <Capacities />
         <DeactivateOrganizationSection
-          organizationName={organization.organization_name}
+          organizationName={organization.organizationName}
         />
       </div>
     </Container>

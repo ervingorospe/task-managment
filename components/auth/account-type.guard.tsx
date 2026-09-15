@@ -15,7 +15,7 @@ export function AccountTypeGuard({
 }: AccountTypeGuardProps) {
   const { currentUser } = useAuth();
 
-  if (!currentUser || currentUser.account_type !== accountType) {
+  if (!currentUser || currentUser.accountType !== accountType) {
     return null;
   }
 

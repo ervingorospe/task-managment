@@ -21,7 +21,7 @@ export default function InviteList({
   return (
     <List>
       {invites.map((invite) => {
-        const role = roles.find((role) => role.id === invite.role_id);
+        const role = roles.find((role) => role.id === invite.roleId);
 
         return (
           <InviteListItem

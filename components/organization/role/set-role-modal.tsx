@@ -64,8 +64,8 @@ export function SetRoleModal({
                 value={role.id}
                 checked={selected === role.id}
                 onCheckedChange={() => setSelected(role.id)}
-                label={role.role_name}
-                description={role.role_desc}
+                label={role.roleName}
+                description={role.roleDesc}
               />
             ))}
           </div>

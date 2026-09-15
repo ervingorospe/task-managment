@@ -22,13 +22,13 @@ export default function TagsSection({
   const [deletingTagId, setDeletingTagId] = useState<number | null>(null);
 
   function addTag(name: string): string | undefined {
-    if (tags.some((t) => t.tag_name.toLowerCase() === name.toLowerCase())) {
+    if (tags.some((t) => t.tagName.toLowerCase() === name.toLowerCase())) {
       return `A tag named "${name}" already exists`;
     }
 
     const newTag: TagDetail = {
       id: Date.now(),
-      tag_name: name,
+      tagName: name,
       color: "#94A39D",
       isDefault: false,
     };

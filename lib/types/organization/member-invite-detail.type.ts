@@ -6,8 +6,8 @@ export interface MemberInviteDetail {
   resentCount?: number;
   type?: "membership" | "ownership";
   status?: string;
-  role_id: number;
-  org_id?: number;
+  roleId: number;
+  orgId?: number;
   createdAt?: string;
   updatedAt?: string;
 }

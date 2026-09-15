@@ -30,7 +30,7 @@ export default function MemberInvitesSection({
     const existing = new Set(invites.map((i) => i.email.toLowerCase()));
     const newInvites: MemberInviteDetail[] = emails
       .filter((email) => !existing.has(email.toLowerCase()))
-      .map((email) => ({ id: Date.now(), email, role_id: 3 }));
+      .map((email) => ({ id: Date.now(), email, roleId: 3 }));
 
     if (newInvites.length === 0) return;
     setInvites((prev) => [...prev, ...newInvites]);
@@ -43,7 +43,7 @@ export default function MemberInvitesSection({
 
   function handleChangeRole(inviteId: number, roleId: number) {
     setInvites((prev) =>
-      prev.map((i) => (i.id === inviteId ? { ...i, role_id: roleId } : i)),
+      prev.map((i) => (i.id === inviteId ? { ...i, roleId: roleId } : i)),
     );
   }
 

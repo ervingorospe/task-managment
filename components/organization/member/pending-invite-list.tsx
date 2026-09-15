@@ -35,7 +35,7 @@ export default function PendingInviteList({
   return (
     <List>
       {invites.map((invite) => {
-        const role = roles.find((item) => item.id === invite.role_id);
+        const role = roles.find((item) => item.id === invite.roleId);
         const cooldown = resendCooldowns[invite.id] ?? 0;
         const canResend = cooldown === 0;
 
@@ -43,7 +43,7 @@ export default function PendingInviteList({
           <List.ListItem
             key={invite.id}
             title={invite.email}
-            subtitle={role?.role_name ?? "No role assigned"}
+            subtitle={role?.roleName ?? "No role assigned"}
             trailing={
               <div className="flex items-center gap-2">
                 {canResend ? (

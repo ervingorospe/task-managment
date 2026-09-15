@@ -39,7 +39,7 @@ export default function MemberListSection({
     <Can action={PERMISSIONS.MEMBER_VIEW_MEMBERS}>
       <List>
         {members.map((member) => {
-          const role = roles.find((item) => item.id === member.role_id);
+          const role = roles.find((item) => item.id === member.roleId);
           const name = getMemberName(member);
           const email = getMemberEmail(member);
 
@@ -72,7 +72,7 @@ export default function MemberListSection({
                       className="flex items-center gap-1 rounded border border-line px-2 py-1 text-xs text-ink-muted hover:bg-canvas hover:text-ink"
                     >
                       <Shuffle size={12} />
-                      {role?.role_name ?? "No role"}
+                      {role?.roleName ?? "No role"}
                     </button>
                   </Can>
 

@@ -1,9 +1,9 @@
 export interface User {
   id: number;
-  first_name: string;
-  last_name: string;
+  firstName: string;
+  lastName: string;
   email: string;
   avatar: string | null;
-  account_type: "owner" | "member";
+  accountType: "owner" | "member";
   isActive: boolean;
 }

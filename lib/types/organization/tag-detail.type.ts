@@ -1,8 +1,8 @@
 export interface TagDetail {
   id: number;
-  tag_name: string;
+  tagName: string;
   color: string;
   isDefault: boolean;
-  org_id?: number;
+  orgId?: number;
   isDeleted?: boolean;
 }

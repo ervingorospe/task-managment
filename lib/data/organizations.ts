@@ -13,7 +13,7 @@ export interface OwnedOrganization {
   name: string;
   logo?: string;
   slug: string;
-  organization_desc?: "A small studio building tools for independent creators.";
+  organizationDesc?: "A small studio building tools for independent creators.";
 }
 
 const mockOrganizations: OwnedOrganization[] = [
@@ -21,8 +21,7 @@ const mockOrganizations: OwnedOrganization[] = [
     id: "acme-studio",
     name: "Acme Studio",
     slug: "acme-studio",
-    organization_desc:
-      "A small studio building tools for independent creators.",
+    organizationDesc: "A small studio building tools for independent creators.",
   },
 ];
 

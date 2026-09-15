@@ -1,8 +1,8 @@
 import { MemberDetail } from "../types/organization/member-detail.type";
 
 export function getMemberName(member: MemberDetail) {
-  const firstName = member.user?.first_name ?? member.first_name;
-  const lastName = member.user?.last_name ?? member.last_name;
+  const firstName = member.user?.firstName ?? member.firstName;
+  const lastName = member.user?.lastName ?? member.lastName;
 
   return `${firstName} ${lastName}`;
 }

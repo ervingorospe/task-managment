@@ -72,10 +72,10 @@ export default function BasicInformation({
   const [isEditing, setIsEditing] = useState(false);
 
   const [displayInfo, setDisplayInfo] = useState({
-    name: organization.organization_name,
+    name: organization.organizationName,
     email: organization.email ?? "",
     website: organization.website ?? "",
-    description: organization.organization_desc ?? "",
+    description: organization.organizationDesc ?? "",
   });
 
   const {

@@ -52,7 +52,7 @@ export default function MembersSection({
 
   const roleNameById = useMemo(() => {
     const map = new Map<number, string>();
-    roles.forEach((r) => map.set(r.id, r.role_name));
+    roles.forEach((r) => map.set(r.id, r.roleName));
     return map;
   }, [roles]);
 
@@ -66,7 +66,7 @@ export default function MembersSection({
     return members.filter((member) => {
       const name = getMemberName(member).toLowerCase();
       const email = getMemberEmail(member).toLowerCase();
-      const roleName = (roleNameById.get(member.role_id) ?? "").toLowerCase();
+      const roleName = (roleNameById.get(member.roleId) ?? "").toLowerCase();
       return (
         name.includes(query) ||
         email.includes(query) ||
@@ -125,11 +125,11 @@ export default function MembersSection({
     if (!activeRoleMember) return;
     setMembers((prev) =>
       prev.map((m) =>
-        m.id === activeRoleMember.id ? { ...m, role_id: roleId } : m,
+        m.id === activeRoleMember.id ? { ...m, roleId: roleId } : m,
       ),
     );
     setActiveRoleMember(null);
-    // TODO: PATCH /organizations/:orgId/members/:id { role_id: roleId }
+    // TODO: PATCH /organizations/:orgId/members/:id { roleId: roleId }
   }
 
   const dialogCopy = pendingAction
@@ -210,7 +210,7 @@ export default function MembersSection({
             open={activeRoleMember !== null}
             onClose={() => setActiveRoleMember(null)}
             roles={roles}
-            currentRoleId={activeRoleMember.role_id}
+            currentRoleId={activeRoleMember.roleId}
             onConfirm={handleConfirmRoleChange}
           />
         )}

@@ -48,17 +48,17 @@ export default function OrganizationMemberTabs({
       <div className="flex items-center gap-3">
         <img
           src={organization.settings.logo}
-          alt={organization.organization_name}
+          alt={organization.organizationName}
           className="h-10 w-10 rounded-lg object-cover"
         />
 
         <div>
           <h1 className="text-lg font-semibold text-ink">
-            {organization.organization_name}
+            {organization.organizationName}
           </h1>
 
           <p className="text-sm text-ink-muted">
-            {organization.organization_desc}
+            {organization.organizationDesc}
           </p>
         </div>
       </div>
@@ -101,7 +101,7 @@ export default function OrganizationMemberTabs({
             <OrganizaionTab organization={organization} />
             <AccountTypeGuard accountType={ACCOUNT_TYPE.MEMBER}>
               <LeaveOrganizationSection
-                organizationName={organization.organization_name}
+                organizationName={organization.organizationName}
               />
             </AccountTypeGuard>
           </>

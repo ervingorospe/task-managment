@@ -21,7 +21,7 @@ function RoleListItem({ role, onEdit, onDelete }: RoleListItemProps) {
     <List.ListItem
       title={
         <span className="flex items-center gap-2">
-          {role.role_name}
+          {role.roleName}
           {role.isDefault && (
             <span className="rounded-sm bg-canvas px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-ink-faint">
               Default
@@ -29,7 +29,7 @@ function RoleListItem({ role, onEdit, onDelete }: RoleListItemProps) {
           )}
         </span>
       }
-      subtitle={role.role_desc}
+      subtitle={role.roleDesc}
       trailing={
         canEdit || canDelete ? (
           <div className="flex items-center gap-1">
@@ -39,7 +39,7 @@ function RoleListItem({ role, onEdit, onDelete }: RoleListItemProps) {
                   type="button"
                   onClick={() => onEdit(role)}
                   className="rounded p-1.5 text-ink-faint transition-colors hover:bg-canvas hover:text-ink"
-                  aria-label={`Edit ${role.role_name} role`}
+                  aria-label={`Edit ${role.roleName} role`}
                 >
                   <Pencil size={15} />
                 </button>
@@ -51,7 +51,7 @@ function RoleListItem({ role, onEdit, onDelete }: RoleListItemProps) {
                   type="button"
                   onClick={() => onDelete(role)}
                   className="shrink-0 rounded p-1.5 text-ink-faint transition-colors hover:bg-danger-subtle hover:text-danger"
-                  aria-label={`Delete ${role.role_name} role`}
+                  aria-label={`Delete ${role.roleName} role`}
                 >
                   <Trash2 size={15} />
                 </button>

@@ -26,7 +26,7 @@ export function Topbar() {
         align="start"
         trigger={
           <span className="flex items-center gap-1.5 rounded px-2 py-1.5 text-sm font-medium text-ink hover:bg-black/5">
-            {activeMembership.organization.organization_name}
+            {activeMembership.organization.organizationName}
             <ChevronDown size={14} className="text-ink/70" />
           </span>
         }
@@ -36,7 +36,7 @@ export function Topbar() {
             key={m.organization.id}
             onClick={() => switchOrganization(m.organization.id)}
           >
-            {m.organization.organization_name}
+            {m.organization.organizationName}
           </Dropdown.DropdownItem>
         ))}
       </Dropdown>
@@ -51,17 +51,17 @@ export function Topbar() {
           align="end"
           trigger={
             <Avatar
-              firstName={currentUser.first_name}
-              lastName={currentUser.last_name}
+              firstName={currentUser.firstName}
+              lastName={currentUser.lastName}
             />
           }
         >
           <div className="border-b border-line px-3 py-2">
             <p className="truncate text-sm font-medium text-ink">
-              {currentUser.first_name} {currentUser.last_name}
+              {currentUser.firstName} {currentUser.lastName}
             </p>
             <p className="truncate text-xs text-ink-muted">
-              {activeMembership.role.role_name}
+              {activeMembership.role.roleName}
             </p>
           </div>
           <Dropdown.DropdownItem href="/profile">

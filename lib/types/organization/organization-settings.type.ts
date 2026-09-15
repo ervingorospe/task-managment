@@ -5,7 +5,7 @@ export interface OrgSettingsDetail {
   timezone: string;
   inviteExpiration: string;
   sendEmailNotif: boolean;
-  org_id: number;
+  orgId: number;
   isActive: boolean;
   isDeleted: boolean;
   createdAt?: string;

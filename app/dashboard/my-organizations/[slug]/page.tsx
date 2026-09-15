@@ -29,7 +29,7 @@ export default async function OrganizationPage({
   }
 
   return (
-    <OwnerGuard ownerId={organization.owner_id}>
+    <OwnerGuard ownerId={organization.ownerId}>
       <OrganizationDefaultsProvider
         roles={organization.roles}
         permissionOptions={permissionOptions}

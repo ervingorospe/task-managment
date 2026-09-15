@@ -8,11 +8,11 @@ import { OrgCapacity } from "./organization-capacity.type";
 
 export interface OrganizationDetail {
   id: number;
-  organization_name: string;
-  organization_desc?: string;
+  organizationName: string;
+  organizationDesc?: string;
   email?: string;
   website?: string;
-  owner_id: number;
+  ownerId: number;
   createdAt?: string;
   updatedAt?: string;
 

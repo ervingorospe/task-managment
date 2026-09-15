@@ -36,7 +36,7 @@ export default function InvitePeopleStep() {
         .map((email) => ({
           id: Date.now(),
           email,
-          role_id: 3,
+          roleId: 3,
         }));
 
       if (newInvites.length === 0) return;
@@ -68,7 +68,7 @@ export default function InvitePeopleStep() {
       setValue(
         "invites",
         invites.map((invite) =>
-          invite.id === inviteId ? { ...invite, role_id: roleId } : invite,
+          invite.id === inviteId ? { ...invite, roleId: roleId } : invite,
         ),
         {
           shouldValidate: true,

@@ -18,10 +18,10 @@ export default function RolesStep() {
 
   const addRole = useCallback(
     (values: RoleFormValues): string | undefined => {
-      const roleName = values.role_name.trim();
+      const roleName = values.roleName.trim();
 
       const roleExists = roles.some(
-        (role) => role.role_name.toLowerCase() === roleName.toLowerCase(),
+        (role) => role.roleName.toLowerCase() === roleName.toLowerCase(),
       );
 
       if (roleExists) {
@@ -30,13 +30,13 @@ export default function RolesStep() {
 
       const newRole: RoleDetail = {
         id: Date.now(),
-        role_name: roleName,
-        role_desc: values.role_desc?.trim() ?? "",
+        roleName: roleName,
+        roleDesc: values.roleDesc?.trim() ?? "",
         rules: resolveRules(values.rules),
         isDefault: false,
         isLocked: false,
         isDeleted: false,
-        org_id: null,
+        orgId: null,
       };
 
       setValue("roles", [...roles, newRole], {
@@ -51,12 +51,12 @@ export default function RolesStep() {
 
   const updateRole = useCallback(
     (id: number, values: RoleFormValues): string | undefined => {
-      const roleName = values.role_name.trim();
+      const roleName = values.roleName.trim();
 
       const roleExists = roles.some(
         (role) =>
           role.id !== id &&
-          role.role_name.toLowerCase() === roleName.toLowerCase(),
+          role.roleName.toLowerCase() === roleName.toLowerCase(),
       );
 
       if (roleExists) {
@@ -69,8 +69,8 @@ export default function RolesStep() {
           role.id === id
             ? {
                 ...role,
-                role_name: values.role_name,
-                role_desc: values.role_desc ?? "",
+                roleName: values.roleName,
+                roleDesc: values.roleDesc ?? "",
                 rules: resolveRules(values.rules),
               }
             : role,

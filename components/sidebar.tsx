@@ -106,7 +106,7 @@ export function Sidebar() {
                           : "text-ink-muted hover:bg-canvas hover:text-ink",
                       )}
                     >
-                      {membership.organization.organization_name}
+                      {membership.organization.organizationName}
                     </Link>
                   );
                 })

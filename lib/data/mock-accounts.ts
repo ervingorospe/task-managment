@@ -14,28 +14,28 @@ const acmeSettings: OrgSettingsDetail = {
   timezone: "Asia/Manila",
   inviteExpiration: "1_day",
   sendEmailNotif: true,
-  org_id: 1,
+  orgId: 1,
   isActive: true,
   isDeleted: false,
 };
 
 const acmeStudio: UserOrganization = {
   id: 1,
-  organization_name: "Acme Studio",
-  organization_desc: "A small studio building tools for independent creators.",
+  organizationName: "Acme Studio",
+  organizationDesc: "A small studio building tools for independent creators.",
   email: "hello@acmestudio.com",
   website: "https://acmestudio.com",
-  owner_id: 1,
+  ownerId: 1,
   settings: acmeSettings,
 };
 
 // Acme Studio's own instantiated copies of the default role templates —
-// same org_id:null (template) vs org_id:set (usable) distinction used
+// same orgId:null (template) vs orgId:set (usable) distinction used
 // throughout the rest of the mock data.
 function instantiateRole(templateId: number, orgRoleId: number): RoleDetail {
   const template = mockDefaultRoles.find((r) => r.id === templateId);
   if (!template) throw new Error(`Unknown role template id: ${templateId}`);
-  return { ...template, id: orgRoleId, org_id: 1 };
+  return { ...template, id: orgRoleId, orgId: 1 };
 }
 
 const superadminRole = instantiateRole(1, 101);
@@ -59,11 +59,11 @@ export const mockAccounts: MockAccount[] = [
     password: "123",
     user: {
       id: 1,
-      first_name: "Jane",
-      last_name: "Doe",
+      firstName: "Jane",
+      lastName: "Doe",
       email: "jane@acmestudio.com",
       avatar: "https://i.pravatar.cc/64?u=jane",
-      account_type: "owner",
+      accountType: "owner",
       isActive: true,
       memberships: [membership(1, superadminRole)],
     },
@@ -73,11 +73,11 @@ export const mockAccounts: MockAccount[] = [
     password: "123",
     user: {
       id: 2,
-      first_name: "Marco",
-      last_name: "Cruz",
+      firstName: "Marco",
+      lastName: "Cruz",
       email: "marco@acmestudio.com",
       avatar: "https://i.pravatar.cc/64?u=marco",
-      account_type: "member",
+      accountType: "member",
       isActive: true,
       memberships: [membership(2, adminRole)],
     },
@@ -87,11 +87,11 @@ export const mockAccounts: MockAccount[] = [
     password: "123",
     user: {
       id: 3,
-      first_name: "Priya",
-      last_name: "Nair",
+      firstName: "Priya",
+      lastName: "Nair",
       email: "priya@acmestudio.com",
       avatar: "https://i.pravatar.cc/64?u=priya",
-      account_type: "member",
+      accountType: "member",
       isActive: true,
       memberships: [membership(3, memberRole)],
     },
@@ -101,11 +101,11 @@ export const mockAccounts: MockAccount[] = [
     password: "123",
     user: {
       id: 4,
-      first_name: "Alex",
-      last_name: "Rivera",
+      firstName: "Alex",
+      lastName: "Rivera",
       email: "alex@clientco.com",
       avatar: "https://i.pravatar.cc/64?u=alex",
-      account_type: "member",
+      accountType: "member",
       isActive: true,
       memberships: [membership(4, clientRole)],
     },

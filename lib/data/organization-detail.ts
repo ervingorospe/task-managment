@@ -21,15 +21,14 @@ const mockOrganizationDetails: Record<string, any> = {
   "acme-studio": {
     // Organization
     id: 1,
-    organization_name: "Acme Studio",
-    organization_desc:
-      "A small studio building tools for independent creators.",
+    organizationName: "Acme Studio",
+    organizationDesc: "A small studio building tools for independent creators.",
     email: "hello@acmestudio.com",
-    owner_id: 1,
+    ownerId: 1,
     createdAt: now,
     updatedAt: now,
 
-    // Organization_Settings (org_id: 1, one-to-one)
+    // Organization_Settings (orgId: 1, one-to-one)
     settings: {
       id: 1,
       slug: "acme-studio",
@@ -37,7 +36,7 @@ const mockOrganizationDetails: Record<string, any> = {
       timezone: "Asia/Manila",
       inviteExpiration: "1_day",
       sendEmailNotif: true,
-      org_id: 1,
+      orgId: 1,
       isActive: true,
       isDeleted: false,
       createdAt: now,
@@ -52,28 +51,28 @@ const mockOrganizationDetails: Record<string, any> = {
       projects: 100,
     },
 
-    // Users (account_type: "owner", joined via owner_id above)
+    // Users (accountType: "owner", joined via ownerId above)
     owner: {
       id: 1,
-      first_name: "Jane",
-      last_name: "Doe",
+      firstName: "Jane",
+      lastName: "Doe",
       email: "jane@acmestudio.com",
       avatar: "https://i.pravatar.cc/64?u=jane",
-      account_type: "owner",
+      accountType: "owner",
       isActive: true,
       createdAt: now,
       updatedAt: now,
     },
 
-    // Roles (org_id: 1 — this org's own copies, not the global templates)
+    // Roles (orgId: 1 — this org's own copies, not the global templates)
     roles: [
       {
         id: 1,
-        role_name: "Superadmin",
-        role_desc:
+        roleName: "Superadmin",
+        roleDesc:
           "Full access to everything in the organization. Assigned to the owner.",
         isDefault: true,
-        org_id: 1,
+        orgId: 1,
         isLocked: true,
         isDeleted: false,
         createdAt: now,
@@ -82,11 +81,11 @@ const mockOrganizationDetails: Record<string, any> = {
       },
       {
         id: 2,
-        role_name: "Client",
-        role_desc:
+        roleName: "Client",
+        roleDesc:
           "Can request tickets, and view the tickets and projects they're included in.",
         isDefault: true,
-        org_id: 1,
+        orgId: 1,
         isLocked: false,
         isDeleted: false,
         createdAt: now,
@@ -99,10 +98,10 @@ const mockOrganizationDetails: Record<string, any> = {
       },
       {
         id: 3,
-        role_name: "Member",
-        role_desc: "Can create, edit, and work on tickets and projects.",
+        roleName: "Member",
+        roleDesc: "Can create, edit, and work on tickets and projects.",
         isDefault: true,
-        org_id: 1,
+        orgId: 1,
         isLocked: false,
         isDeleted: false,
         createdAt: now,
@@ -122,11 +121,11 @@ const mockOrganizationDetails: Record<string, any> = {
       },
       {
         id: 4,
-        role_name: "Admin",
-        role_desc:
+        roleName: "Admin",
+        roleDesc:
           "Can manage members, tags, and reports, and has full visibility across all tickets and projects.",
         isDefault: true,
-        org_id: 1,
+        orgId: 1,
         isDeleted: false,
         isLocked: false,
         createdAt: now,
@@ -165,125 +164,125 @@ const mockOrganizationDetails: Record<string, any> = {
       },
     ],
 
-    // Tags (org_id: 1)
+    // Tags (orgId: 1)
     tags: [
       {
         id: 201,
-        tag_name: "Backlog",
+        tagName: "Backlog",
         color: "#94A39D",
         isDefault: true,
-        org_id: 1,
+        orgId: 1,
         isDeleted: false,
       },
       {
         id: 202,
-        tag_name: "To Do",
+        tagName: "To Do",
         color: "#64748B",
         isDefault: true,
-        org_id: 1,
+        orgId: 1,
         isDeleted: false,
       },
       {
         id: 203,
-        tag_name: "In-Progress",
+        tagName: "In-Progress",
         color: "#3B82C4",
         isDefault: true,
-        org_id: 1,
+        orgId: 1,
         isDeleted: false,
       },
       {
         id: 204,
-        tag_name: "Blocked",
+        tagName: "Blocked",
         color: "#E5484D",
         isDefault: true,
-        org_id: 1,
+        orgId: 1,
         isDeleted: false,
       },
       {
         id: 205,
-        tag_name: "Done",
+        tagName: "Done",
         color: "#28A428",
         isDefault: true,
-        org_id: 1,
+        orgId: 1,
         isDeleted: false,
       },
     ],
 
-    // Members (join of Users <-> Organization, includes role_id)
+    // Members (join of Users <-> Organization, includes roleId)
     members: [
       {
         id: 1,
-        first_name: "Jane",
-        last_name: "Doe",
+        firstName: "Jane",
+        lastName: "Doe",
         email: "jane@acmestudio.com",
-        user_id: 1,
-        org_id: 1,
-        role_id: 1,
+        userId: 1,
+        orgId: 1,
+        roleId: 1,
         isActive: true,
         user: {
           id: 1,
-          first_name: "Jane",
-          last_name: "Doe",
+          firstName: "Jane",
+          lastName: "Doe",
           email: "jane@acmestudio.com",
           isActive: true,
         },
       },
       {
         id: 2,
-        first_name: "Marco",
-        last_name: "Cruz",
+        firstName: "Marco",
+        lastName: "Cruz",
         email: "marco@acmestudio.com",
-        user_id: 2,
-        org_id: 1,
-        role_id: 4,
+        userId: 2,
+        orgId: 1,
+        roleId: 4,
         isActive: true,
         user: {
           id: 2,
-          first_name: "Marco",
-          last_name: "Cruz",
+          firstName: "Marco",
+          lastName: "Cruz",
           email: "marco@acmestudio.com",
           isActive: true,
         },
       },
       {
         id: 3,
-        first_name: "Priya",
-        last_name: "Nair",
+        firstName: "Priya",
+        lastName: "Nair",
         email: "priya@acmestudio.com",
-        user_id: 3,
-        org_id: 1,
-        role_id: 103,
+        userId: 3,
+        orgId: 1,
+        roleId: 103,
         isActive: true,
         createdAt: now,
         updatedAt: now,
         user: {
           id: 3,
-          first_name: "Priya",
-          last_name: "Nair",
+          firstName: "Priya",
+          lastName: "Nair",
           email: "priya@acmestudio.com",
           isActive: true,
         },
       },
       {
         id: 4,
-        first_name: "Alex",
-        last_name: "Rivera",
+        firstName: "Alex",
+        lastName: "Rivera",
         email: "alex@clientco.com",
-        user_id: 4,
-        org_id: 1,
-        role_id: 2,
+        userId: 4,
+        orgId: 1,
+        roleId: 2,
         isActive: false,
         user: {
           id: 4,
-          first_name: "Alex",
-          last_name: "Rivera",
+          firstName: "Alex",
+          lastName: "Rivera",
           email: "alex@clientco.com",
           isActive: false,
         },
       },
     ],
 
-    // Member_Invites (type: "membership" | "ownership", org_id: 1)
+    // Member_Invites (type: "membership" | "ownership", orgId: 1)
     pendingInvites: [
       {
         id: 1,
@@ -293,8 +292,8 @@ const mockOrganizationDetails: Record<string, any> = {
         resentCount: 0,
         type: "membership",
         status: "pending",
-        role_id: 1,
-        org_id: 1,
+        roleId: 1,
+        orgId: 1,
       },
       {
         id: 2,
@@ -304,8 +303,8 @@ const mockOrganizationDetails: Record<string, any> = {
         resentCount: 1,
         type: "membership",
         status: "pending",
-        role_id: 2,
-        org_id: 1,
+        roleId: 2,
+        orgId: 1,
       },
       {
         id: 3,
@@ -315,8 +314,8 @@ const mockOrganizationDetails: Record<string, any> = {
         resentCount: 0,
         type: "membership",
         status: "pending",
-        role_id: 3,
-        org_id: 1,
+        roleId: 3,
+        orgId: 1,
       },
       // Ownership transfer — same table, distinguished by `type`, feeds
       // the pending-transfer notice on the Settings > Information section.
@@ -328,8 +327,8 @@ const mockOrganizationDetails: Record<string, any> = {
         resentCount: 0,
         type: "ownership",
         status: "pending",
-        role_id: 2,
-        org_id: 1,
+        roleId: 2,
+        orgId: 1,
       },
     ],
     pendingOwnershipTransfer: {
@@ -340,8 +339,8 @@ const mockOrganizationDetails: Record<string, any> = {
       resentCount: 0,
       type: "ownership",
       status: "pending",
-      role_id: 1,
-      org_id: 1,
+      roleId: 1,
+      orgId: 1,
     },
   },
 };

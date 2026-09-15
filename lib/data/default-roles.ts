@@ -11,23 +11,23 @@ function rulesFor(actions: string[]): typeof rules {
 export const mockDefaultRoles: RoleDetail[] = [
   {
     id: 1,
-    role_name: "Superadmin",
-    role_desc:
+    roleName: "Superadmin",
+    roleDesc:
       "Full access to everything in the organization. Assigned to the owner.",
     isDefault: true,
     isLocked: true,
-    org_id: null,
+    orgId: null,
     isDeleted: false,
     rules: rulesFor(["*"]),
   },
   {
     id: 2,
-    role_name: "Client",
-    role_desc:
+    roleName: "Client",
+    roleDesc:
       "Can request tickets, and view the tickets and projects they're included in.",
     isDefault: true,
     isLocked: false,
-    org_id: null,
+    orgId: null,
     isDeleted: false,
     rules: rulesFor([
       "ticket.request",
@@ -37,11 +37,11 @@ export const mockDefaultRoles: RoleDetail[] = [
   },
   {
     id: 3,
-    role_name: "Member",
-    role_desc: "Can create, edit, and work on tickets and projects.",
+    roleName: "Member",
+    roleDesc: "Can create, edit, and work on tickets and projects.",
     isDefault: true,
     isLocked: false,
-    org_id: null,
+    orgId: null,
     isDeleted: false,
     rules: rulesFor([
       "ticket.create",
@@ -60,12 +60,12 @@ export const mockDefaultRoles: RoleDetail[] = [
   },
   {
     id: 4,
-    role_name: "Admin",
-    role_desc:
+    roleName: "Admin",
+    roleDesc:
       "Can manage members, tags, and reports, and has full visibility across all tickets and projects.",
     isDefault: true,
     isLocked: false,
-    org_id: null,
+    orgId: null,
     isDeleted: false,
     rules: rulesFor([
       "ticket.create",

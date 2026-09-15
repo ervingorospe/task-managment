@@ -60,7 +60,7 @@ export default async function MyOrganizationsPage() {
                   {org.name}
                 </p>
                 <p className="mt-0.5 text-xs text-ink-muted">
-                  {org.organization_desc}
+                  {org.organizationDesc}
                 </p>
               </div>
 

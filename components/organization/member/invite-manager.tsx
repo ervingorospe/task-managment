@@ -75,7 +75,7 @@ export default function InviteManager({
           open={activeInviteId !== null}
           onClose={() => setActiveInviteId(null)}
           roles={roles}
-          currentRoleId={activeInvite?.role_id ?? null}
+          currentRoleId={activeInvite?.roleId ?? null}
           onConfirm={handleRoleConfirm}
         />
       </div>

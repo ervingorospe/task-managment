@@ -29,8 +29,8 @@ interface RoleFormModalProps {
 }
 
 const emptyDefaults: RoleFormValues = {
-  role_name: "",
-  role_desc: "",
+  roleName: "",
+  roleDesc: "",
   rules: [],
 };
 
@@ -61,8 +61,8 @@ export function RoleFormModal({
     reset(
       role
         ? {
-            role_name: role.role_name,
-            role_desc: role.role_desc,
+            roleName: role.roleName,
+            roleDesc: role.roleDesc,
             rules: role.rules.map((rule) => rule.id),
           }
         : emptyDefaults,
@@ -96,7 +96,7 @@ export function RoleFormModal({
     const error = onSubmit(values);
 
     if (error) {
-      setError("role_name", {
+      setError("roleName", {
         type: "duplicate",
         message: error,
       });
@@ -142,21 +142,21 @@ export function RoleFormModal({
       }
     >
       <form className="space-y-5" onSubmit={handleSubmit(submit)}>
-        {errors.role_name?.type === "duplicate" && (
+        {errors.roleName?.type === "duplicate" && (
           <div className="rounded border border-danger bg-danger-subtle px-3 py-2">
-            <p className="text-sm text-danger">{errors.role_name.message}</p>
+            <p className="text-sm text-danger">{errors.roleName.message}</p>
           </div>
         )}
 
         <Input
-          name="role_name"
+          name="roleName"
           control={control}
           label="Role name"
           placeholder="e.g. Admin"
         />
 
         <Textarea
-          name="role_desc"
+          name="roleDesc"
           control={control}
           label="Description"
           optional

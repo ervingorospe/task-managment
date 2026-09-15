@@ -33,7 +33,7 @@ export const invitesSchema = z.object({
     z.object({
       id: z.number(),
       email: z.string().email(),
-      role_id: z.number(),
+      roleId: z.number(),
     }),
   ),
 });
@@ -46,7 +46,7 @@ export const tagsSchema = z.object({
   tags: z.array(
     z.object({
       id: z.number(),
-      tag_name: z.string(),
+      tagName: z.string(),
       color: z.string(),
       isDefault: z.boolean(),
     }),
@@ -54,12 +54,12 @@ export const tagsSchema = z.object({
 });
 
 export const roleFormSchema = z.object({
-  role_name: z
+  roleName: z
     .string()
     .trim()
     .min(2, "Role name must be at least 2 characters")
     .max(40),
-  role_desc: z.string().trim().max(200).optional().or(z.literal("")),
+  roleDesc: z.string().trim().max(200).optional().or(z.literal("")),
   rules: z.array(z.number()).min(1, "Select at least one permission"), // was z.array(z.string())
 });
 export type RoleFormValues = z.infer<typeof roleFormSchema>;

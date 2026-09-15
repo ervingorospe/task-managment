@@ -41,7 +41,7 @@ export default function OrganizationInfoSection({
     organization.pendingOwnershipTransfer ?? null,
   );
 
-  const ownerName = `${organization.owner.first_name} ${organization.owner.last_name}`;
+  const ownerName = `${organization.owner.firstName} ${organization.owner.lastName}`;
 
   const { control, handleSubmit, reset } = useForm<TimezoneFormValues>({
     defaultValues: {
@@ -109,7 +109,7 @@ export default function OrganizationInfoSection({
       id: Date.now(),
       email,
       createdAt: new Date().toISOString(),
-      role_id: 1,
+      roleId: 1,
     });
   }
 
@@ -136,7 +136,7 @@ export default function OrganizationInfoSection({
                 className="h-full w-full object-cover"
               />
             ) : (
-              <Avatar firstName={organization.organization_name} size="lg" />
+              <Avatar firstName={organization.organizationName} size="lg" />
             )}
           </div>
 

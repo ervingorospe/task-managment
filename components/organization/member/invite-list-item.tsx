@@ -24,7 +24,7 @@ function InviteListItem({
   return (
     <List.ListItem
       title={invite.email}
-      subtitle={role?.role_desc ?? "No role set"}
+      subtitle={role?.roleDesc ?? "No role set"}
       trailing={
         <div className="flex items-center gap-2">
           <Can
@@ -36,7 +36,7 @@ function InviteListItem({
               className="flex items-center gap-1 rounded border border-line px-2 py-1 text-xs text-ink-muted hover:bg-canvas hover:text-ink"
             >
               <Shuffle size={12} />
-              {role?.role_name ?? "No role"}
+              {role?.roleName ?? "No role"}
             </button>
           </Can>
 
