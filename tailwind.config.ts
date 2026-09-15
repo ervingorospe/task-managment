@@ -9,6 +9,7 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
+        link: "#0000FF",
         canvas: "#F7F8F7",
         surface: "#FFFFFF",
         ink: {

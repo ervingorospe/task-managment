@@ -16,7 +16,7 @@ import {
   type BasicInfoValues,
 } from "@/lib/schemas/organization.schema";
 import { FIELD_TYPES, InputFieldConfig } from "@/lib/types/form.type";
-
+import Link from "next/link";
 interface BasicInformationProps {
   organization: OrganizationDetail;
 }
@@ -204,11 +204,15 @@ export default function BasicInformation({
             icon={<Mail size={14} />}
           />
 
-          <InformationField
-            label="Website"
-            value={displayInfo.website || "Not provided"}
-            icon={<Globe size={14} />}
-          />
+          <Link href={displayInfo.website ?? "#"} target="_blank">
+            <InformationField
+              label="Website"
+              value={displayInfo.website || "Not provided"}
+              icon={<Globe size={14} />}
+              textColor={displayInfo.website ? "text-link" : "text-ink-muted"}
+              iconColor={displayInfo.website ? "text-link" : "text-ink-muted"}
+            />
+          </Link>
 
           <InformationField
             label="Description"
@@ -226,6 +230,8 @@ interface InformationFieldProps {
   value: string;
   icon?: React.ReactNode;
   className?: string;
+  textColor?: string;
+  iconColor?: string;
 }
 
 function InformationField({
@@ -233,15 +239,17 @@ function InformationField({
   value,
   icon,
   className,
+  textColor = "text-ink",
+  iconColor = "text-ink-faint",
 }: InformationFieldProps) {
   return (
     <div className={className}>
       <p className="text-xs font-medium text-ink-muted">{label}</p>
 
       <div className="mt-1 flex items-center gap-1.5">
-        {icon && <span className="text-ink-faint">{icon}</span>}
+        {icon && <span className={iconColor}>{icon}</span>}
 
-        <p className="text-sm text-ink">{value}</p>
+        <p className={`text-sm ${textColor}`}>{value}</p>
       </div>
     </div>
   );
