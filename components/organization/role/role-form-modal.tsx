@@ -18,7 +18,7 @@ import {
 } from "@/lib/schemas/organization.schema";
 
 import type { RoleDetail } from "@/lib/types/organization/role-detail.type";
-import { Checkbox } from "@/components/ui/form";
+import { CheckboxBase } from "@/components/ui/form";
 
 interface RoleFormModalProps {
   open: boolean;
@@ -197,10 +197,10 @@ export function RoleFormModal({
 
                 <div className="space-y-1.5">
                   {categoryRules.map((rule) => (
-                    <Checkbox
+                    <CheckboxBase
                       key={rule.id}
                       checked={selected.includes(rule.id)}
-                      onCheckedChange={() => togglePermission(rule.id)}
+                      onChange={() => togglePermission(rule.id)}
                       label={rule.name}
                     />
                   ))}
