@@ -1,5 +1,5 @@
 export interface OrgCapacity {
-  member: number;
+  members: number;
   tags: number;
   roles: number;
   tickets: number;

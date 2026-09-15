@@ -85,7 +85,7 @@ export default function InvitePeopleStep() {
       subtitle="Invite your team members to join the organization."
       invites={invites}
       roles={roles}
-      capacity={capacity.member}
+      capacity={capacity.members}
       totalInvites={0}
       onAdd={addInvites}
       onRemove={removeInvite}

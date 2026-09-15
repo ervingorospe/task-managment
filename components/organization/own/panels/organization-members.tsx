@@ -20,7 +20,7 @@ export default function OrganizationMembers({
       <MemberInvitesSection
         orgId={organization.id}
         roles={organization.roles}
-        capacity={organization.capacity.member}
+        capacity={organization.capacity.members}
         currentTotalInvites={currentTotalInvites}
       />
 
