@@ -7,6 +7,7 @@ import NotificationSettingsSection from "./sections/notification-settings-sectio
 import RulesSection from "./sections/rules-section";
 import DeactivateOrganizationSection from "./sections/deactivate-organization-section";
 import { OrganizationDetail } from "@/lib/types/organization/organization-detail.type";
+import Capacities from "./sections/organization-capacities";
 
 interface OrganizationSettingsProps {
   organization: OrganizationDetail;
@@ -26,6 +27,7 @@ export default function OrganizationSettings({
           initialValue={organization.settings.sendEmailNotif}
         />
         <RulesSection />
+        <Capacities />
         <DeactivateOrganizationSection
           organizationName={organization.organization_name}
         />

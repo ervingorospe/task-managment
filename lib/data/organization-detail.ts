@@ -46,7 +46,7 @@ const mockOrganizationDetails: Record<string, any> = {
     },
 
     capacity: {
-      member: 10,
+      members: 10,
       tags: 20,
       roles: 20,
       tickets: 500,
