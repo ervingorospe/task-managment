@@ -2,6 +2,7 @@ import {
   getDefaultRoles,
   getPermissionOptions,
   getDefaultTags,
+  getOrgCapacity,
 } from "@/lib/data/organizations";
 import { OrganizationDefaultsProvider } from "@/providers/organization-defaults.provider";
 import { CreateOrganizationClient } from "@/components/organization/create/create-organization-client";
@@ -12,13 +13,19 @@ import { ACCOUNT_TYPE } from "@/lib/constants/accoun-type.constant";
 // Server Component — fetches once, before anything reaches the browser.
 // No "use client" here; the interactive stepper lives one level down.
 export default async function CreateOrganizationPage() {
-  const [defaultRoles, permissionOptions, defaultTags, ruleCategories] =
-    await Promise.all([
-      getDefaultRoles(),
-      getPermissionOptions(),
-      getDefaultTags(),
-      getPermissionOptions(),
-    ]);
+  const [
+    defaultRoles,
+    permissionOptions,
+    defaultTags,
+    ruleCategories,
+    capacity,
+  ] = await Promise.all([
+    getDefaultRoles(),
+    getPermissionOptions(),
+    getDefaultTags(),
+    getPermissionOptions(),
+    getOrgCapacity(),
+  ]);
 
   return (
     <AccountTypeGuard accountType={ACCOUNT_TYPE.OWNER}>
@@ -27,6 +34,7 @@ export default async function CreateOrganizationPage() {
         permissionOptions={permissionOptions}
         tags={defaultTags}
         ruleCategories={ruleCategories}
+        capacity={capacity}
       >
         <BackButton />
         <CreateOrganizationClient />

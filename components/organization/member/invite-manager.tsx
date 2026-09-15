@@ -14,6 +14,8 @@ interface InviteManagerProps {
   subtitle: string;
   invites: MemberInviteDetail[];
   roles: RoleDetail[];
+  capacity: number;
+  totalInvites: number;
   onAdd: (emails: string[]) => void;
   onRemove: (id: number) => void;
   onChangeRole: (inviteId: number, roleId: number) => void;
@@ -24,10 +26,13 @@ export default function InviteManager({
   subtitle,
   invites,
   roles,
+  capacity,
+  totalInvites = 0,
   onAdd,
   onRemove,
   onChangeRole,
 }: InviteManagerProps) {
+  const atCapacity = totalInvites >= capacity;
   const [activeInviteId, setActiveInviteId] = useState<number | null>(null);
 
   const activeInvite =
@@ -45,11 +50,17 @@ export default function InviteManager({
       <div className="space-y-5">
         <div>
           <h2 className="text-base font-semibold text-ink">{title}</h2>
-
           <p className="mt-1 text-sm text-ink-muted">{subtitle}</p>
+          <p className="mt-1 text-xs text-ink-faint">
+            {totalInvites} / {capacity} invite used
+          </p>
         </div>
 
-        <EmailChipInput onAdd={onAdd} />
+        <EmailChipInput
+          onAdd={onAdd}
+          atCapacity={atCapacity}
+          capacity={capacity}
+        />
 
         {invites.length > 0 && (
           <InviteList

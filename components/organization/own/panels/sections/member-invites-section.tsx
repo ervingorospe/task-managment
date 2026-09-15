@@ -5,19 +5,25 @@ import InviteManager from "@/components/organization/member/invite-manager";
 import { Button } from "@/components/ui/button";
 import { RoleDetail } from "@/lib/types/organization/role-detail.type";
 import { MemberInviteDetail } from "@/lib/types/organization/member-invite-detail.type";
+import { MemberDetail } from "@/lib/types/organization/member-detail.type";
 
 interface InvitePeopleSectionProps {
   orgId: number;
   roles: RoleDetail[];
+  capacity: number;
+  currentTotalInvites: number;
 }
 
 export default function MemberInvitesSection({
   orgId,
   roles,
+  capacity,
+  currentTotalInvites,
 }: InvitePeopleSectionProps) {
   // This is a compose-and-send box, not a persisted list — invites sent
   // here move into MemberPendingInvites once "sent." For the mock phase,
   // this local list just represents "invites queued in this session."
+  const atCapacity = currentTotalInvites >= capacity;
   const [invites, setInvites] = useState<MemberInviteDetail[]>([]);
 
   function handleAdd(emails: string[]) {
@@ -48,6 +54,8 @@ export default function MemberInvitesSection({
         invites={invites}
         subtitle="Invite people to join your organization and assign them a role."
         roles={roles}
+        capacity={capacity}
+        totalInvites={currentTotalInvites + invites.length}
         onAdd={handleAdd}
         onRemove={handleRemove}
         onChangeRole={handleChangeRole}
@@ -55,7 +63,14 @@ export default function MemberInvitesSection({
 
       <div className="mt-8 flex items-center justify-between border-t border-line pt-5">
         <div className="flex w-full justify-end">
-          <Button>Send Invite</Button>
+          <Button
+            disabled={atCapacity}
+            title={
+              atCapacity ? `Invite limit reached (${capacity})` : undefined
+            }
+          >
+            Send Invite
+          </Button>
         </div>
       </div>
     </section>

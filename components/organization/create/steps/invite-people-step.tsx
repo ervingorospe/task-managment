@@ -12,7 +12,7 @@ import { RoleDetail } from "@/lib/types/organization/role-detail.type";
 const EMPTY_INVITES: MemberInviteDetail[] = [];
 
 export default function InvitePeopleStep() {
-  const { roles: defaultRoles } = useOrganizationDefaults();
+  const { roles: defaultRoles, capacity } = useOrganizationDefaults();
 
   const { watch, setValue } = useStepForm(invitesSchema, {
     invites: EMPTY_INVITES,
@@ -85,6 +85,8 @@ export default function InvitePeopleStep() {
       subtitle="Invite your team members to join the organization."
       invites={invites}
       roles={roles}
+      capacity={capacity.member}
+      totalInvites={0}
       onAdd={addInvites}
       onRemove={removeInvite}
       onChangeRole={changeInviteRole}

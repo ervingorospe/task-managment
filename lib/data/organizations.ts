@@ -5,6 +5,8 @@ import { mockDefaultRoles } from "./default-roles";
 import { rules } from "./default-rules";
 import { mockDefaultTags } from "./default-tags";
 import { rulesCategories } from "./rules-category";
+import { OrgCapacity } from "../types/organization/organization-capacity.type";
+import { DEFAULT_ORG_CAPACITY } from "./default-capacity";
 
 export interface OwnedOrganization {
   id: string;
@@ -58,4 +60,9 @@ export async function getDefaultTags(): Promise<TagDetail[]> {
 export async function getRuleCategories(): Promise<RuleCategory[]> {
   // TODO: GET /organizations/defaults/tags
   return rulesCategories;
+}
+
+export async function getOrgCapacity(): Promise<OrgCapacity> {
+  // TODO: GET /organizations/defaults/tags
+  return DEFAULT_ORG_CAPACITY;
 }

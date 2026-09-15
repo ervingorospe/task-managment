@@ -9,10 +9,16 @@ import { Can } from "@/components/auth/can";
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 interface EmailChipInputProps {
+  atCapacity: boolean;
+  capacity: number;
   onAdd: (emails: string[]) => void;
 }
 
-export function EmailChipInput({ onAdd }: EmailChipInputProps) {
+export function EmailChipInput({
+  onAdd,
+  atCapacity,
+  capacity,
+}: EmailChipInputProps) {
   const [chips, setChips] = useState<string[]>([]);
   const [inputValue, setInputValue] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -46,6 +52,11 @@ export function EmailChipInput({ onAdd }: EmailChipInputProps) {
     const pending = inputValue.trim();
     const all = pending ? [...chips, pending] : chips;
     const valid = all.filter((e) => emailRegex.test(e));
+
+    if (atCapacity) {
+      setError("Reached invite capacity");
+      return;
+    }
 
     if (valid.length === 0) {
       setError("Add at least one valid email");

@@ -22,6 +22,7 @@ interface RoleManagerProps {
   title: string;
   subtitle: string;
   roles: RoleDetail[];
+  capacity: number;
   addRole: (values: RoleFormValues) => string | undefined;
   updateRole: (id: number, values: RoleFormValues) => string | undefined;
   /** Called when the user clicks delete on a role — parent decides whether to confirm. */
@@ -32,10 +33,12 @@ export default function RoleManager({
   title,
   subtitle,
   roles,
+  capacity,
   addRole,
   updateRole,
   onDeleteRole,
 }: RoleManagerProps) {
+  const atCapacity = roles.length >= capacity;
   const [formModalOpen, setFormModalOpen] = useState(false);
   const [editingRole, setEditingRole] = useState<RoleDetail | undefined>(
     undefined,
@@ -72,9 +75,20 @@ export default function RoleManager({
           <div>
             <h2 className="text-base font-semibold text-ink">{title}</h2>
             <p className="mt-1 text-sm text-ink-muted">{subtitle}</p>
+            <p className="mt-1 text-xs text-ink-faint">
+              {roles.length} / {capacity} roles used
+            </p>
           </div>
+
           <Can allOf={[PERMISSIONS.ROLE_VIEW, PERMISSIONS.ROLE_ADD]}>
-            <Button variant="secondary" onClick={openCreateModal}>
+            <Button
+              variant="secondary"
+              onClick={openCreateModal}
+              disabled={atCapacity}
+              title={
+                atCapacity ? `Role limit reached (${capacity})` : undefined
+              }
+            >
               <Plus size={15} className="mr-1.5" />
               Add role
             </Button>
@@ -87,7 +101,7 @@ export default function RoleManager({
           onDelete={onDeleteRole}
         />
 
-        {formModalOpen && (
+        {formModalOpen && !atCapacity && (
           <Can anyOf={[PERMISSIONS.ROLE_ADD, PERMISSIONS.ROLE_UPDATE]}>
             <RoleFormModal
               open={formModalOpen}

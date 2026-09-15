@@ -45,6 +45,14 @@ const mockOrganizationDetails: Record<string, any> = {
       updatedAt: now,
     },
 
+    capacity: {
+      member: 10,
+      tags: 20,
+      roles: 20,
+      tickets: 500,
+      projects: 100,
+    },
+
     // Users (account_type: "owner", joined via owner_id above)
     owner: {
       id: 1,

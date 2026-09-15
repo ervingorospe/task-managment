@@ -12,6 +12,7 @@ interface TagManagerProps {
   title?: string;
   subtitle?: string;
   tags: TagDetail[];
+  capacity: number;
   addTag: (name: string) => string | undefined;
   onDeleteTag: (id: number) => void;
   updateTagColor: (id: number, color: string) => void;
@@ -21,10 +22,12 @@ export default function TagManager({
   title = "Tags",
   subtitle = "Create and manage tags.",
   tags,
+  capacity,
   addTag,
   onDeleteTag,
   updateTagColor,
 }: TagManagerProps) {
+  const atCapacity = tags.length >= capacity;
   const [inputValue, setInputValue] = useState("");
   const [error, setError] = useState<string | null>(null);
 
@@ -56,8 +59,10 @@ export default function TagManager({
       <div className="space-y-5">
         <div>
           <h2 className="text-base font-semibold text-ink">{title}</h2>
-
           <p className="mt-1 text-sm text-ink-muted">{subtitle}</p>
+          <p className="mt-1 text-xs text-ink-faint">
+            {tags.length} / {capacity} tags used
+          </p>
         </div>
 
         <Can action={PERMISSIONS.TAG_ADD}>
@@ -77,7 +82,13 @@ export default function TagManager({
               className="flex-1 rounded border border-line bg-surface px-3 py-2 text-sm text-ink placeholder:text-ink-faint focus:border-accent-text"
             />
 
-            <Button type="button" variant="secondary" onClick={handleAdd}>
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={handleAdd}
+              disabled={atCapacity}
+              title={atCapacity ? `Tag limit reached (${capacity})` : undefined}
+            >
               <Plus size={15} className="mr-1.5" />
               Add
             </Button>

@@ -14,8 +14,16 @@ export default function OrganizationInformation({
   return (
     <Container>
       <BasicInformation organization={organization} />
-      <RolesSection roles={organization.roles} orgId={organization.id} />
-      <TagsSection tags={organization.tags} orgId={organization.id} />
+      <RolesSection
+        roles={organization.roles}
+        capacity={organization.capacity.roles}
+        orgId={organization.id}
+      />
+      <TagsSection
+        tags={organization.tags}
+        capacity={organization.capacity.tags}
+        orgId={organization.id}
+      />
     </Container>
   );
 }

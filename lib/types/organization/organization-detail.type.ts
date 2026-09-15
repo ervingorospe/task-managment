@@ -4,6 +4,7 @@ import { OrgSettingsDetail } from "./organization-settings.type";
 import { RoleDetail } from "./role-detail.type";
 import { TagDetail } from "./tag-detail.type";
 import { User } from "../user/user.type";
+import { OrgCapacity } from "./organization-capacity.type";
 
 export interface OrganizationDetail {
   id: number;
@@ -16,6 +17,7 @@ export interface OrganizationDetail {
   updatedAt?: string;
 
   settings: OrgSettingsDetail;
+  capacity: OrgCapacity;
   owner: User;
   roles: RoleDetail[];
   tags: TagDetail[];

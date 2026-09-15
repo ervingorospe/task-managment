@@ -5,12 +5,14 @@ import { RoleDetail } from "@/lib/types/organization/role-detail.type";
 import { TagDetail } from "@/lib/types/organization/tag-detail.type";
 import { Rule } from "@/lib/types/rule/rule.type";
 import { RuleCategory } from "@/lib/types/rule/rule-category.type";
+import { OrgCapacity } from "@/lib/types/organization/organization-capacity.type";
 
 interface OrganizationDefaultsValue {
   roles: RoleDetail[];
   permissionOptions: Rule[];
   ruleCategories: RuleCategory[];
   tags: TagDetail[];
+  capacity: OrgCapacity;
 }
 
 const OrganizationDefaultsContext =

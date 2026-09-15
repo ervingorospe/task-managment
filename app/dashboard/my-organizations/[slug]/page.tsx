@@ -35,6 +35,7 @@ export default async function OrganizationPage({
         permissionOptions={permissionOptions}
         ruleCategories={ruleCategories}
         tags={organization.tags}
+        capacity={organization.capacity}
       >
         <BackButton />
         <OrganizationTabs organization={organization} />

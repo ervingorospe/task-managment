@@ -16,6 +16,7 @@ const ConfirmDialog = lazyNamed(
 
 interface RolesSectionProps {
   roles: RoleDetail[];
+  capacity: number;
   orgId: string | number;
 }
 
@@ -25,6 +26,7 @@ interface RolesSectionProps {
 
 export default function RolesSection({
   roles: initialRoles,
+  capacity,
   orgId,
 }: RolesSectionProps) {
   const [roles, setRoles] = useState<RoleDetail[]>(initialRoles);
@@ -95,6 +97,7 @@ export default function RolesSection({
         title="Roles"
         subtitle="Manage the roles and permissions available in this organization."
         roles={roles}
+        capacity={capacity}
         addRole={addRole}
         updateRole={updateRole}
         onDeleteRole={setDeletingRole}

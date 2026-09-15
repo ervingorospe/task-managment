@@ -9,11 +9,13 @@ import { PERMISSIONS } from "@/lib/data/permissions";
 
 interface TagsSectionProps {
   tags: TagDetail[];
+  capacity: number;
   orgId: string | number;
 }
 
 export default function TagsSection({
   tags: initialTags,
+  capacity,
   orgId,
 }: TagsSectionProps) {
   const [tags, setTags] = useState<TagDetail[]>(initialTags);
@@ -57,6 +59,7 @@ export default function TagsSection({
         addTag={addTag}
         onDeleteTag={setDeletingTagId}
         updateTagColor={updateTagColor}
+        capacity={capacity}
       />
 
       <Can action={PERMISSIONS.TAG_REMOVE}>

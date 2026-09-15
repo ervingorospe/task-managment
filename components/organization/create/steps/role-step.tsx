@@ -9,7 +9,7 @@ import { RoleDetail } from "@/lib/types/organization/role-detail.type";
 import { resolveRules } from "@/lib/helper/resolve-rules";
 
 export default function RolesStep() {
-  const { roles: defaultRoles } = useOrganizationDefaults();
+  const { roles: defaultRoles, capacity } = useOrganizationDefaults();
   const { watch, setValue } = useStepForm(rolesSchema, {
     roles: defaultRoles,
   });
@@ -103,6 +103,7 @@ export default function RolesStep() {
       title="Set Up Roles"
       subtitle="Create roles and define what members can do in your organization."
       roles={roles}
+      capacity={capacity.roles}
       addRole={addRole}
       updateRole={updateRole}
       onDeleteRole={onDeleteRole}

@@ -13,11 +13,15 @@ interface OrganizationMembersProps {
 export default function OrganizationMembers({
   organization,
 }: OrganizationMembersProps) {
+  const currentTotalInvites =
+    (organization.pendingInvites?.length ?? 0) + organization.members.length;
   return (
     <Container>
       <MemberInvitesSection
         orgId={organization.id}
         roles={organization.roles}
+        capacity={organization.capacity.member}
+        currentTotalInvites={currentTotalInvites}
       />
 
       <MemberPendingInvites

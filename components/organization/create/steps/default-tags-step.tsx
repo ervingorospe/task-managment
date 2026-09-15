@@ -7,7 +7,7 @@ import { tagsSchema } from "@/lib/schemas/organization.schema";
 import { TagDetail } from "@/lib/types/organization/tag-detail.type";
 
 export default function DefaultTagsStep() {
-  const { tags: defaultTags } = useOrganizationDefaults();
+  const { tags: defaultTags, capacity } = useOrganizationDefaults();
   const { watch, setValue } = useStepForm(tagsSchema, { tags: defaultTags });
 
   const tags = (watch("tags") as TagDetail[] | undefined) ?? defaultTags;
@@ -54,6 +54,7 @@ export default function DefaultTagsStep() {
       title="Default Tags"
       subtitle="Set up tags that can be used across your projects and tickets."
       tags={tags}
+      capacity={capacity.tags}
       addTag={addTag}
       updateTagColor={updateTagColor}
       onDeleteTag={onDeleteTag}
