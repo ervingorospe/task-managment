@@ -7,28 +7,40 @@ import clsx from "clsx";
 import {
   LayoutGrid,
   Ticket,
-  FolderKanban,
   FileBarChart,
   Building2,
   ChevronDown,
+  CalendarCheck2,
+  Star,
 } from "lucide-react";
 import { useAuth } from "@/providers/auth-provider";
 
 const staticNavItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutGrid },
-  { href: "/dashboard/tickets", label: "Tickets", icon: Ticket },
-  { href: "/dashboard/projects", label: "Projects", icon: FolderKanban },
   { href: "/dashboard/reports", label: "Reports", icon: FileBarChart },
+  { href: "/dashboard/starred", label: "Starred", icon: Star },
+  {
+    href: "/dashboard/daily-journal",
+    label: "Daily Journal",
+    icon: CalendarCheck2,
+  },
 ];
 
 export function Sidebar() {
   const pathname = usePathname();
-  const { currentUser } = useAuth();
+  const { currentUser, activeOrganization } = useAuth();
+
   const [orgMenuOpen, setOrgMenuOpen] = useState(
     pathname.startsWith("/dashboard/organizations"),
   );
 
   const memberships = currentUser?.memberships ?? [];
+
+  const ticketsHref = activeOrganization
+    ? `/dashboard/organizations/${activeOrganization.settings.slug}/tickets`
+    : "/dashboard";
+
+  const ticketActive = pathname === ticketsHref;
 
   return (
     <aside className="flex w-56 shrink-0 flex-col border-r border-line bg-surface">
@@ -37,11 +49,13 @@ export function Sidebar() {
       </div>
 
       <nav className="flex-1 space-y-0.5 p-2">
+        {/* Static navigation */}
         {staticNavItems.map(({ href, label, icon: Icon }) => {
           const active =
             href === "/dashboard"
               ? pathname === href
-              : pathname.startsWith(href);
+              : pathname.startsWith(`${href}/`) || pathname === href;
+
           return (
             <Link
               key={href}
@@ -49,7 +63,7 @@ export function Sidebar() {
               className={clsx(
                 "flex items-center gap-2.5 rounded px-3 py-2 text-sm transition-colors",
                 active
-                  ? "bg-accent-subtle text-accent-text font-medium"
+                  ? "bg-accent-subtle font-medium text-accent-text"
                   : "text-ink-muted hover:bg-canvas hover:text-ink",
               )}
             >
@@ -59,15 +73,29 @@ export function Sidebar() {
           );
         })}
 
-        {/* Organization submenu — one entry per org the user belongs to */}
+        {/* Tickets */}
+        <Link
+          href={ticketsHref}
+          className={clsx(
+            "flex items-center gap-2.5 rounded px-3 py-2 text-sm transition-colors",
+            ticketActive
+              ? "bg-accent-subtle font-medium text-accent-text"
+              : "text-ink-muted hover:bg-canvas hover:text-ink",
+          )}
+        >
+          <Ticket size={16} strokeWidth={2} />
+          Tickets
+        </Link>
+
+        {/* Organization */}
         <div>
           <button
             type="button"
-            onClick={() => setOrgMenuOpen((v) => !v)}
+            onClick={() => setOrgMenuOpen((value) => !value)}
             className={clsx(
               "flex w-full items-center justify-between gap-2.5 rounded px-3 py-2 text-sm transition-colors",
               pathname.startsWith("/dashboard/organizations")
-                ? "text-accent-text font-medium"
+                ? "font-medium text-accent-text"
                 : "text-ink-muted hover:bg-canvas hover:text-ink",
             )}
           >
@@ -75,6 +103,7 @@ export function Sidebar() {
               <Building2 size={16} strokeWidth={2} />
               Organization
             </span>
+
             <ChevronDown
               size={14}
               className={clsx(
@@ -93,8 +122,15 @@ export function Sidebar() {
               ) : (
                 memberships.map((membership) => {
                   const slug = membership.organization.settings.slug;
+
+                  // Organization's own landing page.
                   const href = `/dashboard/organizations/${slug}`;
-                  const active = pathname.startsWith(href);
+
+                  // IMPORTANT:
+                  // Only active when the URL is exactly the organization's
+                  // landing page.
+                  const active = pathname === href;
+
                   return (
                     <Link
                       key={membership.id}
@@ -102,7 +138,7 @@ export function Sidebar() {
                       className={clsx(
                         "block truncate rounded px-3 py-1.5 text-sm transition-colors",
                         active
-                          ? "bg-accent-subtle text-accent-text font-medium"
+                          ? "bg-accent-subtle font-medium text-accent-text"
                           : "text-ink-muted hover:bg-canvas hover:text-ink",
                       )}
                     >

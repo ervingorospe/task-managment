@@ -85,10 +85,13 @@ function Dropdown({
     function handleMouseDown(e: MouseEvent) {
       const target = e.target;
       if (!(target instanceof Node)) return;
+      if (target instanceof Element && target.closest("[data-floating-panel]"))
+        return;
       const inTrigger = wrapperRef.current?.contains(target);
       const inPanel = panelRef.current?.contains(target);
       if (!inTrigger && !inPanel) close();
     }
+
     function handleKeyDown(e: KeyboardEvent) {
       if (e.key === "Escape") close();
     }
@@ -137,6 +140,7 @@ function Dropdown({
         createPortal(
           <div
             ref={panelRef}
+            data-floating-panel
             style={{
               position: "fixed",
               top: side === "bottom" ? position.top : undefined,

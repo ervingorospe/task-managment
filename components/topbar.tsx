@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "@/providers/auth-provider";
 import Avatar from "@/components/ui/avatar";
 import Dropdown from "@/components/ui/dropdown";
@@ -13,12 +14,34 @@ import {
 } from "lucide-react";
 import { AccountTypeGuard } from "@/components/auth/account-type.guard";
 import { ACCOUNT_TYPE } from "@/lib/constants/accoun-type.constant";
+import { replaceUrlSlug } from "@/lib/helper/replace-url-slug";
 
 export function Topbar() {
+  const router = useRouter();
+  const pathname = usePathname();
+
   const { currentUser, activeMembership, switchOrganization, logout } =
     useAuth();
 
   if (!currentUser || !activeMembership) return null;
+
+  function handleOrganizationSwitch(organizationId: number) {
+    const membership = currentUser?.memberships.find(
+      (m) => m.organization.id === organizationId,
+    );
+
+    if (!membership) return;
+
+    const newSlug = membership.organization.settings.slug;
+
+    // Change the active organization in auth state.
+    switchOrganization(organizationId);
+
+    // Replace the organization slug in the current URL.
+    const newPathname = replaceUrlSlug(pathname, newSlug);
+
+    router.push(newPathname);
+  }
 
   return (
     <header className="flex h-14 items-center justify-between bg-accent px-4">
@@ -31,12 +54,12 @@ export function Topbar() {
           </span>
         }
       >
-        {currentUser.memberships.map((m) => (
+        {currentUser.memberships.map((membership) => (
           <Dropdown.DropdownItem
-            key={m.organization.id}
-            onClick={() => switchOrganization(m.organization.id)}
+            key={membership.id}
+            onClick={() => handleOrganizationSwitch(membership.organization.id)}
           >
-            {m.organization.organizationName}
+            {membership.organization.organizationName}
           </Dropdown.DropdownItem>
         ))}
       </Dropdown>
@@ -60,25 +83,34 @@ export function Topbar() {
             <p className="truncate text-sm font-medium text-ink">
               {currentUser.firstName} {currentUser.lastName}
             </p>
+
             <p className="truncate text-xs text-ink-muted">
               {activeMembership.role.roleName}
             </p>
           </div>
+
           <Dropdown.DropdownItem href="/profile">
-            <User size={15} /> Profile
+            <User size={15} />
+            Profile
           </Dropdown.DropdownItem>
+
           <Dropdown.DropdownItem href="/dashboard/settings">
-            <Settings size={15} /> Settings
+            <Settings size={15} />
+            Settings
           </Dropdown.DropdownItem>
+
           <AccountTypeGuard accountType={ACCOUNT_TYPE.OWNER}>
             <Dropdown.DropdownItem href="/dashboard/my-organizations">
-              <Building2 size={15} /> Organization
+              <Building2 size={15} />
+              Organization
             </Dropdown.DropdownItem>
           </AccountTypeGuard>
 
           <Dropdown.DropdownSeparator />
+
           <Dropdown.DropdownItem danger onClick={logout}>
-            <LogOut size={15} /> Log out
+            <LogOut size={15} />
+            Log out
           </Dropdown.DropdownItem>
         </Dropdown>
       </div>

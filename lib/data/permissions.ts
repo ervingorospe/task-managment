@@ -26,16 +26,6 @@ export const PERMISSIONS = {
   ROLE_UPDATE: "role.update",
   ROLE_REMOVE: "role.remove",
 
-  // Project Rules
-  PROJECT_VIEW: "project.view",
-  PROJECT_VIEW_OWN: "project.view.own",
-  PROJECT_CREATE: "project.create",
-  PROJECT_UPDATE: "project.update",
-  PROJECT_REMOVE: "project.remove",
-  PROJECT_CHANGE_STATUS: "project.change.status",
-  PROJECT_INVITE: "project.invite",
-  PROJECT_UPDATE_TAGS: "project.update.tags",
-
   // Ticket Rules
   TICKET_REQUEST: "ticket.request",
   TICKET_CREATE: "ticket.create",
@@ -44,7 +34,6 @@ export const PERMISSIONS = {
   TICKET_VIEW_ALL: "ticket.view.all",
   TICKET_VIEW_INCLUDED: "ticket.view.included",
   TICKET_CHANGE_STATUS: "ticket.change.status",
-  TICKET_CHANGE_OWNER: "ticket.change.owner",
   TICKET_ASSIGN: "ticket.assign",
 
   // Report Rules

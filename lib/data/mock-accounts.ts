@@ -19,6 +19,18 @@ const acmeSettings: OrgSettingsDetail = {
   isDeleted: false,
 };
 
+const acmeSettings2: OrgSettingsDetail = {
+  id: 2,
+  slug: "acme-studio2",
+  logo: "https://i.pravatar.cc/64?u=acme",
+  timezone: "Asia/Manila",
+  inviteExpiration: "1_day",
+  sendEmailNotif: true,
+  orgId: 1,
+  isActive: true,
+  isDeleted: false,
+};
+
 const acmeStudio: UserOrganization = {
   id: 1,
   organizationName: "Acme Studio",
@@ -27,6 +39,16 @@ const acmeStudio: UserOrganization = {
   website: "https://acmestudio.com",
   ownerId: 1,
   settings: acmeSettings,
+};
+
+const acmeStudio2: UserOrganization = {
+  id: 2,
+  organizationName: "Acme Studio2",
+  organizationDesc: "A small studio building tools for independent creators.",
+  email: "hello@acmestudio.com",
+  website: "https://acmestudio.com",
+  ownerId: 1,
+  settings: acmeSettings2,
 };
 
 // Acme Studio's own instantiated copies of the default role templates —
@@ -43,8 +65,12 @@ const adminRole = instantiateRole(4, 104);
 const memberRole = instantiateRole(3, 103);
 const clientRole = instantiateRole(2, 102);
 
-function membership(id: number, role: RoleDetail): UserMembership {
-  return { id, role, organization: acmeStudio };
+function membership(
+  id: number,
+  role: RoleDetail,
+  organization = acmeStudio,
+): UserMembership {
+  return { id, role, organization };
 }
 
 interface MockAccount {
@@ -65,7 +91,10 @@ export const mockAccounts: MockAccount[] = [
       avatar: "https://i.pravatar.cc/64?u=jane",
       accountType: "owner",
       isActive: true,
-      memberships: [membership(1, superadminRole)],
+      memberships: [
+        membership(1, superadminRole),
+        membership(1, superadminRole, acmeStudio2),
+      ],
     },
   },
   {

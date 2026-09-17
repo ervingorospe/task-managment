@@ -6,7 +6,6 @@ import type { OrganizationDetail } from "@/lib/types/organization/organization-d
 import OrganizationMembers from "@/components/organization/own/panels/organization-members";
 import OrganizaionTab from "@/components/organization/member/organization-tab";
 import { Button } from "@/components/ui/button";
-import Link from "next/link";
 import { Can } from "@/components/auth/can";
 import { PERMISSIONS } from "@/lib/data/permissions";
 import EmptyState from "@/components/ui/empty-state";
@@ -28,10 +27,10 @@ const tabs = [
     permission: PERMISSIONS.MEMBER_VIEW_MEMBERS,
   },
   {
-    id: "projects",
-    label: "Projects",
+    id: "tickets",
+    label: "Tickets",
     icon: FolderKanban,
-    permission: PERMISSIONS.PROJECT_VIEW,
+    permission: PERMISSIONS.TICKET_VIEW_ALL,
   },
 ] as const;
 type Tab = (typeof tabs)[number]["id"];
@@ -122,28 +121,24 @@ export default function OrganizationMemberTabs({
           </Can>
         )}
 
-        {activeTab === "projects" && (
+        {activeTab === "tickets" && (
           <Can
-            action={PERMISSIONS.PROJECT_VIEW}
+            action={PERMISSIONS.TICKET_VIEW_ALL}
             fallback={
               <div className="rounded border border-dashed border-line p-10 text-center">
                 <p className="text-sm text-ink-muted">
-                  You do not have permission to view organization projects.
+                  You do not have permission to view organization tickets.
                 </p>
               </div>
             }
           >
             <EmptyState
-              title="No projects yet"
-              subtitle="Projects you're part of in this organization will show up
+              title="No tickets yet"
+              subtitle="Tickets you're part of in this organization will show up
                 here."
             >
-              <Can action={PERMISSIONS.PROJECT_CREATE}>
-                <Link
-                  href={`/dashboard/project/create?orgId=${organization.id}`}
-                >
-                  <Button className="mt-4">Create Project</Button>
-                </Link>
+              <Can action={PERMISSIONS.TICKET_VIEW_ALL}>
+                <Button className="mt-4">Create Ticket</Button>
               </Can>
             </EmptyState>
           </Can>

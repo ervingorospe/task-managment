@@ -8,9 +8,11 @@ export default function MemberGuard({
   organizationId,
   children,
 }: {
-  organizationId: number;
+  organizationId: number | null;
   children: ReactNode;
 }) {
+  if (!organizationId) notFound();
+
   const isMember = useIsOrganizationMember(organizationId);
   if (!isMember) notFound();
   return <>{children}</>;

@@ -23,6 +23,12 @@ const mockOrganizations: OwnedOrganization[] = [
     slug: "acme-studio",
     organizationDesc: "A small studio building tools for independent creators.",
   },
+  {
+    id: "acme-studio2",
+    name: "Acme Studio2",
+    slug: "acme-studio2",
+    organizationDesc: "A small studio building tools for independent creators.",
+  },
 ];
 
 export async function getOwnedOrganizations(): Promise<OwnedOrganization[]> {

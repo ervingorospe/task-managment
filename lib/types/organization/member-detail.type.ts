@@ -1,4 +1,5 @@
 import { User } from "../user/user.type";
+import { RoleDetail } from "./role-detail.type";
 
 export interface MemberDetail {
   id: number;
@@ -11,4 +12,5 @@ export interface MemberDetail {
   createdAt?: string;
   updatedAt?: string;
   user: User | null;
+  role?: RoleDetail;
 }
