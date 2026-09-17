@@ -122,13 +122,13 @@ function Dropdown({
 
   return (
     <DropdownContextProvider close={close}>
-      <div ref={wrapperRef} className="inline-block">
+      <div ref={wrapperRef} className="inline-block w-full">
         <button
           type="button"
           onClick={() => setOpen((v) => !v)}
           aria-haspopup="menu"
           aria-expanded={open}
-          className="block appearance-none rounded-full border-0 bg-transparent p-0 leading-none focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-text focus-visible:ring-offset-2"
+          className="block w-full appearance-none rounded-full border-0 bg-transparent p-0 leading-none focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-text focus-visible:ring-offset-2"
         >
           {trigger}
         </button>

@@ -17,7 +17,6 @@ export interface TicketDetail {
   tag: TagDetail;
   client: MemberDetail | null;
   assignees: MemberDetail[];
-  startDate: string | null;
   dueDate: string | null;
   createdAt: string;
   updatedAt: string;

@@ -28,8 +28,8 @@ function formatDate(date: string | null) {
 }
 
 function formatTimeframe(ticket: TicketDetail) {
-  if (!ticket.startDate && !ticket.dueDate) return null;
-  return `${formatDate(ticket.startDate) ?? "—"} → ${formatDate(ticket.dueDate) ?? "—"}`;
+  if (!ticket.dueDate) return null;
+  return `Due on ${formatDate(ticket.dueDate) ?? "—"}`;
 }
 
 function getDueState(ticket: TicketDetail): "overdue" | "due-today" | null {

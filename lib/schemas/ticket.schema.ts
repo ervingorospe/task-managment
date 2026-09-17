@@ -7,44 +7,36 @@ function today(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
-export const ticketFormSchema = z
-  .object({
-    organizationId: z.string().min(1, "Select an organization"),
-    title: z
-      .string()
-      .trim()
-      .min(2, "Title must be at least 2 characters")
-      .max(150),
+export const ticketFormSchema = z.object({
+  organizationId: z.string().min(1, "Select an organization"),
 
-    description: z.string().trim().max(10000).optional().or(z.literal("")),
+  title: z
+    .string()
+    .trim()
+    .min(2, "Title must be at least 2 characters")
+    .max(150),
 
-    assigneeIds: z.array(z.number()),
+  description: z.string().trim().max(10000).optional().or(z.literal("")),
 
-    clientId: z.string().nullable(),
+  assigneeIds: z.array(z.number()),
 
-    startDate: z.string().optional().or(z.literal("")),
+  clientId: z.string().nullable(),
 
-    dueDate: z.string().optional().or(z.literal("")),
+  dueDate: z
+    .string()
+    .optional()
+    .or(z.literal(""))
+    .refine((date) => !date || date >= today(), {
+      message: "Due date can't be in the past",
+    }),
 
-    attachments: z
-      .array(z.instanceof(File))
-      .max(MAX_FILES, `You can attach up to ${MAX_FILES} files`)
-      .refine(
-        (files) => files.every((file) => file.size <= MAX_FILE_SIZE),
-        "Each file must be 50MB or smaller",
-      ),
-  })
-  .refine((data) => !data.startDate || data.startDate >= today(), {
-    message: "Start date can't be in the past",
-    path: ["startDate"],
-  })
-  .refine(
-    (data) =>
-      !data.startDate || !data.dueDate || data.dueDate >= data.startDate,
-    {
-      message: "Due date can't be earlier than the start date",
-      path: ["dueDate"],
-    },
-  );
+  attachments: z
+    .array(z.instanceof(File))
+    .max(MAX_FILES, `You can attach up to ${MAX_FILES} files`)
+    .refine(
+      (files) => files.every((file) => file.size <= MAX_FILE_SIZE),
+      "Each file must be 50MB or smaller",
+    ),
+});
 
 export type TicketFormValues = z.infer<typeof ticketFormSchema>;

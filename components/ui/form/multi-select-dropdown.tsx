@@ -62,7 +62,7 @@ export default function MultiSelectDropdown({
 
   return (
     <Dropdown align="start" trigger={trigger ?? defaultTrigger}>
-      <div className="w-64 p-2">
+      <div className="w-full p-2">
         <div className="relative mb-2">
           <Search
             size={13}
@@ -73,7 +73,7 @@ export default function MultiSelectDropdown({
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search members"
-            className="w-3/4 rounded border border-line bg-surface py-1.5 pl-7 pr-2 text-xs text-ink placeholder:text-ink-faint focus:border-accent-text"
+            className="w-full rounded border border-line bg-surface py-1.5 pl-7 pr-2 text-xs text-ink placeholder:text-ink-faint focus:border-accent-text"
           />
         </div>
 
