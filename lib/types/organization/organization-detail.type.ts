@@ -5,6 +5,7 @@ import { RoleDetail } from "./role-detail.type";
 import { TagDetail } from "./tag-detail.type";
 import { User } from "../user/user.type";
 import { OrgCapacity } from "./organization-capacity.type";
+import { TicketDetail } from "../ticket/ticket-detail.type";
 
 export interface OrganizationDetail {
   id: number;
@@ -24,4 +25,5 @@ export interface OrganizationDetail {
   members: MemberDetail[];
   pendingInvites?: MemberInviteDetail[];
   pendingOwnershipTransfer?: MemberInviteDetail;
+  tickets: TicketDetail[];
 }

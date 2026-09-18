@@ -6,6 +6,7 @@ import List from "@/components/ui/list";
 import { RoleDetail } from "@/lib/types/organization/role-detail.type";
 import { PERMISSIONS } from "@/lib/data/permissions";
 import { Can } from "@/components/auth/can";
+import { IconButton } from "@/components/ui/buttons";
 
 interface RoleListItemProps {
   role: RoleDetail;
@@ -35,26 +36,20 @@ function RoleListItem({ role, onEdit, onDelete }: RoleListItemProps) {
           <div className="flex items-center gap-1">
             {canEdit && (
               <Can allOf={[PERMISSIONS.ROLE_UPDATE, PERMISSIONS.ROLE_VIEW]}>
-                <button
-                  type="button"
+                <IconButton
+                  label={`Edit ${role.roleName} role`}
+                  icon={<Pencil size={15} />}
                   onClick={() => onEdit(role)}
-                  className="rounded p-1.5 text-ink-faint transition-colors hover:bg-canvas hover:text-ink"
-                  aria-label={`Edit ${role.roleName} role`}
-                >
-                  <Pencil size={15} />
-                </button>
+                />
               </Can>
             )}
             {canDelete && (
               <Can allOf={[PERMISSIONS.ROLE_REMOVE, PERMISSIONS.ROLE_VIEW]}>
-                <button
-                  type="button"
+                <IconButton
+                  label={`Delete ${role.roleName} role`}
+                  icon={<Trash2 size={15} />}
                   onClick={() => onDelete(role)}
-                  className="shrink-0 rounded p-1.5 text-ink-faint transition-colors hover:bg-danger-subtle hover:text-danger"
-                  aria-label={`Delete ${role.roleName} role`}
-                >
-                  <Trash2 size={15} />
-                </button>
+                />
               </Can>
             )}
           </div>

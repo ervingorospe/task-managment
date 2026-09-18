@@ -19,6 +19,7 @@ interface MultiSelectDropdownProps {
   /** Custom trigger element — defaults to the standard form-field-style box. */
   trigger?: ReactNode;
   maxVisible?: number;
+  isWidthFull?: boolean;
 }
 
 export default function MultiSelectDropdown({
@@ -29,6 +30,7 @@ export default function MultiSelectDropdown({
   emptyMessage = "No options available",
   trigger,
   maxVisible = 10,
+  isWidthFull = false,
 }: MultiSelectDropdownProps) {
   const [search, setSearch] = useState("");
 

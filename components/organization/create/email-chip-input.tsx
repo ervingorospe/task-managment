@@ -2,7 +2,7 @@
 
 import { useState, type KeyboardEvent } from "react";
 import { X } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/buttons/button";
 import { PERMISSIONS } from "@/lib/data/permissions";
 import { Can } from "@/components/auth/can";
 

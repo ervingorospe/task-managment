@@ -23,6 +23,7 @@ interface DropdownProps {
   children: ReactNode;
   side?: Side;
   align?: Align;
+  isWidthFull?: boolean;
 }
 
 interface Position {
@@ -42,6 +43,7 @@ function Dropdown({
   children,
   side = "bottom",
   align = "end",
+  isWidthFull = false,
 }: DropdownProps) {
   const [open, setOpen] = useState(false);
   const [visible, setVisible] = useState(false);
@@ -122,7 +124,10 @@ function Dropdown({
 
   return (
     <DropdownContextProvider close={close}>
-      <div ref={wrapperRef} className="inline-block w-full">
+      <div
+        ref={wrapperRef}
+        className={`inline-block ${isWidthFull && "w-full"}`}
+      >
         <button
           type="button"
           onClick={() => setOpen((v) => !v)}
@@ -164,7 +169,7 @@ function Dropdown({
             />
             <div
               className={clsx(
-                "grid w-56 transition-[grid-template-rows] duration-200 ease-out",
+                "grid min-w-56 transition-[grid-template-rows] duration-200 ease-out",
                 visible ? "grid-rows-[1fr]" : "grid-rows-[0fr]",
               )}
             >

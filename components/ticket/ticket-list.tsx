@@ -10,6 +10,7 @@ import MultiSelectDropdown from "@/components/ui/form/multi-select-dropdown";
 import type { TicketDetail } from "@/lib/types/ticket/ticket-detail.type";
 import type { TagDetail } from "@/lib/types/organization/tag-detail.type";
 import type { MemberDetail } from "@/lib/types/organization/member-detail.type";
+import { InlineButton } from "@/components/ui/buttons";
 
 interface TicketListProps {
   tickets: TicketDetail[];
@@ -134,10 +135,9 @@ export function TicketList({
                   emptyMessage="No assignable members"
                   trigger={
                     ticket.assignees.length === 0 ? (
-                      <span className="flex items-center gap-1 rounded border border-dashed border-line px-2 py-1 text-xs text-ink-muted hover:bg-canvas hover:text-ink">
-                        <UserPlus size={12} />
+                      <InlineButton icon={<UserPlus size={12} />}>
                         Assign
-                      </span>
+                      </InlineButton>
                     ) : (
                       <div className="flex -space-x-2">
                         {ticket.assignees.map((member) => (
@@ -162,7 +162,7 @@ export function TicketList({
               </td>
 
               {/* Change tag */}
-              <td className="max-w-[50px] whitespace-nowrap px-4 py-3">
+              <td className="max-w-[40px] whitespace-nowrap px-4 py-3">
                 <TagPicker
                   value={ticket.tag}
                   options={availableTags}

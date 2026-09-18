@@ -7,6 +7,7 @@ import { MemberInviteDetail } from "@/lib/types/organization/member-invite-detai
 import { RoleDetail } from "@/lib/types/organization/role-detail.type";
 import { Can } from "@/components/auth/can";
 import { PERMISSIONS } from "@/lib/data/permissions";
+import { IconButton } from "@/components/ui/buttons";
 
 interface InviteListItemProps {
   invite: MemberInviteDetail;
@@ -41,14 +42,11 @@ function InviteListItem({
           </Can>
 
           <Can action={PERMISSIONS.MEMBER_REMOVE}>
-            <button
-              type="button"
+            <IconButton
+              label={`Remove ${invite.email}`}
+              icon={<Trash2 size={15} />}
               onClick={() => onRemove(invite.id)}
-              className="rounded p-1.5 text-ink-faint transition-colors hover:bg-danger-subtle hover:text-danger"
-              aria-label={`Remove ${invite.email}`}
-            >
-              <Trash2 size={15} />
-            </button>
+            />
           </Can>
         </div>
       }

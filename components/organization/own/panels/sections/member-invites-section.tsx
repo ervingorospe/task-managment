@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import InviteManager from "@/components/organization/member/invite-manager";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/buttons/button";
 import { RoleDetail } from "@/lib/types/organization/role-detail.type";
 import { MemberInviteDetail } from "@/lib/types/organization/member-invite-detail.type";
 import { MemberDetail } from "@/lib/types/organization/member-detail.type";

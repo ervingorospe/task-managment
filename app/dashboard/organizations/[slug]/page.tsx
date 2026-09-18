@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { getOrganizationBySlug } from "@/lib/data/organization-detail";
 import MemberGuard from "@/components/auth/member-guard";
 import OrganizationMemberTabs from "@/components/organization/member/organization-member-tab";
-import BackButton from "@/components/ui/back-button";
+import BackButton from "@/components/ui/buttons/button-back";
 
 interface OrganizationPageProps {
   params: Promise<{ slug: string }>;

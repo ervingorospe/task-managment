@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 
 import { Modal } from "@/components/ui/modal";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/buttons/button";
 import Input from "@/components/ui/form/input";
 import Textarea from "@/components/ui/form/textarea";
 

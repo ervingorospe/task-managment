@@ -6,7 +6,7 @@ import {
 } from "@/lib/data/organizations";
 import { OrganizationDefaultsProvider } from "@/providers/organization-defaults.provider";
 import OrganizationTabs from "@/components/organization/own/organization-tabs"; // adjust to your actual component name
-import BackButton from "@/components/ui/back-button";
+import BackButton from "@/components/ui/buttons/button-back";
 import { OwnerGuard } from "@/components/auth/owner-guard";
 
 interface OrganizationPageProps {

@@ -6,7 +6,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Mail, Lock } from "lucide-react";
 import { useAuth } from "@/providers/auth-provider";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/buttons/button";
 import Input from "@/components/ui/form/input";
 import { loginSchema, LoginValues } from "@/lib/schemas/login.schema";
 

@@ -14,13 +14,17 @@ export function TagPicker({ value, options, onChange }: TagPickerProps) {
   return (
     <Dropdown
       align="end"
+      isWidthFull
       trigger={
-        <span className="flex items-center gap-1.5 rounded-sm border border-line px-2 py-1 text-xs text-ink hover:bg-canvas">
-          <span
-            className="h-2 w-2 rounded-full"
-            style={{ backgroundColor: value.color }}
-          />
-          {value.tagName}
+        <span className="flex justify-between items-center rounded-sm border border-line px-2 py-1 text-xs text-ink hover:bg-canvas">
+          <div className="flex  gap-1.5 items-center">
+            <span
+              className="h-2 w-2 rounded-full"
+              style={{ backgroundColor: value.color }}
+            />
+            {value.tagName}
+          </div>
+
           <ChevronDown size={12} className="text-ink-faint" />
         </span>
       }

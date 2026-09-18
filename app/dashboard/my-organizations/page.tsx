@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { ChevronRight, Plus } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/buttons/button";
 import List from "@/components/ui/list";
 import Avatar from "@/components/ui/avatar";
 import { getOwnedOrganizations } from "@/lib/data/organizations";

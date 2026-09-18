@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Card from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/buttons/button";
 import { lazyNamed } from "@/lib/helper/lazy-named";
 
 const ConfirmDialog = lazyNamed(

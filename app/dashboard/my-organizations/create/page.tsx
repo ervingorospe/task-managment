@@ -6,7 +6,7 @@ import {
 } from "@/lib/data/organizations";
 import { OrganizationDefaultsProvider } from "@/providers/organization-defaults.provider";
 import { CreateOrganizationClient } from "@/components/organization/create/create-organization-client";
-import BackButton from "@/components/ui/back-button";
+import BackButton from "@/components/ui/buttons/button-back";
 import { AccountTypeGuard } from "@/components/auth/account-type.guard";
 import { ACCOUNT_TYPE } from "@/lib/constants/accoun-type.constant";
 

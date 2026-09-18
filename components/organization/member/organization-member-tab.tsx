@@ -5,7 +5,7 @@ import { Info, FolderKanban, Users } from "lucide-react";
 import type { OrganizationDetail } from "@/lib/types/organization/organization-detail.type";
 import OrganizationMembers from "@/components/organization/own/panels/organization-members";
 import OrganizaionTab from "@/components/organization/member/organization-tab";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/buttons/button";
 import { Can } from "@/components/auth/can";
 import { PERMISSIONS } from "@/lib/data/permissions";
 import EmptyState from "@/components/ui/empty-state";

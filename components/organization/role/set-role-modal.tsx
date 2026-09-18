@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Modal } from "@/components/ui/modal";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/buttons/button";
 import { RoleDetail } from "@/lib/types/organization/role-detail.type";
 import Radio from "@/components/ui/form/radio";
 import { Can } from "@/components/auth/can";

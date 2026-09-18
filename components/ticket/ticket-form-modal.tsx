@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Modal } from "@/components/ui/modal";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/buttons/button";
 import Input from "@/components/ui/form/input";
 import Select from "@/components/ui/form/select";
 import {
@@ -141,6 +141,7 @@ export default function TicketFormModal({
             control={control}
             render={({ field }) => (
               <MultiSelectDropdown
+                isWidthFull={true}
                 value={field.value}
                 onChange={field.onChange}
                 options={assignableMembers.map((m) => ({

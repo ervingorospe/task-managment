@@ -8,6 +8,7 @@ import { ColorPicker } from "@/components/ui/color-picker";
 import { TagDetail } from "@/lib/types/organization/tag-detail.type";
 import { PERMISSIONS } from "@/lib/data/permissions";
 import { Can } from "@/components/auth/can";
+import { IconButton } from "@/components/ui/buttons";
 
 interface TagListProps {
   tags: TagDetail[];
@@ -48,14 +49,11 @@ const TagListItem = memo(function TagListItem({
 
           {!tag.isDefault && (
             <Can action={PERMISSIONS.TAG_REMOVE}>
-              <button
-                type="button"
+              <IconButton
+                label={`Delete ${tag.tagName} tag`}
+                icon={<Trash2 size={15} />}
                 onClick={() => onRemoveTag(tag.id)}
-                className="shrink-0 rounded p-1.5 text-ink-faint hover:bg-danger-subtle hover:text-danger"
-                aria-label={`Delete ${tag.tagName} tag`}
-              >
-                <Trash2 size={15} />
-              </button>
+              />
             </Can>
           )}
         </div>

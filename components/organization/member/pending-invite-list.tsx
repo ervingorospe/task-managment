@@ -1,5 +1,6 @@
 "use client";
 
+import IconButton from "@/components/ui/buttons/button-icon";
 import List from "@/components/ui/list";
 import { MemberInviteDetail } from "@/lib/types/organization/member-invite-detail.type";
 import { RoleDetail } from "@/lib/types/organization/role-detail.type";
@@ -47,28 +48,22 @@ export default function PendingInviteList({
             trailing={
               <div className="flex items-center gap-2">
                 {canResend ? (
-                  <button
-                    type="button"
+                  <IconButton
+                    icon={<RotateCcw size={15} />}
+                    label="Resend invitation"
                     onClick={() => onResend(invite.id)}
-                    className="rounded p-1.5 text-ink-faint hover:bg-canvas hover:text-ink"
-                    aria-label={`Resend invitation to ${invite.email}`}
-                  >
-                    <RotateCcw size={15} />
-                  </button>
+                  />
                 ) : (
                   <span className="text-xs text-ink-faint">
                     Resend in {cooldown}s
                   </span>
                 )}
 
-                <button
-                  type="button"
+                <IconButton
+                  icon={<Trash2 size={15} />}
+                  label="Resend invitation"
                   onClick={() => onRemove(invite)}
-                  className="rounded p-1.5 text-ink-faint hover:bg-danger-subtle hover:text-danger"
-                  aria-label={`Cancel invitation to ${invite.email}`}
-                >
-                  <Trash2 size={15} />
-                </button>
+                />
               </div>
             }
           />

@@ -1,15 +1,19 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useMemo, useState } from "react";
 import { Plus } from "lucide-react";
 import { Can } from "@/components/auth/can";
 import { PERMISSIONS } from "@/lib/data/permissions";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/buttons/button";
+import { DataTable } from "@/components/ui/data-table";
 import TicketFormModal from "./ticket-form-modal";
 import { TicketList } from "./ticket-list";
-import TicketTagFilter from "./ticket-tag-filter";
+import {
+  TicketFilterDropdown,
+  emptyTicketFilter,
+  type TicketFilterState,
+} from "./ticket-filter-dropdown";
 import { useAuth } from "@/providers/auth-provider";
-import { getOrganizationBySlug } from "@/lib/data/organization-detail";
 import type { OrganizationDetail } from "@/lib/types/organization/organization-detail.type";
 import type { TicketDetail } from "@/lib/types/ticket/ticket-detail.type";
 import type { TagDetail } from "@/lib/types/organization/tag-detail.type";
@@ -28,42 +32,73 @@ export default function TicketsPageClient({
     (m) => m.role?.roleName !== "Client",
   );
 
-  const [tickets, setTickets] = useState<TicketDetail[]>([]);
+  const [tickets, setTickets] = useState<TicketDetail[]>(
+    organization.tickets ?? [],
+  );
   const [modalOpen, setModalOpen] = useState(false);
-  const [tagFilter, setTagFilter] = useState<number | null>(null);
 
-  // Every org the current user belongs to — needed so the create-ticket
-  // form can offer switching organizations, not just the one this page
-  // happens to be showing.
+  const [search, setSearch] = useState("");
+  const [filter, setFilter] = useState<TicketFilterState>(emptyTicketFilter);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(15);
+
   const [allOrganizations, setAllOrganizations] = useState<
     OrganizationDetail[]
   >([organization]);
 
-  useEffect(() => {
-    if (!currentUser) return;
-    let cancelled = false;
+  // Search, then filter, then paginate — each step operates on the
+  // previous step's result, same ordering used for MembersSection earlier.
+  const searched = useMemo(() => {
+    const query = search.trim().toLowerCase();
+    if (!query) return tickets;
+    return tickets.filter((t) => t.title.toLowerCase().includes(query));
+  }, [tickets, search]);
 
-    Promise.all(
-      currentUser.memberships.map((m) =>
-        getOrganizationBySlug(m.organization.settings.slug),
-      ),
-    ).then((results) => {
-      if (!cancelled) {
-        setAllOrganizations(
-          results.filter((o): o is OrganizationDetail => o !== null),
+  const filtered = useMemo(() => {
+    return searched.filter((ticket) => {
+      if (filter.tagIds.length > 0 && !filter.tagIds.includes(ticket.tag.id))
+        return false;
+
+      if (filter.memberIds.length > 0) {
+        const hasMatch = ticket.assignees.some((m) =>
+          filter.memberIds.includes(m.id),
         );
+        if (!hasMatch) return false;
       }
+
+      if (
+        filter.dateFrom &&
+        (!ticket.dueDate || ticket.dueDate < filter.dateFrom)
+      )
+        return false;
+      if (filter.dateTo && (!ticket.dueDate || ticket.dueDate > filter.dateTo))
+        return false;
+
+      return true;
     });
+  }, [searched, filter]);
 
-    return () => {
-      cancelled = true;
-    };
-  }, [currentUser]);
+  const totalPages = Math.max(Math.ceil(filtered.length / pageSize), 1);
+  const currentPage = Math.min(page, totalPages);
+  const paginated = filtered.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize,
+  );
 
-  const filteredTickets =
-    tagFilter === null
-      ? tickets
-      : tickets.filter((t) => t.tag.id === tagFilter);
+  function handleSearchChange(value: string) {
+    setSearch(value);
+    setPage(1);
+  }
+
+  function handleFilterChange(value: TicketFilterState) {
+    setFilter(value);
+    setPage(1);
+  }
+
+  function handlePageSizeChange(size: number) {
+    setPageSize(size);
+    setPage(1);
+  }
 
   function handleCreate(values: TicketFormValues) {
     const targetOrg =
@@ -81,8 +116,6 @@ export default function TicketsPageClient({
       attachments: values.attachments.map((file, i) => ({
         id: Date.now() + i,
         name: file.name,
-        // MOCK: object URLs only last this browser session — real version
-        // uploads to storage and stores a persistent URL.
         url: URL.createObjectURL(file),
         size: file.size,
       })),
@@ -92,7 +125,6 @@ export default function TicketsPageClient({
       assignees: targetOrg.members.filter((m) =>
         values.assigneeIds.includes(m.id),
       ),
-      startDate: values.startDate || null,
       dueDate: values.dueDate || null,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
@@ -101,11 +133,7 @@ export default function TicketsPageClient({
     if (targetOrg.id === organization.id) {
       setTickets((prev) => [newTicket, ...prev]);
     }
-    // TODO: POST /organizations/:orgId/tickets in the background, regardless
-    // of which org was targeted. This page's local `tickets` state only
-    // mirrors the CURRENT org, so a ticket created for a different org
-    // won't visibly appear here — it'll show once the user navigates to
-    // that org's own Tickets page.
+    // TODO: POST /organizations/:orgId/tickets in the background.
   }
 
   function handleChangeTag(ticketId: number, tag: TagDetail) {
@@ -142,22 +170,34 @@ export default function TicketsPageClient({
         </Can>
       </div>
 
-      <div className="mt-6 rounded border border-line bg-surface">
-        <div className="flex items-center justify-between border-b border-line px-4 py-3">
-          <h2 className="text-sm font-medium text-ink">Tickets</h2>
-          <TicketTagFilter
-            tags={tags}
-            value={tagFilter}
-            onChange={setTagFilter}
+      <div className="mt-6">
+        <DataTable
+          search={search}
+          onSearchChange={handleSearchChange}
+          searchPlaceholder="Search tickets by name"
+          filterAction={
+            <TicketFilterDropdown
+              value={filter}
+              onChange={handleFilterChange}
+              members={members}
+              tags={tags}
+            />
+          }
+          page={currentPage}
+          totalPages={totalPages}
+          totalItems={filtered.length}
+          pageSize={pageSize}
+          onPageChange={setPage}
+          onPageSizeChange={handlePageSizeChange}
+        >
+          <TicketList
+            tickets={paginated}
+            availableTags={tags}
+            assignableMembers={assignableMembers}
+            onChangeTag={handleChangeTag}
+            onAssign={handleAssign}
           />
-        </div>
-        <TicketList
-          tickets={filteredTickets}
-          availableTags={tags}
-          assignableMembers={assignableMembers}
-          onChangeTag={handleChangeTag}
-          onAssign={handleAssign}
-        />
+        </DataTable>
       </div>
 
       <TicketFormModal
