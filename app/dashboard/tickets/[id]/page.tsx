@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { getTicketById } from "@/lib/data/organization-detail";
 import MemberGuard from "@/components/auth/member-guard";
+import TicketAccessGuard from "@/components/auth/ticket-access-guard";
 import TicketDetailClient from "@/components/ticket/ticket-detail-client";
 
 interface TicketPageProps {
@@ -20,7 +21,9 @@ export default async function TicketPage({ params }: TicketPageProps) {
 
   return (
     <MemberGuard organizationId={organization.id}>
-      <TicketDetailClient ticket={ticket} organization={organization} />
+      <TicketAccessGuard ticket={ticket}>
+        <TicketDetailClient ticket={ticket} organization={organization} />
+      </TicketAccessGuard>
     </MemberGuard>
   );
 }

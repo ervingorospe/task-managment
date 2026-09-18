@@ -125,6 +125,9 @@ export default function TicketDetailClient({
             description={ticket.description}
             attachments={ticket.attachments}
             comments={ticket.comments}
+            client={ticket.client}
+            assignees={ticket.assignees}
+            organization={organization}
           />
         </div>
 

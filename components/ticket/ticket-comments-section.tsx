@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState, type ChangeEvent } from "react";
 import { MessageSquare } from "lucide-react";
 
 import Avatar from "@/components/ui/avatar";
@@ -8,17 +8,83 @@ import { Button } from "@/components/ui/buttons/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { useAuth } from "@/providers/auth-provider";
 import { formatDateTime } from "@/lib/helper/format-date";
+import { getMemberName } from "@/lib/helper/member-name";
+import { getMentionableMembers } from "@/lib/helper/mentionable-members";
+import {
+  detectMentionTrigger,
+  insertMention,
+  splitOnMentions,
+  type MentionTrigger,
+} from "@/lib/helper/mention-text";
 import type { TicketComment } from "@/lib/types/ticket/ticket-comment.type";
+import type { MemberDetail } from "@/lib/types/organization/member-detail.type";
+import type { OrganizationDetail } from "@/lib/types/organization/organization-detail.type";
 import { SectionHeading } from "./section-heading";
 
 interface TicketCommentsSectionProps {
   ticketId: number;
   comments?: TicketComment[];
+  client: MemberDetail | null;
+  assignees: MemberDetail[];
+  organization: OrganizationDetail;
+}
+
+type MentionField = "compose" | number;
+
+interface MentionState {
+  field: MentionField;
+  trigger: MentionTrigger;
+}
+
+function MentionSuggestions({
+  suggestions,
+  onSelect,
+}: {
+  suggestions: MemberDetail[];
+  onSelect: (member: MemberDetail) => void;
+}) {
+  if (suggestions.length === 0) return null;
+
+  return (
+    <div className="mt-1 overflow-hidden rounded border border-line bg-surface shadow-sm">
+      {suggestions.map((member) => (
+        <button
+          key={member.id}
+          type="button"
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={() => onSelect(member)}
+          className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-sm text-ink hover:bg-canvas"
+        >
+          <Avatar
+            firstName={member.user?.firstName ?? member.firstName}
+            lastName={member.user?.lastName ?? member.lastName}
+            size="sm"
+          />
+          {getMemberName(member)}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function renderCommentText(text: string, mentionableNames: string[]) {
+  return splitOnMentions(text, mentionableNames).map((part, i) =>
+    part.isMention ? (
+      <span key={i} className="font-medium text-accent-text">
+        {part.text}
+      </span>
+    ) : (
+      <span key={i}>{part.text}</span>
+    ),
+  );
 }
 
 export default function TicketCommentsSection({
   ticketId,
   comments: initialComments,
+  client,
+  assignees,
+  organization,
 }: TicketCommentsSectionProps) {
   const { currentUser } = useAuth();
 
@@ -33,6 +99,61 @@ export default function TicketCommentsSection({
   const [commentToDelete, setCommentToDelete] = useState<TicketComment | null>(
     null,
   );
+  const [mentionState, setMentionState] = useState<MentionState | null>(null);
+
+  const mentionableMembers = useMemo(
+    () => getMentionableMembers(organization, { client, assignees }),
+    [organization, client, assignees],
+  );
+  const mentionableNames = useMemo(
+    () => mentionableMembers.map(getMemberName),
+    [mentionableMembers],
+  );
+
+  const mentionSuggestions = useMemo(() => {
+    if (!mentionState) return [];
+    const query = mentionState.trigger.query.toLowerCase();
+    return mentionableMembers
+      .filter((member) => getMemberName(member).toLowerCase().includes(query))
+      .slice(0, 5);
+  }, [mentionState, mentionableMembers]);
+
+  function updateMentionState(
+    field: MentionField,
+    value: string,
+    selectionStart: number | null,
+  ) {
+    const trigger = detectMentionTrigger(value, selectionStart ?? value.length);
+    setMentionState((prev) => {
+      if (trigger) return { field, trigger };
+      return prev?.field === field ? null : prev;
+    });
+  }
+
+  function handleComposeChange(e: ChangeEvent<HTMLTextAreaElement>) {
+    setCommentDraft(e.target.value);
+    updateMentionState("compose", e.target.value, e.target.selectionStart);
+  }
+
+  function handleEditChange(e: ChangeEvent<HTMLTextAreaElement>) {
+    if (editingCommentId === null) return;
+    setEditCommentDraft(e.target.value);
+    updateMentionState(editingCommentId, e.target.value, e.target.selectionStart);
+  }
+
+  function selectMention(member: MemberDetail) {
+    if (!mentionState) return;
+    const name = getMemberName(member);
+
+    if (mentionState.field === "compose") {
+      setCommentDraft((prev) => insertMention(prev, mentionState.trigger, name));
+    } else {
+      setEditCommentDraft((prev) =>
+        insertMention(prev, mentionState.trigger, name),
+      );
+    }
+    setMentionState(null);
+  }
 
   function handlePostComment() {
     const text = commentDraft.trim();
@@ -55,17 +176,20 @@ export default function TicketCommentsSection({
 
     setComments((prev) => [...prev, comment]);
     setCommentDraft("");
+    setMentionState(null);
     // TODO: POST /tickets/:id/comments { comment: text }
   }
 
   function startEditComment(comment: TicketComment) {
     setEditingCommentId(comment.id);
     setEditCommentDraft(comment.comment);
+    setMentionState(null);
   }
 
   function cancelEditComment() {
     setEditingCommentId(null);
     setEditCommentDraft("");
+    setMentionState(null);
   }
 
   function saveEditComment(commentId: number) {
@@ -81,6 +205,7 @@ export default function TicketCommentsSection({
     );
     setEditingCommentId(null);
     setEditCommentDraft("");
+    setMentionState(null);
     // TODO: PATCH /tickets/:id/comments/:commentId { comment: text }
   }
 
@@ -150,10 +275,16 @@ export default function TicketCommentsSection({
                       <textarea
                         autoFocus
                         value={editCommentDraft}
-                        onChange={(e) => setEditCommentDraft(e.target.value)}
+                        onChange={handleEditChange}
                         rows={3}
                         className="w-full resize-none rounded border border-line bg-surface px-3 py-2 text-sm text-ink placeholder:text-ink-faint focus:border-accent-text focus:outline-none"
                       />
+                      {mentionState?.field === comment.id && (
+                        <MentionSuggestions
+                          suggestions={mentionSuggestions}
+                          onSelect={selectMention}
+                        />
+                      )}
                       <div className="flex justify-end gap-2">
                         <Button
                           type="button"
@@ -173,7 +304,7 @@ export default function TicketCommentsSection({
                     </div>
                   ) : (
                     <p className="mt-0.5 whitespace-pre-wrap text-sm text-ink-muted">
-                      {comment.comment}
+                      {renderCommentText(comment.comment, mentionableNames)}
                     </p>
                   )}
                 </div>
@@ -194,11 +325,17 @@ export default function TicketCommentsSection({
           <div className="flex-1 space-y-2">
             <textarea
               value={commentDraft}
-              onChange={(e) => setCommentDraft(e.target.value)}
-              placeholder="Leave a comment..."
+              onChange={handleComposeChange}
+              placeholder="Leave a comment... use @ to mention someone"
               rows={3}
               className="w-full resize-none rounded border border-line bg-surface px-3 py-2 text-sm text-ink placeholder:text-ink-faint focus:border-accent-text focus:outline-none"
             />
+            {mentionState?.field === "compose" && (
+              <MentionSuggestions
+                suggestions={mentionSuggestions}
+                onSelect={selectMention}
+              />
+            )}
             <div className="flex justify-end">
               <Button
                 type="button"

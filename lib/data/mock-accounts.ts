@@ -81,7 +81,7 @@ interface MockAccount {
 
 export const mockAccounts: MockAccount[] = [
   {
-    email: "erv@g.com",
+    email: "jane@acmestudio.com",
     password: "123",
     user: {
       id: 1,
@@ -98,7 +98,7 @@ export const mockAccounts: MockAccount[] = [
     },
   },
   {
-    email: "admin@g.com",
+    email: "marco@acmestudio.com",
     password: "123",
     user: {
       id: 2,
@@ -112,7 +112,7 @@ export const mockAccounts: MockAccount[] = [
     },
   },
   {
-    email: "mem@g.com",
+    email: "priya@acmestudio.com",
     password: "123",
     user: {
       id: 3,
@@ -126,7 +126,7 @@ export const mockAccounts: MockAccount[] = [
     },
   },
   {
-    email: "cl@g.com",
+    email: "alex@clientco.com",
     password: "123",
     user: {
       id: 4,

@@ -117,63 +117,6 @@ export const rules = [
   },
 
   {
-    id: 16,
-    action: "project.view",
-    name: "View All Projects",
-    desc: "Can view every project in the organization.",
-    categoryId: 4,
-  },
-  {
-    id: 17,
-    action: "project.view.own",
-    name: "View Included Projects",
-    desc: "Can only view projects they've been added to.",
-    categoryId: 4,
-  },
-  {
-    id: 18,
-    action: "project.create",
-    name: "Create Projects",
-    desc: "Can create a new project.",
-    categoryId: 4,
-  },
-  {
-    id: 19,
-    action: "project.update",
-    name: "Update Projects",
-    desc: "Can edit a project's details.",
-    categoryId: 4,
-  },
-  {
-    id: 20,
-    action: "project.remove",
-    name: "Remove Projects",
-    desc: "Can delete a project.",
-    categoryId: 4,
-  },
-  {
-    id: 21,
-    action: "project.change.status",
-    name: "Change Project Status",
-    desc: "Can change a project's status.",
-    categoryId: 4,
-  },
-  {
-    id: 22,
-    action: "project.invite",
-    name: "Invite to Project",
-    desc: "Can invite organization members to join a project.",
-    categoryId: 4,
-  },
-  {
-    id: 23,
-    action: "project.update.tags",
-    name: "Update Project Tags",
-    desc: "Can set or change which tags are available on a project.",
-    categoryId: 4,
-  },
-
-  {
     id: 24,
     action: "ticket.request",
     name: "Request Tickets",

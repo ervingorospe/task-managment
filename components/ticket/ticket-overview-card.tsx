@@ -1,6 +1,8 @@
 import Card from "@/components/ui/card";
 import type { TicketAttachment } from "@/lib/types/ticket/ticket-detail.type";
 import type { TicketComment } from "@/lib/types/ticket/ticket-comment.type";
+import type { OrganizationDetail } from "@/lib/types/organization/organization-detail.type";
+import type { MemberDetail } from "@/lib/types/organization/member-detail.type";
 import TicketDescriptionSection from "./ticket-description-section";
 import TicketAttachmentsSection from "./ticket-attachments-section";
 import TicketCommentsSection from "./ticket-comments-section";
@@ -10,6 +12,9 @@ interface TicketOverviewCardProps {
   description?: string;
   attachments: TicketAttachment[];
   comments?: TicketComment[];
+  client: MemberDetail | null;
+  assignees: MemberDetail[];
+  organization: OrganizationDetail;
 }
 
 export default function TicketOverviewCard({
@@ -17,6 +22,9 @@ export default function TicketOverviewCard({
   description,
   attachments,
   comments,
+  client,
+  assignees,
+  organization,
 }: TicketOverviewCardProps) {
   return (
     <Card
@@ -32,7 +40,13 @@ export default function TicketOverviewCard({
 
         <div className="border-t border-line" />
 
-        <TicketCommentsSection ticketId={ticketId} comments={comments} />
+        <TicketCommentsSection
+          ticketId={ticketId}
+          comments={comments}
+          client={client}
+          assignees={assignees}
+          organization={organization}
+        />
       </div>
     </Card>
   );

@@ -13,7 +13,8 @@ import {
   emptyTicketFilter,
   type TicketFilterState,
 } from "./ticket-filter-dropdown";
-import { useAuth } from "@/providers/auth-provider";
+import { useAuth, usePermission } from "@/providers/auth-provider";
+import { isTicketIncluded } from "@/lib/helper/ticket-access";
 import type { OrganizationDetail } from "@/lib/types/organization/organization-detail.type";
 import type { TicketDetail } from "@/lib/types/ticket/ticket-detail.type";
 import type { TagDetail } from "@/lib/types/organization/tag-detail.type";
@@ -27,6 +28,7 @@ export default function TicketsPageClient({
   organization,
 }: TicketsPageClientProps) {
   const { currentUser } = useAuth();
+  const canViewAllTickets = usePermission(PERMISSIONS.TICKET_VIEW_ALL);
   const { tags, members } = organization;
   const assignableMembers = members.filter(
     (m) => m.role?.roleName !== "Client",
@@ -46,13 +48,22 @@ export default function TicketsPageClient({
     OrganizationDetail[]
   >([organization]);
 
+  // ticket.view.all sees everything; ticket.view.included (or nothing) only
+  // sees tickets the current user requested or is assigned to.
+  const viewableTickets = useMemo(() => {
+    if (canViewAllTickets) return tickets;
+    return tickets.filter((t) => isTicketIncluded(t, currentUser?.id));
+  }, [tickets, canViewAllTickets, currentUser?.id]);
+
   // Search, then filter, then paginate — each step operates on the
   // previous step's result, same ordering used for MembersSection earlier.
   const searched = useMemo(() => {
     const query = search.trim().toLowerCase();
-    if (!query) return tickets;
-    return tickets.filter((t) => t.title.toLowerCase().includes(query));
-  }, [tickets, search]);
+    if (!query) return viewableTickets;
+    return viewableTickets.filter((t) =>
+      t.title.toLowerCase().includes(query),
+    );
+  }, [viewableTickets, search]);
 
   const filtered = useMemo(() => {
     return searched.filter((ticket) => {
