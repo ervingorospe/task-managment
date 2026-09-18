@@ -110,11 +110,7 @@ export default function OrganizationMemberTabs({
           <Can
             action={PERMISSIONS.MEMBER_VIEW_MEMBERS}
             fallback={
-              <div className="rounded border border-dashed border-line p-10 text-center">
-                <p className="text-sm text-ink-muted">
-                  You do not have permission to view organization members.
-                </p>
-              </div>
+              <EmptyState subtitle="You do not have permission to view organization members." />
             }
           >
             <OrganizationMembers organization={organization} />
@@ -125,11 +121,7 @@ export default function OrganizationMemberTabs({
           <Can
             action={PERMISSIONS.TICKET_VIEW_ALL}
             fallback={
-              <div className="rounded border border-dashed border-line p-10 text-center">
-                <p className="text-sm text-ink-muted">
-                  You do not have permission to view organization tickets.
-                </p>
-              </div>
+              <EmptyState subtitle="You do not have permission to view organization tickets." />
             }
           >
             <EmptyState

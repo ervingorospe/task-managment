@@ -3,6 +3,7 @@
 import { memo } from "react";
 import { Pencil, Trash2 } from "lucide-react";
 import List from "@/components/ui/list";
+import { MetaBadge } from "@/components/ui/meta-badge";
 import { RoleDetail } from "@/lib/types/organization/role-detail.type";
 import { PERMISSIONS } from "@/lib/data/permissions";
 import { Can } from "@/components/auth/can";
@@ -23,11 +24,7 @@ function RoleListItem({ role, onEdit, onDelete }: RoleListItemProps) {
       title={
         <span className="flex items-center gap-2">
           {role.roleName}
-          {role.isDefault && (
-            <span className="rounded-sm bg-canvas px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-ink-faint">
-              Default
-            </span>
-          )}
+          {role.isDefault && <MetaBadge>Default</MetaBadge>}
         </span>
       }
       subtitle={role.roleDesc}

@@ -88,24 +88,13 @@ export default function MemberPendingInvites({
         subtitle="Invitations that have not been accepted yet."
         desc={`${pendingInvites.length} invited`}
       >
-        {pendingInvites.length > 0 ? (
-          <PendingInviteList
-            invites={pendingInvites}
-            roles={roles}
-            resendCooldowns={resendCooldowns}
-            onRemove={(invite) => setPendingRemoveInvite(invite)}
-            onResend={handleResendInvite}
-          />
-        ) : (
-          <div className="rounded border border-dashed border-line p-8 text-center">
-            <p className="text-sm font-medium text-ink">
-              No pending invitations
-            </p>
-            <p className="mt-1 text-sm text-ink-muted">
-              Invitations you send will appear here until they are accepted.
-            </p>
-          </div>
-        )}
+        <PendingInviteList
+          invites={pendingInvites}
+          roles={roles}
+          resendCooldowns={resendCooldowns}
+          onRemove={(invite) => setPendingRemoveInvite(invite)}
+          onResend={handleResendInvite}
+        />
       </Card>
 
       {pendingRemoveInvite && (

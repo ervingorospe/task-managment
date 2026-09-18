@@ -3,6 +3,7 @@
 import { useState, type KeyboardEvent } from "react";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/buttons/button";
+import { CapacityHeader } from "@/components/ui/capacity-header";
 import TagList from "./tag-list";
 import { TagDetail } from "@/lib/types/organization/tag-detail.type";
 import { PERMISSIONS } from "@/lib/data/permissions";
@@ -57,13 +58,13 @@ export default function TagManager({
   return (
     <Can action={PERMISSIONS.TAG_VIEW}>
       <div className="space-y-5">
-        <div>
-          <h2 className="text-base font-semibold text-ink">{title}</h2>
-          <p className="mt-1 text-sm text-ink-muted">{subtitle}</p>
-          <p className="mt-1 text-xs text-ink-faint">
-            {tags.length} / {capacity} tags used
-          </p>
-        </div>
+        <CapacityHeader
+          title={title}
+          subtitle={subtitle}
+          used={tags.length}
+          capacity={capacity}
+          unitLabel="tags"
+        />
 
         <Can action={PERMISSIONS.TAG_ADD}>
           <div className="flex gap-2">

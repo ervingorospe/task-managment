@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { EmailChipInput } from "@/components/organization/create/email-chip-input";
 import { SetRoleModal } from "@/components/organization/role/set-role-modal";
+import { CapacityHeader } from "@/components/ui/capacity-header";
 import InviteList from "./invite-list";
 import { RoleDetail } from "@/lib/types/organization/role-detail.type";
 import { MemberInviteDetail } from "@/lib/types/organization/member-invite-detail.type";
@@ -48,13 +49,13 @@ export default function InviteManager({
   return (
     <Can action={PERMISSIONS.MEMBER_VIEW_MEMBERS}>
       <div className="space-y-5">
-        <div>
-          <h2 className="text-base font-semibold text-ink">{title}</h2>
-          <p className="mt-1 text-sm text-ink-muted">{subtitle}</p>
-          <p className="mt-1 text-xs text-ink-faint">
-            {totalInvites} / {capacity} invite used
-          </p>
-        </div>
+        <CapacityHeader
+          title={title}
+          subtitle={subtitle}
+          used={totalInvites}
+          capacity={capacity}
+          unitLabel="invite"
+        />
 
         <EmailChipInput
           onAdd={onAdd}

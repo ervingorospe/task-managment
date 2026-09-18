@@ -5,6 +5,7 @@ import { Filter, X, Search, RotateCcw } from "lucide-react";
 import Dropdown from "@/components/ui/dropdown";
 import { Button } from "@/components/ui/buttons/button";
 import CheckboxBase from "@/components/ui/form/checkbox-base";
+import PropertyRow from "@/components/ui/property-row";
 import { useDropdown } from "@/providers/dropdown-context.provider";
 import type { MemberDetail } from "@/lib/types/organization/member-detail.type";
 import type { TagDetail } from "@/lib/types/organization/tag-detail.type";
@@ -182,11 +183,7 @@ function TicketFilterContent({
       {/* Members + Tags */}
       <div className="grid grid-cols-2 gap-4">
         {/* Members */}
-        <div>
-          <p className="mb-1.5 text-xs font-medium uppercase tracking-wide text-ink-faint">
-            Members
-          </p>
-
+        <PropertyRow label="Members">
           <div className="relative mb-1.5">
             <Search
               size={12}
@@ -227,14 +224,10 @@ function TicketFilterContent({
               +{hiddenMemberCount} more — refine your search
             </p>
           )}
-        </div>
+        </PropertyRow>
 
         {/* Tags */}
-        <div>
-          <p className="mb-1.5 text-xs font-medium uppercase tracking-wide text-ink-faint">
-            Tags
-          </p>
-
+        <PropertyRow label="Tags">
           <div className="max-h-40 space-y-1 overflow-y-auto">
             {tags.length === 0 ? (
               <p className="px-1 py-1 text-xs text-ink-faint">No tags found</p>
@@ -261,15 +254,11 @@ function TicketFilterContent({
               ))
             )}
           </div>
-        </div>
+        </PropertyRow>
       </div>
 
       {/* Due Date Range */}
-      <div className="mt-4">
-        <p className="mb-1.5 text-xs font-medium uppercase tracking-wide text-ink-faint">
-          Due date range
-        </p>
-
+      <PropertyRow label="Due date range" className="mt-4">
         <div className="grid grid-cols-2 gap-2">
           <input
             type="date"
@@ -295,7 +284,7 @@ function TicketFilterContent({
             className="w-full rounded border border-line bg-surface px-2 py-1.5 text-xs text-ink focus:border-accent-text focus:outline-none"
           />
         </div>
-      </div>
+      </PropertyRow>
 
       {/* Actions */}
       <div className="mt-4 flex items-center justify-end gap-2 border-t border-line pt-3">

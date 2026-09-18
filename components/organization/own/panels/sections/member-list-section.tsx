@@ -3,6 +3,8 @@
 import { UserX, UserCheck, Trash2, Shuffle } from "lucide-react";
 import List from "@/components/ui/list";
 import Avatar from "@/components/ui/avatar";
+import EmptyState from "@/components/ui/empty-state";
+import { MetaBadge } from "@/components/ui/meta-badge";
 import { MemberDetail } from "@/lib/types/organization/member-detail.type";
 import { RoleDetail } from "@/lib/types/organization/role-detail.type";
 import { getMemberEmail, getMemberName } from "@/lib/helper/member-name";
@@ -26,12 +28,10 @@ export default function MemberListSection({
 }: MemberListProps) {
   if (members.length === 0) {
     return (
-      <div className="rounded border border-dashed border-line px-6 py-8 text-center">
-        <p className="text-sm font-medium text-ink">No members yet</p>
-        <p className="mt-1 text-sm text-ink-muted">
-          Members who accept an invitation will appear here.
-        </p>
-      </div>
+      <EmptyState
+        title="No members yet"
+        subtitle="Members who accept an invitation will appear here."
+      />
     );
   }
 
@@ -50,11 +50,7 @@ export default function MemberListSection({
               title={
                 <span className="flex items-center gap-2">
                   {name}
-                  {!member.isActive && (
-                    <span className="rounded-sm bg-canvas px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-ink-faint">
-                      Deactivated
-                    </span>
-                  )}
+                  {!member.isActive && <MetaBadge>Deactivated</MetaBadge>}
                 </span>
               }
               subtitle={email}

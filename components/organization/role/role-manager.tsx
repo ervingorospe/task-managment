@@ -4,6 +4,7 @@ import { useState } from "react";
 import dynamic from "next/dynamic";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/buttons/button";
+import { CapacityHeader } from "@/components/ui/capacity-header";
 import { RoleFormValues } from "@/lib/schemas/organization.schema";
 import RoleList from "@/components/organization/role/role-list";
 import type { RoleDetail } from "@/lib/types/organization/role-detail.type";
@@ -71,29 +72,28 @@ export default function RoleManager({
   return (
     <Can action={PERMISSIONS.ROLE_VIEW}>
       <div className="space-y-5">
-        <div className="flex items-start justify-between">
-          <div>
-            <h2 className="text-base font-semibold text-ink">{title}</h2>
-            <p className="mt-1 text-sm text-ink-muted">{subtitle}</p>
-            <p className="mt-1 text-xs text-ink-faint">
-              {roles.length} / {capacity} roles used
-            </p>
-          </div>
-
-          <Can allOf={[PERMISSIONS.ROLE_VIEW, PERMISSIONS.ROLE_ADD]}>
-            <Button
-              variant="secondary"
-              onClick={openCreateModal}
-              disabled={atCapacity}
-              title={
-                atCapacity ? `Role limit reached (${capacity})` : undefined
-              }
-            >
-              <Plus size={15} className="mr-1.5" />
-              Add role
-            </Button>
-          </Can>
-        </div>
+        <CapacityHeader
+          title={title}
+          subtitle={subtitle}
+          used={roles.length}
+          capacity={capacity}
+          unitLabel="roles"
+          trailing={
+            <Can allOf={[PERMISSIONS.ROLE_VIEW, PERMISSIONS.ROLE_ADD]}>
+              <Button
+                variant="secondary"
+                onClick={openCreateModal}
+                disabled={atCapacity}
+                title={
+                  atCapacity ? `Role limit reached (${capacity})` : undefined
+                }
+              >
+                <Plus size={15} className="mr-1.5" />
+                Add role
+              </Button>
+            </Can>
+          }
+        />
 
         <RoleList
           roles={roles}

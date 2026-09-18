@@ -9,6 +9,7 @@ import Input from "@/components/ui/form/input";
 import Textarea from "@/components/ui/form/textarea";
 import { Button } from "@/components/ui/buttons/button";
 import Card from "@/components/ui/card";
+import PropertyRow from "@/components/ui/property-row";
 
 import { OrganizationDetail } from "@/lib/types/organization/organization-detail.type";
 import {
@@ -201,64 +202,46 @@ export default function BasicInformation({
         </AccountTypeGuard>
       ) : (
         <div className="grid gap-5 sm:grid-cols-2">
-          <InformationField
-            label="Organization Name"
-            value={displayInfo.name}
-          />
+          <PropertyRow label="Organization Name" variant="plain">
+            <p className="text-sm text-ink">{displayInfo.name}</p>
+          </PropertyRow>
 
-          <InformationField
-            label="Email"
-            value={displayInfo.email || "Not provided"}
-            icon={<Mail size={14} />}
-          />
+          <PropertyRow label="Email" variant="plain">
+            <Mail size={14} className="text-ink-faint" />
+            <p className="text-sm text-ink">
+              {displayInfo.email || "Not provided"}
+            </p>
+          </PropertyRow>
 
           <Link href={displayInfo.website ?? "#"} target="_blank">
-            <InformationField
-              label="Website"
-              value={displayInfo.website || "Not provided"}
-              icon={<Globe size={14} />}
-              textColor={displayInfo.website ? "text-link" : "text-ink-muted"}
-              iconColor={displayInfo.website ? "text-link" : "text-ink-muted"}
-            />
+            <PropertyRow label="Website" variant="plain">
+              <Globe
+                size={14}
+                className={
+                  displayInfo.website ? "text-accent-text" : "text-ink-muted"
+                }
+              />
+              <p
+                className={`text-sm ${
+                  displayInfo.website ? "text-accent-text" : "text-ink-muted"
+                }`}
+              >
+                {displayInfo.website || "Not provided"}
+              </p>
+            </PropertyRow>
           </Link>
 
-          <InformationField
+          <PropertyRow
             label="Description"
-            value={displayInfo.description || "No description provided"}
+            variant="plain"
             className="sm:col-span-2"
-          />
+          >
+            <p className="text-sm text-ink">
+              {displayInfo.description || "No description provided"}
+            </p>
+          </PropertyRow>
         </div>
       )}
     </Card>
-  );
-}
-
-interface InformationFieldProps {
-  label: string;
-  value: string;
-  icon?: React.ReactNode;
-  className?: string;
-  textColor?: string;
-  iconColor?: string;
-}
-
-function InformationField({
-  label,
-  value,
-  icon,
-  className,
-  textColor = "text-ink",
-  iconColor = "text-ink-faint",
-}: InformationFieldProps) {
-  return (
-    <div className={className}>
-      <p className="text-xs font-medium text-ink-muted">{label}</p>
-
-      <div className="mt-1 flex items-center gap-1.5">
-        {icon && <span className={iconColor}>{icon}</span>}
-
-        <p className={`text-sm ${textColor}`}>{value}</p>
-      </div>
-    </div>
   );
 }

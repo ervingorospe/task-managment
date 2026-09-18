@@ -2,6 +2,7 @@
 
 import IconButton from "@/components/ui/buttons/button-icon";
 import List from "@/components/ui/list";
+import EmptyState from "@/components/ui/empty-state";
 import { MemberInviteDetail } from "@/lib/types/organization/member-invite-detail.type";
 import { RoleDetail } from "@/lib/types/organization/role-detail.type";
 import { RotateCcw, Trash2 } from "lucide-react";
@@ -23,13 +24,10 @@ export default function PendingInviteList({
 }: PendingInviteListProps) {
   if (invites.length === 0) {
     return (
-      <div className="rounded border border-dashed border-line px-6 py-8 text-center">
-        <p className="text-sm font-medium text-ink">No pending invitations</p>
-
-        <p className="mt-1 text-sm text-ink-muted">
-          Invitations that have not been accepted will appear here.
-        </p>
-      </div>
+      <EmptyState
+        title="No pending invitations"
+        subtitle="Invitations that have not been accepted will appear here."
+      />
     );
   }
 

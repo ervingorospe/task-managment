@@ -1,8 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import Card from "@/components/ui/card";
-import { Button } from "@/components/ui/buttons/button";
+import { DangerZoneCard, DangerZoneRow } from "@/components/ui/danger-zone-card";
 import { lazyNamed } from "@/lib/helper/lazy-named";
 
 const ConfirmDialog = lazyNamed(
@@ -62,48 +61,29 @@ export default function DeactivateOrganizationSection({
   };
 
   return (
-    <Card
-      title="Danger Zone"
-      subtitle="Irreversible and access-affecting actions for this organization."
-    >
-      <div className="space-y-3">
-        <div className="flex items-center justify-between rounded border border-line bg-canvas px-4 py-3">
-          <div>
-            <p className="text-sm font-medium text-ink">
-              {isActive
-                ? "Deactivate this organization"
-                : "Activate this organization"}
-            </p>
-            <p className="mt-0.5 text-xs text-ink-muted">
-              {isActive
-                ? "Members will lose access. You can reactivate at any time."
-                : "This organization is currently deactivated. Members have no access."}
-            </p>
-          </div>
-          <Button
-            variant="secondary"
-            onClick={() =>
-              setPendingAction(isActive ? "deactivate" : "activate")
-            }
-          >
-            {isActive ? "Deactivate" : "Activate"}
-          </Button>
-        </div>
+    <DangerZoneCard>
+      <DangerZoneRow
+        variant="default"
+        title={
+          isActive
+            ? "Deactivate this organization"
+            : "Activate this organization"
+        }
+        description={
+          isActive
+            ? "Members will lose access. You can reactivate at any time."
+            : "This organization is currently deactivated. Members have no access."
+        }
+        actionLabel={isActive ? "Deactivate" : "Activate"}
+        onAction={() => setPendingAction(isActive ? "deactivate" : "activate")}
+      />
 
-        <div className="flex items-center justify-between rounded border border-danger/30 bg-danger-subtle px-4 py-3">
-          <div>
-            <p className="text-sm font-medium text-ink">
-              Delete this organization
-            </p>
-            <p className="mt-0.5 text-xs text-ink-muted">
-              Permanently removes this organization. This cannot be reversed.
-            </p>
-          </div>
-          <Button variant="danger" onClick={() => setPendingAction("delete")}>
-            Delete organization
-          </Button>
-        </div>
-      </div>
+      <DangerZoneRow
+        title="Delete this organization"
+        description="Permanently removes this organization. This cannot be reversed."
+        actionLabel="Delete organization"
+        onAction={() => setPendingAction("delete")}
+      />
 
       {pendingAction && (
         <ConfirmDialog
@@ -116,6 +96,6 @@ export default function DeactivateOrganizationSection({
           danger={pendingAction !== "activate"}
         />
       )}
-    </Card>
+    </DangerZoneCard>
   );
 }

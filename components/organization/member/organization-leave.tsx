@@ -1,8 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import Card from "@/components/ui/card";
-import { Button } from "@/components/ui/buttons/button";
+import { DangerZoneCard, DangerZoneRow } from "@/components/ui/danger-zone-card";
 import { lazyNamed } from "@/lib/helper/lazy-named";
 
 const ConfirmDialog = lazyNamed(
@@ -17,35 +16,24 @@ interface LeaveOrganizationSectionProps {
 export default function LeaveOrganizationSection({
   organizationName,
 }: LeaveOrganizationSectionProps) {
-  const [confirm, setConfirm] = useState<boolean>(false);
+  const [confirm, setConfirm] = useState(false);
 
   function handleConfirm() {
     setConfirm(false);
   }
 
   return (
-    <Card
-      title="Danger Zone"
-      subtitle="Irreversible and access-affecting actions for this organization."
-    >
-      <div className="space-y-3">
-        <div className="flex items-center justify-between rounded border border-danger/30 bg-danger-subtle px-4 py-3">
-          <div>
-            <p className="text-sm font-medium text-ink">
-              Leave this organization
-            </p>
-            <p className="mt-0.5 text-xs text-ink-muted">
-              Permanently leave this organization.
-            </p>
-          </div>
-          <Button variant="danger" onClick={() => setConfirm(true)}>
-            Leave organization
-          </Button>
-        </div>
-      </div>
+    <DangerZoneCard>
+      <DangerZoneRow
+        title="Leave this organization"
+        description="Permanently leave this organization."
+        actionLabel="Leave organization"
+        onAction={() => setConfirm(true)}
+      />
+
       {confirm && (
         <ConfirmDialog
-          open={confirm !== null}
+          open={confirm}
           onClose={() => setConfirm(false)}
           onConfirm={handleConfirm}
           title={`Leave "${organizationName}"?`}
@@ -54,6 +42,6 @@ export default function LeaveOrganizationSection({
           danger={true}
         />
       )}
-    </Card>
+    </DangerZoneCard>
   );
 }

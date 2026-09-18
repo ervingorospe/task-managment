@@ -3,14 +3,17 @@
 import Link from "next/link";
 import Tooltip from "@/components/ui/tooltip";
 import Avatar from "@/components/ui/avatar";
+import EmptyState from "@/components/ui/empty-state";
 import { UserPlus } from "lucide-react";
 import { TagPicker } from "./tag-picker";
 import TicketDescriptionCell from "./ticket-description-cell";
+import { DueChip } from "./due-chip";
 import MultiSelectDropdown from "@/components/ui/form/multi-select-dropdown";
 import type { TicketDetail } from "@/lib/types/ticket/ticket-detail.type";
 import type { TagDetail } from "@/lib/types/organization/tag-detail.type";
 import type { MemberDetail } from "@/lib/types/organization/member-detail.type";
 import { InlineButton } from "@/components/ui/buttons";
+import { formatDueDate, getDueState } from "@/lib/helper/ticket-status";
 
 interface TicketListProps {
   tickets: TicketDetail[];
@@ -20,42 +23,9 @@ interface TicketListProps {
   onAssign: (ticketId: number, memberIds: number[]) => void;
 }
 
-function formatDate(date: string | null) {
-  if (!date) return null;
-  return new Date(date).toLocaleDateString(undefined, {
-    month: "short",
-    day: "numeric",
-  });
-}
-
 function formatTimeframe(ticket: TicketDetail) {
   if (!ticket.dueDate) return null;
-  return `Due on ${formatDate(ticket.dueDate) ?? "—"}`;
-}
-
-function getDueState(ticket: TicketDetail): "overdue" | "due-today" | null {
-  if (!ticket.dueDate) return null;
-  if (["Done", "Cancelled"].includes(ticket.tag.tagName)) return null;
-
-  const today = new Date().toISOString().slice(0, 10);
-  if (ticket.dueDate < today) return "overdue";
-  if (ticket.dueDate === today) return "due-today";
-  return null;
-}
-
-function DueChip({ state }: { state: "overdue" | "due-today" }) {
-  const isOverdue = state === "overdue";
-  return (
-    <span
-      className={`rounded-sm px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide ${
-        isOverdue
-          ? "bg-danger-subtle text-danger"
-          : "bg-warning-subtle text-warning"
-      }`}
-    >
-      {isOverdue ? "Overdue" : "Due today"}
-    </span>
-  );
+  return `Due on ${formatDueDate(ticket.dueDate) ?? "—"}`;
 }
 
 export function TicketList({
@@ -67,12 +37,10 @@ export function TicketList({
 }: TicketListProps) {
   if (tickets.length === 0) {
     return (
-      <div className="rounded border border-dashed border-line p-10 text-center">
-        <p className="text-sm font-medium text-ink">No tickets yet</p>
-        <p className="mt-1 text-sm text-ink-muted">
-          Create your first ticket to get started.
-        </p>
-      </div>
+      <EmptyState
+        title="No tickets yet"
+        subtitle="Create your first ticket to get started."
+      />
     );
   }
 

@@ -5,6 +5,7 @@ import { Trash2 } from "lucide-react";
 
 import List from "@/components/ui/list";
 import { ColorPicker } from "@/components/ui/color-picker";
+import { MetaBadge } from "@/components/ui/meta-badge";
 import { TagDetail } from "@/lib/types/organization/tag-detail.type";
 import { PERMISSIONS } from "@/lib/data/permissions";
 import { Can } from "@/components/auth/can";
@@ -33,11 +34,7 @@ const TagListItem = memo(function TagListItem({
         <span className="flex items-center gap-2">
           {tag.tagName}
 
-          {tag.isDefault && (
-            <span className="rounded-sm bg-canvas px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-ink-faint">
-              Default
-            </span>
-          )}
+          {tag.isDefault && <MetaBadge>Default</MetaBadge>}
         </span>
       }
       trailing={

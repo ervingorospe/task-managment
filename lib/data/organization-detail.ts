@@ -383,6 +383,38 @@ const mockOrganizationDetails: Record<string, any> = {
           },
         ],
         dueDate: "2026-01-14", // in the past relative to `now` — renders as Overdue
+        comments: [
+          {
+            id: 1,
+            ticketId: 1001,
+            userId: 2,
+            comment:
+              "Reproduced on iOS 17.4 as well. Looks like the tap handler isn't attached until the page fully hydrates on slower connections.",
+            author: {
+              id: 2,
+              firstName: "Marco",
+              lastName: "Cruz",
+              avatar: "https://i.pravatar.cc/64?u=jane",
+            },
+            createdAt: "2026-01-09T10:00:00.000Z",
+            updatedAt: "2026-01-09T10:00:00.000Z",
+          },
+          {
+            id: 2,
+            ticketId: 1001,
+            userId: 1,
+            comment:
+              "Any update on this? The client is asking since it's blocking checkout on mobile.",
+            author: {
+              id: 1,
+              firstName: "Jane",
+              lastName: "Doe",
+              avatar: "https://i.pravatar.cc/64?u=jane",
+            },
+            createdAt: "2026-01-12T14:30:00.000Z",
+            updatedAt: "2026-01-12T14:30:00.000Z",
+          },
+        ],
         createdAt: "2026-01-08T09:00:00.000Z",
         updatedAt: "2026-01-13T09:00:00.000Z",
       },
@@ -1078,4 +1110,17 @@ export async function getOrganizationBySlug(slug: string): Promise<any | null> {
 export async function getOrganizationById(id: number): Promise<any | null> {
   // TODO: GET /organizations/:slug
   return mockOrganizationDetails["acme-studio"] ?? null;
+}
+
+export async function getTicketById(
+  id: number,
+): Promise<{ ticket: TicketDetail; organization: any } | null> {
+  // TODO: GET /tickets/:id (with its organization joined/included)
+  for (const organization of Object.values(mockOrganizationDetails)) {
+    const ticket = organization?.tickets?.find(
+      (t: TicketDetail) => t.id === id,
+    );
+    if (ticket) return { ticket, organization };
+  }
+  return null;
 }

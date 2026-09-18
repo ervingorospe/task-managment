@@ -1,5 +1,6 @@
 import type { MemberDetail } from "../organization/member-detail.type";
 import type { TagDetail } from "../organization/tag-detail.type";
+import type { TicketComment } from "./ticket-comment.type";
 
 export interface TicketAttachment {
   id: number;
@@ -18,6 +19,7 @@ export interface TicketDetail {
   client: MemberDetail | null;
   assignees: MemberDetail[];
   dueDate: string | null;
+  comments?: TicketComment[];
   createdAt: string;
   updatedAt: string;
 }

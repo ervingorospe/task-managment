@@ -8,6 +8,7 @@ import { Modal } from "@/components/ui/modal";
 import { Button } from "@/components/ui/buttons/button";
 import Input from "@/components/ui/form/input";
 import Textarea from "@/components/ui/form/textarea";
+import PropertyRow from "@/components/ui/property-row";
 
 import { rules } from "@/lib/data/default-rules";
 import { rulesCategories } from "@/lib/data/rules-category";
@@ -190,11 +191,7 @@ export function RoleFormModal({
 
           <div className="max-h-72 space-y-4 overflow-y-auto rounded border border-line p-3">
             {Object.entries(grouped).map(([category, categoryRules]) => (
-              <div key={category}>
-                <p className="mb-1.5 text-xs font-medium uppercase tracking-wide text-ink-faint">
-                  {category}
-                </p>
-
+              <PropertyRow key={category} label={category}>
                 <div className="space-y-1.5">
                   {categoryRules.map((rule) => (
                     <CheckboxBase
@@ -205,7 +202,7 @@ export function RoleFormModal({
                     />
                   ))}
                 </div>
-              </div>
+              </PropertyRow>
             ))}
           </div>
         </div>

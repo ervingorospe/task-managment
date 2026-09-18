@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { Paperclip } from "lucide-react";
 import type { TicketAttachment } from "@/lib/types/ticket/ticket-detail.type";
+import { renderDescription } from "@/lib/helper/render-description";
 
 interface TicketDescriptionCellProps {
   ticketId: number;
@@ -29,6 +30,7 @@ export default function TicketDescriptionCell({
   const [isTruncated, setIsTruncated] = useState(false);
 
   const hasContent = Boolean(description?.trim());
+  const html = renderDescription(description);
 
   useEffect(() => {
     const element = contentRef.current;
@@ -57,7 +59,7 @@ export default function TicketDescriptionCell({
           <div ref={contentRef} className="ticket-description-preview">
             <div
               dangerouslySetInnerHTML={{
-                __html: description!,
+                __html: html,
               }}
             />
           </div>
