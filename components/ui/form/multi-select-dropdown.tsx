@@ -3,7 +3,8 @@
 import { useState, type ReactNode } from "react";
 import Dropdown from "@/components/ui/dropdown";
 import CheckboxBase from "./checkbox-base";
-import { ChevronDown, Search } from "lucide-react";
+import { SearchInput } from "@/components/ui/search-input";
+import { ChevronDown } from "lucide-react";
 
 interface MultiSelectOption {
   value: number;
@@ -63,21 +64,18 @@ export default function MultiSelectDropdown({
   );
 
   return (
-    <Dropdown align="start" trigger={trigger ?? defaultTrigger}>
+    <Dropdown
+      align="start"
+      trigger={trigger ?? defaultTrigger}
+      isWidthFull={isWidthFull}
+    >
       <div className="w-full p-2">
-        <div className="relative mb-2">
-          <Search
-            size={13}
-            className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 text-ink-faint"
-          />
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search members"
-            className="w-full rounded border border-line bg-surface py-1.5 pl-7 pr-2 text-xs text-ink placeholder:text-ink-faint focus:border-accent-text"
-          />
-        </div>
+        <SearchInput
+          containerClassName="mb-2"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search members"
+        />
 
         <div className="max-h-60 space-y-1 overflow-y-auto">
           {visible.length === 0 ? (

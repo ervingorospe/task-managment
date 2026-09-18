@@ -18,7 +18,6 @@ import { useAuth } from "@/providers/auth-provider";
 const staticNavItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutGrid },
   { href: "/dashboard/reports", label: "Reports", icon: FileBarChart },
-  { href: "/dashboard/starred", label: "Starred", icon: Star },
   {
     href: "/dashboard/daily-journal",
     label: "Daily Journal",
@@ -37,6 +36,12 @@ export function Sidebar() {
     : "/dashboard";
 
   const ticketActive = pathname === ticketsHref;
+
+  const starredHref = activeOrganization
+    ? `/dashboard/organizations/${activeOrganization.settings.slug}/starred`
+    : "/dashboard";
+
+  const starredActive = pathname === starredHref;
 
   // An organization's own landing page is exactly /dashboard/organizations/{slug}
   // — no further segments. That's distinct from the Tickets nav link, which
@@ -100,6 +105,20 @@ export function Sidebar() {
         >
           <Ticket size={16} strokeWidth={2} />
           Tickets
+        </Link>
+
+        {/* Starred */}
+        <Link
+          href={starredHref}
+          className={clsx(
+            "flex items-center gap-2.5 rounded px-3 py-2 text-sm transition-colors",
+            starredActive
+              ? "bg-accent-subtle font-medium text-accent-text"
+              : "text-ink-muted hover:bg-canvas hover:text-ink",
+          )}
+        >
+          <Star size={16} strokeWidth={2} />
+          Starred
         </Link>
 
         {/* Organization */}

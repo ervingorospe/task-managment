@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useState, type Dispatch, type SetStateAction } from "react";
-import { Filter, X, Search, RotateCcw } from "lucide-react";
+import { Filter, X, RotateCcw } from "lucide-react";
 import Dropdown from "@/components/ui/dropdown";
 import { Button } from "@/components/ui/buttons/button";
 import CheckboxBase from "@/components/ui/form/checkbox-base";
 import PropertyRow from "@/components/ui/property-row";
+import { SearchInput } from "@/components/ui/search-input";
 import { useDropdown } from "@/providers/dropdown-context.provider";
 import type { MemberDetail } from "@/lib/types/organization/member-detail.type";
 import type { TagDetail } from "@/lib/types/organization/tag-detail.type";
@@ -184,20 +185,12 @@ function TicketFilterContent({
       <div className="grid grid-cols-2 gap-4">
         {/* Members */}
         <PropertyRow label="Members">
-          <div className="relative mb-1.5">
-            <Search
-              size={12}
-              className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 text-ink-faint"
-            />
-
-            <input
-              type="text"
-              value={memberSearch}
-              onChange={(e) => setMemberSearch(e.target.value)}
-              placeholder="Search members"
-              className="w-full rounded border border-line bg-surface py-1.5 pl-6 pr-2 text-xs text-ink placeholder:text-ink-faint focus:border-accent-text focus:outline-none"
-            />
-          </div>
+          <SearchInput
+            containerClassName="mb-1.5"
+            value={memberSearch}
+            onChange={(e) => setMemberSearch(e.target.value)}
+            placeholder="Search members"
+          />
 
           <div className="max-h-40 space-y-1 overflow-y-auto">
             {visibleMembers.length === 0 ? (

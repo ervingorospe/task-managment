@@ -24,10 +24,13 @@ import type { TicketFormValues } from "@/lib/schemas/ticket.schema";
 
 interface TicketsPageClientProps {
   organization: OrganizationDetail;
+  /** Scopes the list to only the current user's starred tickets — used by the Starred page. */
+  starredOnly?: boolean;
 }
 
 export default function TicketsPageClient({
   organization,
+  starredOnly = false,
 }: TicketsPageClientProps) {
   const { currentUser } = useAuth();
   const toast = useToast();
@@ -54,9 +57,11 @@ export default function TicketsPageClient({
   // ticket.view.all sees everything; ticket.view.included (or nothing) only
   // sees tickets the current user requested or is assigned to.
   const viewableTickets = useMemo(() => {
-    if (canViewAllTickets) return tickets;
-    return tickets.filter((t) => isTicketIncluded(t, currentUser?.id));
-  }, [tickets, canViewAllTickets, currentUser?.id]);
+    const base = canViewAllTickets
+      ? tickets
+      : tickets.filter((t) => isTicketIncluded(t, currentUser?.id));
+    return starredOnly ? base.filter((t) => t.starred) : base;
+  }, [tickets, canViewAllTickets, currentUser?.id, starredOnly]);
 
   // Search, then filter, then paginate — each step operates on the
   // previous step's result, same ordering used for MembersSection earlier.
@@ -140,6 +145,7 @@ export default function TicketsPageClient({
         values.assigneeIds.includes(m.id),
       ),
       dueDate: values.dueDate || null,
+      starred: false,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
@@ -171,20 +177,39 @@ export default function TicketsPageClient({
     // TODO: PATCH /tickets/:id { assignee_ids: memberIds }
   }
 
+  function handleToggleStar(ticketId: number) {
+    let nowStarred = false;
+    setTickets((prev) =>
+      prev.map((t) => {
+        if (t.id !== ticketId) return t;
+        nowStarred = !t.starred;
+        return { ...t, starred: nowStarred };
+      }),
+    );
+    toast(nowStarred ? "Ticket starred" : "Ticket unstarred");
+    // TODO: PATCH /tickets/:id { starred: nowStarred }
+  }
+
   return (
     <div>
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-lg font-semibold text-ink">Tickets</h1>
+          <h1 className="text-lg font-semibold text-ink">
+            {starredOnly ? "Starred" : "Tickets"}
+          </h1>
           <p className="mt-1 text-sm text-ink-muted">
-            Every ticket in {organization.organizationName}.
+            {starredOnly
+              ? `Tickets you've starred in ${organization.organizationName}.`
+              : `Every ticket in ${organization.organizationName}.`}
           </p>
         </div>
-        <Can action={PERMISSIONS.TICKET_CREATE}>
-          <Button onClick={() => setModalOpen(true)}>
-            <Plus size={15} className="mr-1.5" /> Create ticket
-          </Button>
-        </Can>
+        {!starredOnly && (
+          <Can action={PERMISSIONS.TICKET_CREATE}>
+            <Button onClick={() => setModalOpen(true)}>
+              <Plus size={15} className="mr-1.5" /> Create ticket
+            </Button>
+          </Can>
+        )}
       </div>
 
       <div className="mt-6">
@@ -213,6 +238,13 @@ export default function TicketsPageClient({
             assignableMembers={assignableMembers}
             onChangeTag={handleChangeTag}
             onAssign={handleAssign}
+            onToggleStar={handleToggleStar}
+            emptyTitle={starredOnly ? "No starred tickets" : undefined}
+            emptySubtitle={
+              starredOnly
+                ? "Star a ticket from the list to pin it here."
+                : undefined
+            }
           />
         </DataTable>
       </div>

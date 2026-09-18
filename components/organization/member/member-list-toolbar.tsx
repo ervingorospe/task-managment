@@ -1,6 +1,6 @@
 "use client";
 
-import { Search } from "lucide-react";
+import { SearchInput } from "@/components/ui/search-input";
 
 export type MemberSortField = "name" | "email";
 
@@ -19,19 +19,12 @@ export function MemberListToolbar({
 }: MemberListToolbarProps) {
   return (
     <div className="flex flex-wrap items-center gap-2">
-      <div className="relative flex-1 min-w-[200px]">
-        <Search
-          size={14}
-          className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-ink-faint"
-        />
-        <input
-          type="text"
-          value={search}
-          onChange={(e) => onSearchChange(e.target.value)}
-          placeholder="Search by name, email, or role"
-          className="w-full rounded border border-line bg-surface py-1.5 pl-8 pr-3 text-sm text-ink placeholder:text-ink-faint focus:border-accent-text"
-        />
-      </div>
+      <SearchInput
+        containerClassName="min-w-[200px] flex-1"
+        value={search}
+        onChange={(e) => onSearchChange(e.target.value)}
+        placeholder="Search by name, email, or role"
+      />
 
       <select
         value={sortField}

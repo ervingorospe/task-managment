@@ -19,6 +19,7 @@ export interface TicketDetail {
   client: MemberDetail | null;
   assignees: MemberDetail[];
   dueDate: string | null;
+  starred: boolean;
   comments?: TicketComment[];
   createdAt: string;
   updatedAt: string;

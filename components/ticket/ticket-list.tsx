@@ -4,7 +4,7 @@ import Link from "next/link";
 import Tooltip from "@/components/ui/tooltip";
 import Avatar from "@/components/ui/avatar";
 import EmptyState from "@/components/ui/empty-state";
-import { UserPlus } from "lucide-react";
+import { Star, UserPlus } from "lucide-react";
 import { TagPicker } from "./tag-picker";
 import TicketDescriptionCell from "./ticket-description-cell";
 import { DueChip } from "./due-chip";
@@ -21,6 +21,9 @@ interface TicketListProps {
   assignableMembers: MemberDetail[];
   onChangeTag: (ticketId: number, tag: TagDetail) => void;
   onAssign: (ticketId: number, memberIds: number[]) => void;
+  onToggleStar: (ticketId: number) => void;
+  emptyTitle?: string;
+  emptySubtitle?: string;
 }
 
 function formatTimeframe(ticket: TicketDetail) {
@@ -34,14 +37,12 @@ export function TicketList({
   assignableMembers,
   onChangeTag,
   onAssign,
+  onToggleStar,
+  emptyTitle = "No tickets yet",
+  emptySubtitle = "Create your first ticket to get started.",
 }: TicketListProps) {
   if (tickets.length === 0) {
-    return (
-      <EmptyState
-        title="No tickets yet"
-        subtitle="Create your first ticket to get started."
-      />
-    );
+    return <EmptyState title={emptyTitle} subtitle={emptySubtitle} />;
   }
 
   return (
@@ -56,6 +57,22 @@ export function TicketList({
               key={ticket.id}
               className="border-b border-line align-top last:border-0"
             >
+              {/* Star toggle */}
+              <td className="w-8 px-4 py-3 align-middle">
+                <button
+                  type="button"
+                  onClick={() => onToggleStar(ticket.id)}
+                  aria-label={ticket.starred ? "Unstar ticket" : "Star ticket"}
+                  aria-pressed={ticket.starred}
+                  className="text-ink-faint transition-colors hover:text-warning"
+                >
+                  <Star
+                    size={16}
+                    className={ticket.starred ? "fill-warning text-warning" : ""}
+                  />
+                </button>
+              </td>
+
               {/* Title, with timeframe + due chip + client stacked below */}
               <td className="max-w-[70px] px-4 py-3">
                 <Link

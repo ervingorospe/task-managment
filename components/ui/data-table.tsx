@@ -1,8 +1,8 @@
 "use client";
 
-import { Search } from "lucide-react";
 import type { ReactNode } from "react";
 import { Pagination } from "@/components/ui/pagination";
+import { SearchInput } from "@/components/ui/search-input";
 
 interface DataTableProps {
   search: string;
@@ -36,19 +36,12 @@ export function DataTable({
   return (
     <div className="rounded border border-line bg-surface">
       <div className="flex items-center justify-between gap-3 border-b border-line px-4 py-3">
-        <div className="relative max-w-xs flex-1">
-          <Search
-            size={14}
-            className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-ink-faint"
-          />
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => onSearchChange(e.target.value)}
-            placeholder={searchPlaceholder}
-            className="w-full rounded border border-line bg-surface py-1.5 pl-8 pr-3 text-sm text-ink placeholder:text-ink-faint focus:border-accent-text"
-          />
-        </div>
+        <SearchInput
+          containerClassName="max-w-xs flex-1"
+          value={search}
+          onChange={(e) => onSearchChange(e.target.value)}
+          placeholder={searchPlaceholder}
+        />
 
         {filterAction}
       </div>

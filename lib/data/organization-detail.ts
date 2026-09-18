@@ -169,6 +169,7 @@ function generateMockTickets(count: number, startId: number): TicketDetail[] {
       client: hasClient ? genClient : null,
       assignees,
       dueDate,
+      starred: i % 11 === 0,
       createdAt,
       updatedAt,
     };
@@ -524,6 +525,7 @@ const mockOrganizationDetails: Record<string, any> = {
           },
         ],
         dueDate: "2026-01-14", // in the past relative to `now` — renders as Overdue
+        starred: true,
         comments: [
           {
             id: 1,
@@ -594,6 +596,7 @@ const mockOrganizationDetails: Record<string, any> = {
         },
         assignees: [],
         dueDate: "2026-01-15", // renders as Due today
+        starred: false,
         createdAt: "2026-01-15T08:00:00.000Z",
         updatedAt: "2026-01-15T08:00:00.000Z",
       },
@@ -652,6 +655,7 @@ const mockOrganizationDetails: Record<string, any> = {
           },
         ],
         dueDate: "2026-01-20", // upcoming — no chip
+        starred: true,
         createdAt: "2026-01-12T10:00:00.000Z",
         updatedAt: "2026-01-14T16:00:00.000Z",
       },
@@ -691,6 +695,7 @@ const mockOrganizationDetails: Record<string, any> = {
           },
         ],
         dueDate: null, // no timeframe at all — tests the "—" fallback
+        starred: false,
         createdAt: "2026-01-05T09:00:00.000Z",
         updatedAt: "2026-01-09T09:00:00.000Z",
       },
@@ -711,6 +716,7 @@ const mockOrganizationDetails: Record<string, any> = {
         client: null,
         assignees: [],
         dueDate: null,
+        starred: false,
         createdAt: "2026-01-11T09:00:00.000Z",
         updatedAt: "2026-01-11T09:00:00.000Z",
       },
@@ -1067,6 +1073,7 @@ const mockOrganizationDetails: Record<string, any> = {
         },
       ],
       dueDate: "2026-01-14", // in the past relative to `now` — renders as Overdue
+      starred: true,
       createdAt: "2026-01-08T09:00:00.000Z",
       updatedAt: "2026-01-13T09:00:00.000Z",
     },
@@ -1105,6 +1112,7 @@ const mockOrganizationDetails: Record<string, any> = {
       },
       assignees: [],
       dueDate: "2026-01-15", // renders as Due today
+      starred: false,
       createdAt: "2026-01-15T08:00:00.000Z",
       updatedAt: "2026-01-15T08:00:00.000Z",
     },
@@ -1163,6 +1171,7 @@ const mockOrganizationDetails: Record<string, any> = {
         },
       ],
       dueDate: "2026-01-20", // upcoming — no chip
+      starred: true,
       createdAt: "2026-01-12T10:00:00.000Z",
       updatedAt: "2026-01-14T16:00:00.000Z",
     },
@@ -1202,6 +1211,7 @@ const mockOrganizationDetails: Record<string, any> = {
         },
       ],
       dueDate: null, // no timeframe at all — tests the "—" fallback
+      starred: false,
       createdAt: "2026-01-05T09:00:00.000Z",
       updatedAt: "2026-01-09T09:00:00.000Z",
     },
@@ -1222,6 +1232,7 @@ const mockOrganizationDetails: Record<string, any> = {
       client: null,
       assignees: [],
       dueDate: null,
+      starred: false,
       createdAt: "2026-01-11T09:00:00.000Z",
       updatedAt: "2026-01-11T09:00:00.000Z",
     },

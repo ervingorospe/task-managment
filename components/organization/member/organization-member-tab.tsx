@@ -5,7 +5,7 @@ import { Info, FolderKanban, Users } from "lucide-react";
 import type { OrganizationDetail } from "@/lib/types/organization/organization-detail.type";
 import OrganizationMembers from "@/components/organization/own/panels/organization-members";
 import OrganizaionTab from "@/components/organization/member/organization-tab";
-import TicketsPageClient from "@/components/ticket/tickets-page-client";
+import TicketReports from "@/components/organization/ticket-reports/ticket-reports";
 import { Can } from "@/components/auth/can";
 import { PERMISSIONS } from "@/lib/data/permissions";
 import EmptyState from "@/components/ui/empty-state";
@@ -124,7 +124,7 @@ export default function OrganizationMemberTabs({
               <EmptyState subtitle="You do not have permission to view organization tickets." />
             }
           >
-            <TicketsPageClient organization={organization} />
+            <TicketReports organization={organization} />
           </Can>
         )}
       </div>
