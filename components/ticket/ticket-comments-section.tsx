@@ -7,6 +7,7 @@ import Avatar from "@/components/ui/avatar";
 import { Button } from "@/components/ui/buttons/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { useAuth } from "@/providers/auth-provider";
+import { useToast } from "@/providers/toast-provider";
 import { formatDateTime } from "@/lib/helper/format-date";
 import { getMemberName } from "@/lib/helper/member-name";
 import { getMentionableMembers } from "@/lib/helper/mentionable-members";
@@ -87,6 +88,7 @@ export default function TicketCommentsSection({
   organization,
 }: TicketCommentsSectionProps) {
   const { currentUser } = useAuth();
+  const toast = useToast();
 
   const [comments, setComments] = useState<TicketComment[]>(
     initialComments ?? [],
@@ -177,6 +179,7 @@ export default function TicketCommentsSection({
     setComments((prev) => [...prev, comment]);
     setCommentDraft("");
     setMentionState(null);
+    toast("Comment added");
     // TODO: POST /tickets/:id/comments { comment: text }
   }
 
@@ -206,6 +209,7 @@ export default function TicketCommentsSection({
     setEditingCommentId(null);
     setEditCommentDraft("");
     setMentionState(null);
+    toast("Comment updated");
     // TODO: PATCH /tickets/:id/comments/:commentId { comment: text }
   }
 
@@ -214,6 +218,7 @@ export default function TicketCommentsSection({
 
     setComments((prev) => prev.filter((c) => c.id !== commentToDelete.id));
     setCommentToDelete(null);
+    toast("Comment removed", "error");
     // TODO: DELETE /tickets/:id/comments/:commentId
   }
 

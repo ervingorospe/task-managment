@@ -5,7 +5,7 @@ import InviteManager from "@/components/organization/member/invite-manager";
 import { Button } from "@/components/ui/buttons/button";
 import { RoleDetail } from "@/lib/types/organization/role-detail.type";
 import { MemberInviteDetail } from "@/lib/types/organization/member-invite-detail.type";
-import { MemberDetail } from "@/lib/types/organization/member-detail.type";
+import { useToast } from "@/providers/toast-provider";
 
 interface InvitePeopleSectionProps {
   orgId: number;
@@ -23,6 +23,7 @@ export default function MemberInvitesSection({
   // This is a compose-and-send box, not a persisted list — invites sent
   // here move into MemberPendingInvites once "sent." For the mock phase,
   // this local list just represents "invites queued in this session."
+  const toast = useToast();
   const atCapacity = currentTotalInvites >= capacity;
   const [invites, setInvites] = useState<MemberInviteDetail[]>([]);
 
@@ -34,11 +35,17 @@ export default function MemberInvitesSection({
 
     if (newInvites.length === 0) return;
     setInvites((prev) => [...prev, ...newInvites]);
+    toast(
+      newInvites.length === 1
+        ? `Invite queued for ${newInvites[0].email}`
+        : `${newInvites.length} invites queued`,
+    );
     // TODO: POST /organizations/:orgId/invites in the background.
   }
 
   function handleRemove(id: number) {
     setInvites((prev) => prev.filter((i) => i.id !== id));
+    toast("Invite removed", "error");
   }
 
   function handleChangeRole(inviteId: number, roleId: number) {

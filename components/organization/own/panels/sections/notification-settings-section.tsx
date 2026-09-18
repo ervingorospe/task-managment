@@ -5,6 +5,7 @@ import { useForm } from "react-hook-form";
 import Card from "@/components/ui/card";
 import { Button } from "@/components/ui/buttons/button";
 import Checkbox from "@/components/ui/form/checkbox";
+import { useToast } from "@/providers/toast-provider";
 
 interface NotificationSettingsSectionProps {
   initialValue?: boolean;
@@ -17,6 +18,7 @@ interface NotificationSettingsValues {
 export default function NotificationSettingsSection({
   initialValue = true,
 }: NotificationSettingsSectionProps) {
+  const toast = useToast();
   const { control, handleSubmit } = useForm<NotificationSettingsValues>({
     defaultValues: {
       receiveEmails: initialValue,
@@ -28,6 +30,7 @@ export default function NotificationSettingsSection({
     // { receiveEmailNotifications: values.receiveEmails }
 
     console.log("PATCH notification settings", values);
+    toast("Notification settings updated");
   }
 
   return (

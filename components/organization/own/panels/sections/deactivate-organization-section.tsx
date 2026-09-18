@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { DangerZoneCard, DangerZoneRow } from "@/components/ui/danger-zone-card";
 import { lazyNamed } from "@/lib/helper/lazy-named";
+import { useToast } from "@/providers/toast-provider";
 
 const ConfirmDialog = lazyNamed(
   () => import("@/components/ui/confirm-dialog"),
@@ -20,17 +21,21 @@ export default function DeactivateOrganizationSection({
   organizationName,
   initialIsActive = true,
 }: DeactivateOrganizationSectionProps) {
+  const toast = useToast();
   const [isActive, setIsActive] = useState(initialIsActive);
   const [pendingAction, setPendingAction] = useState<PendingAction>(null);
 
   function handleConfirm() {
     if (pendingAction === "deactivate") {
       setIsActive(false);
+      toast(`"${organizationName}" deactivated`, "error");
       // TODO: PATCH /organizations/:id { isActive: false }
     } else if (pendingAction === "activate") {
       setIsActive(true);
+      toast(`"${organizationName}" activated`);
       // TODO: PATCH /organizations/:id { isActive: true }
     } else if (pendingAction === "delete") {
+      toast(`"${organizationName}" deleted`, "error");
       // TODO: DELETE /organizations/:id — soft delete server-side.
     }
     setPendingAction(null);

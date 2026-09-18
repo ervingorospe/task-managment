@@ -8,6 +8,7 @@ import type { RoleDetail } from "@/lib/types/organization/role-detail.type";
 import { resolveRules } from "@/lib/helper/resolve-rules";
 import { Can } from "@/components/auth/can";
 import { PERMISSIONS } from "@/lib/data/permissions";
+import { useToast } from "@/providers/toast-provider";
 
 const ConfirmDialog = lazyNamed(
   () => import("@/components/ui/confirm-dialog"),
@@ -29,6 +30,7 @@ export default function RolesSection({
   capacity,
   orgId,
 }: RolesSectionProps) {
+  const toast = useToast();
   const [roles, setRoles] = useState<RoleDetail[]>(initialRoles);
   const [deletingRole, setDeletingRole] = useState<RoleDetail | null>(null);
 
@@ -53,6 +55,7 @@ export default function RolesSection({
     };
 
     setRoles((prev) => [...prev, newRole]);
+    toast(`Role "${newRole.roleName}" added`);
     // TODO: POST /organizations/:orgId/roles in the background.
     return undefined;
   }
@@ -80,6 +83,7 @@ export default function RolesSection({
           : r,
       ),
     );
+    toast(`Role "${values.roleName}" updated`);
     // TODO: PATCH /organizations/:orgId/roles/:id in the background.
     return undefined;
   }
@@ -88,6 +92,7 @@ export default function RolesSection({
     if (!deletingRole) return;
     setRoles((prev) => prev.filter((r) => r.id !== deletingRole.id));
     setDeletingRole(null);
+    toast(`Role "${deletingRole.roleName}" deleted`, "error");
     // TODO: DELETE /organizations/:orgId/roles/:id
   }
 

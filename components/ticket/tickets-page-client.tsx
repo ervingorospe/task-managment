@@ -14,6 +14,8 @@ import {
   type TicketFilterState,
 } from "./ticket-filter-dropdown";
 import { useAuth, usePermission } from "@/providers/auth-provider";
+import { useToast } from "@/providers/toast-provider";
+import { usePageQueryParam } from "@/hooks/use-page-query-param";
 import { isTicketIncluded } from "@/lib/helper/ticket-access";
 import type { OrganizationDetail } from "@/lib/types/organization/organization-detail.type";
 import type { TicketDetail } from "@/lib/types/ticket/ticket-detail.type";
@@ -28,6 +30,7 @@ export default function TicketsPageClient({
   organization,
 }: TicketsPageClientProps) {
   const { currentUser } = useAuth();
+  const toast = useToast();
   const canViewAllTickets = usePermission(PERMISSIONS.TICKET_VIEW_ALL);
   const { tags, members } = organization;
   const assignableMembers = members.filter(
@@ -41,7 +44,7 @@ export default function TicketsPageClient({
 
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<TicketFilterState>(emptyTicketFilter);
-  const [page, setPage] = useState(1);
+  const [page, setPage] = usePageQueryParam("page");
   const [pageSize, setPageSize] = useState(15);
 
   const [allOrganizations, setAllOrganizations] = useState<
@@ -144,6 +147,7 @@ export default function TicketsPageClient({
     if (targetOrg.id === organization.id) {
       setTickets((prev) => [newTicket, ...prev]);
     }
+    toast(`Ticket "${newTicket.title}" created`);
     // TODO: POST /organizations/:orgId/tickets in the background.
   }
 
@@ -151,6 +155,7 @@ export default function TicketsPageClient({
     setTickets((prev) =>
       prev.map((t) => (t.id === ticketId ? { ...t, tag } : t)),
     );
+    toast(`Status changed to "${tag.tagName}"`);
     // TODO: PATCH /tickets/:id { tag_id: tag.id }
   }
 
@@ -162,6 +167,7 @@ export default function TicketsPageClient({
           : t,
       ),
     );
+    toast("Assignees updated");
     // TODO: PATCH /tickets/:id { assignee_ids: memberIds }
   }
 

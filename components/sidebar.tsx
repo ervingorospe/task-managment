@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import clsx from "clsx";
 import {
   LayoutGrid,
@@ -30,10 +30,6 @@ export function Sidebar() {
   const pathname = usePathname();
   const { currentUser, activeOrganization } = useAuth();
 
-  const [orgMenuOpen, setOrgMenuOpen] = useState(
-    pathname.startsWith("/dashboard/organizations"),
-  );
-
   const memberships = currentUser?.memberships ?? [];
 
   const ticketsHref = activeOrganization
@@ -41,6 +37,25 @@ export function Sidebar() {
     : "/dashboard";
 
   const ticketActive = pathname === ticketsHref;
+
+  // An organization's own landing page is exactly /dashboard/organizations/{slug}
+  // — no further segments. That's distinct from the Tickets nav link, which
+  // routes through /dashboard/organizations/{slug}/tickets and shares the same
+  // prefix, so a startsWith() check here would wrongly open this dropdown
+  // whenever Tickets is active.
+  const isOrgOwnPage = memberships.some(
+    (membership) =>
+      pathname === `/dashboard/organizations/${membership.organization.settings.slug}`,
+  );
+
+  const [orgMenuOpen, setOrgMenuOpen] = useState(isOrgOwnPage);
+
+  // Keep the dropdown in sync with the route: leaving an organization's own
+  // page for another tab should close it, not leave it hanging open.
+  useEffect(() => {
+    setOrgMenuOpen(isOrgOwnPage);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pathname]);
 
   return (
     <aside className="flex w-56 shrink-0 flex-col border-r border-line bg-surface">
@@ -94,7 +109,7 @@ export function Sidebar() {
             onClick={() => setOrgMenuOpen((value) => !value)}
             className={clsx(
               "flex w-full items-center justify-between gap-2.5 rounded px-3 py-2 text-sm transition-colors",
-              pathname.startsWith("/dashboard/organizations")
+              isOrgOwnPage
                 ? "font-medium text-accent-text"
                 : "text-ink-muted hover:bg-canvas hover:text-ink",
             )}
@@ -133,7 +148,7 @@ export function Sidebar() {
 
                   return (
                     <Link
-                      key={membership.id}
+                      key={membership.organization.id}
                       href={href}
                       className={clsx(
                         "block truncate rounded px-3 py-1.5 text-sm transition-colors",

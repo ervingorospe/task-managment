@@ -6,6 +6,7 @@ import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { TagDetail } from "@/lib/types/organization/tag-detail.type";
 import { Can } from "@/components/auth/can";
 import { PERMISSIONS } from "@/lib/data/permissions";
+import { useToast } from "@/providers/toast-provider";
 
 interface TagsSectionProps {
   tags: TagDetail[];
@@ -18,6 +19,7 @@ export default function TagsSection({
   capacity,
   orgId,
 }: TagsSectionProps) {
+  const toast = useToast();
   const [tags, setTags] = useState<TagDetail[]>(initialTags);
   const [deletingTagId, setDeletingTagId] = useState<number | null>(null);
 
@@ -34,19 +36,26 @@ export default function TagsSection({
     };
 
     setTags((prev) => [...prev, newTag]);
+    toast(`Tag "${name}" added`);
     // TODO: POST /organizations/:orgId/tags in the background.
     return undefined;
   }
 
   function updateTagColor(id: number, color: string) {
     setTags((prev) => prev.map((t) => (t.id === id ? { ...t, color } : t)));
+    toast("Tag color updated");
     // TODO: PATCH /organizations/:orgId/tags/:id in the background.
   }
 
   function handleConfirmDelete() {
     if (!deletingTagId) return;
+    const removedTag = tags.find((t) => t.id === deletingTagId);
     setTags((prev) => prev.filter((t) => t.id !== deletingTagId));
     setDeletingTagId(null);
+    toast(
+      removedTag ? `Tag "${removedTag.tagName}" removed` : "Tag removed",
+      "error",
+    );
     // TODO: DELETE /organizations/:orgId/tags/:id
   }
 

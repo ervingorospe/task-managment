@@ -7,6 +7,7 @@ import { AlignLeft, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/buttons/button";
 import { MarkdownEditor } from "@/components/ui/form";
 import { Can } from "@/components/auth/can";
+import { useToast } from "@/providers/toast-provider";
 import { PERMISSIONS } from "@/lib/data/permissions";
 import { renderDescription } from "@/lib/helper/render-description";
 import { SectionHeading } from "./section-heading";
@@ -18,6 +19,7 @@ interface TicketDescriptionSectionProps {
 export default function TicketDescriptionSection({
   description: initialDescription,
 }: TicketDescriptionSectionProps) {
+  const toast = useToast();
   const [description, setDescription] = useState(initialDescription ?? "");
   const [isEditing, setIsEditing] = useState(false);
 
@@ -33,6 +35,7 @@ export default function TicketDescriptionSection({
   function save(values: { description: string }) {
     setDescription(values.description);
     setIsEditing(false);
+    toast("Description updated");
     // TODO: PATCH /tickets/:id { description: values.description }
   }
 

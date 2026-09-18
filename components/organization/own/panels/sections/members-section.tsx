@@ -14,6 +14,8 @@ import { RoleDetail } from "@/lib/types/organization/role-detail.type";
 import { getMemberName, getMemberEmail } from "@/lib/helper/member-name";
 import { PERMISSIONS } from "@/lib/data/permissions";
 import { Can } from "@/components/auth/can";
+import { useToast } from "@/providers/toast-provider";
+import { usePageQueryParam } from "@/hooks/use-page-query-param";
 
 const ConfirmDialog = lazyNamed(
   () => import("@/components/ui/confirm-dialog"),
@@ -37,6 +39,7 @@ export default function MembersSection({
   members: initialMembers,
   roles,
 }: InvitePeopleSectionProps) {
+  const toast = useToast();
   const [members, setMembers] = useState<MemberDetail[]>(initialMembers);
   const [pendingAction, setPendingAction] = useState<PendingAction | null>(
     null,
@@ -47,7 +50,7 @@ export default function MembersSection({
 
   const [search, setSearch] = useState("");
   const [sortField, setSortField] = useState<MemberSortField>("name");
-  const [page, setPage] = useState(1);
+  const [page, setPage] = usePageQueryParam("membersPage");
   const [pageSize, setPageSize] = useState(15);
 
   const roleNameById = useMemo(() => {
@@ -112,9 +115,14 @@ export default function MembersSection({
           m.id === member.id ? { ...m, isActive: !m.isActive } : m,
         ),
       );
+      toast(
+        `${getMemberName(member)} ${member.isActive ? "deactivated" : "activated"}`,
+        member.isActive ? "error" : "success",
+      );
       // TODO: PATCH /organizations/:orgId/members/:id { isActive }
     } else {
       setMembers((prev) => prev.filter((m) => m.id !== member.id));
+      toast(`${getMemberName(member)} removed`, "error");
       // TODO: DELETE /organizations/:orgId/members/:id
     }
 
@@ -128,6 +136,7 @@ export default function MembersSection({
         m.id === activeRoleMember.id ? { ...m, roleId: roleId } : m,
       ),
     );
+    toast(`${getMemberName(activeRoleMember)}'s role updated`);
     setActiveRoleMember(null);
     // TODO: PATCH /organizations/:orgId/members/:id { roleId: roleId }
   }

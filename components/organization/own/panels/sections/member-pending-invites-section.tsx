@@ -8,6 +8,7 @@ import { MemberInviteDetail } from "@/lib/types/organization/member-invite-detai
 import { RoleDetail } from "@/lib/types/organization/role-detail.type";
 import { PERMISSIONS } from "@/lib/data/permissions";
 import { Can } from "@/components/auth/can";
+import { useToast } from "@/providers/toast-provider";
 
 const ConfirmDialog = lazyNamed(
   () => import("@/components/ui/confirm-dialog"),
@@ -27,6 +28,7 @@ export default function MemberPendingInvites({
   invites,
   roles,
 }: InvitePeopleSectionProps) {
+  const toast = useToast();
   const [pendingInvites, setPendingInvites] = useState<MemberInviteDetail[]>(
     invites ?? [],
   );
@@ -60,6 +62,7 @@ export default function MemberPendingInvites({
     setPendingInvites((prev) => prev.filter((invite) => invite.id !== id));
     // TODO: await DELETE /organizations/:orgId/invites/:id
     console.log("Remove invite:", id);
+    toast("Invitation removed", "error");
   }
 
   function handleConfirmRemove() {
@@ -79,6 +82,7 @@ export default function MemberPendingInvites({
       ...current,
       [id]: RESEND_COOLDOWN_SECONDS,
     }));
+    toast("Invitation resent");
   }
 
   return (

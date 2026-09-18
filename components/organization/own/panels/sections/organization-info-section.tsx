@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/buttons/button";
 import Avatar from "@/components/ui/avatar";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import Select from "@/components/ui/form/select";
+import { useToast } from "@/providers/toast-provider";
 
 import { getTimezoneList } from "@/lib/helper/timezones";
 import { lazyNamed } from "@/lib/helper/lazy-named";
@@ -30,6 +31,7 @@ interface TimezoneFormValues {
 export default function OrganizationInfoSection({
   organization,
 }: OrganizationInfoSectionProps) {
+  const toast = useToast();
   const timezones = useMemo(getTimezoneList, []);
 
   const [logo, setLogo] = useState(organization.settings.logo);
@@ -81,6 +83,7 @@ export default function OrganizationInfoSection({
       return url;
     });
 
+    toast("Logo updated");
     // TODO: upload the file and PATCH /organizations/:id { logo }
   }
 
@@ -102,6 +105,7 @@ export default function OrganizationInfoSection({
     console.log("PATCH timezone", values.timezone);
 
     setIsEditingTimezone(false);
+    toast("Timezone updated");
   }
 
   function handleOwnershipTransferSent(email: string) {
@@ -120,6 +124,7 @@ export default function OrganizationInfoSection({
 
     setPendingTransfer(null);
     setCancelTransferModalOpen(false);
+    toast("Ownership transfer cancelled", "error");
   }
 
   return (

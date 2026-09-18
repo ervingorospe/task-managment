@@ -14,3 +14,17 @@ export function renderDescription(description?: string | null): string {
   const html = marked.parse(trimmed, { async: false }) as string;
   return DOMPurify.sanitize(html);
 }
+
+// For contexts like the ticket list, where markdown formatting (headings,
+// bullets, bold) reads as noise rather than helping — strip it down to
+// plain, single-line-friendly text instead of rendering it.
+export function toPlainText(description?: string | null): string {
+  const html = renderDescription(description);
+  if (!html) return "";
+
+  const text = DOMPurify.sanitize(html, {
+    ALLOWED_TAGS: [],
+    ALLOWED_ATTR: [],
+  });
+  return text.replace(/\s+/g, " ").trim();
+}

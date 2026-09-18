@@ -10,6 +10,7 @@ import Textarea from "@/components/ui/form/textarea";
 import { Button } from "@/components/ui/buttons/button";
 import Card from "@/components/ui/card";
 import PropertyRow from "@/components/ui/property-row";
+import { useToast } from "@/providers/toast-provider";
 
 import { OrganizationDetail } from "@/lib/types/organization/organization-detail.type";
 import {
@@ -70,6 +71,7 @@ const inputFields: InputFieldConfig<BasicInfoValues>[] = [
 export default function BasicInformation({
   organization,
 }: BasicInformationProps) {
+  const toast = useToast();
   const [isEditing, setIsEditing] = useState(false);
 
   const [displayInfo, setDisplayInfo] = useState({
@@ -131,6 +133,7 @@ export default function BasicInformation({
     });
 
     setIsEditing(false);
+    toast("Organization information updated");
   }
 
   return (

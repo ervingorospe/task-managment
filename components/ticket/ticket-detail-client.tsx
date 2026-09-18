@@ -9,6 +9,7 @@ import BackButton from "@/components/ui/buttons/button-back";
 import { Button } from "@/components/ui/buttons/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Can } from "@/components/auth/can";
+import { useToast } from "@/providers/toast-provider";
 import { PERMISSIONS } from "@/lib/data/permissions";
 import type { TicketDetail } from "@/lib/types/ticket/ticket-detail.type";
 import type { OrganizationDetail } from "@/lib/types/organization/organization-detail.type";
@@ -26,6 +27,7 @@ export default function TicketDetailClient({
   organization,
 }: TicketDetailClientProps) {
   const router = useRouter();
+  const toast = useToast();
   const slug = organization.settings?.slug;
 
   const [title, setTitle] = useState(ticket.title);
@@ -35,9 +37,11 @@ export default function TicketDetailClient({
 
   function commitTitle() {
     const next = titleDraft.trim();
+    const changed = Boolean(next) && next !== title;
     setTitle((prev) => next || prev);
     setTitleDraft(next || title);
     setIsEditingTitle(false);
+    if (changed) toast("Ticket title updated");
     // TODO: PATCH /tickets/:id { title }
   }
 
@@ -48,6 +52,7 @@ export default function TicketDetailClient({
 
   function handleDelete() {
     // TODO: DELETE /tickets/:id
+    toast(`Ticket "${title}" removed`, "error");
     router.push(
       slug ? `/dashboard/organizations/${slug}/tickets` : "/dashboard",
     );

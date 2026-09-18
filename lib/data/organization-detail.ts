@@ -18,6 +18,163 @@ function rulesForRole(actions: string[]) {
   return rules.filter((rule) => actions.includes(rule.action));
 }
 
+function addDays(base: string, days: number): string {
+  const d = new Date(base);
+  d.setUTCDate(d.getUTCDate() + days);
+  return d.toISOString().slice(0, 10);
+}
+
+function addDaysIso(base: string, days: number): string {
+  const d = new Date(base);
+  d.setUTCDate(d.getUTCDate() + days);
+  return d.toISOString();
+}
+
+// Acme Studio's tags/members, duplicated as plain data here (rather than
+// referencing the literal below) so this generator can build tickets that
+// point at real tag/member ids without restructuring the org literal.
+const genTags = [
+  { id: 201, tagName: "Backlog", color: "#94A39D", isDefault: true, orgId: 1, isDeleted: false },
+  { id: 202, tagName: "To Do", color: "#64748B", isDefault: true, orgId: 1, isDeleted: false },
+  { id: 203, tagName: "In-Progress", color: "#3B82C4", isDefault: true, orgId: 1, isDeleted: false },
+  { id: 204, tagName: "Blocked", color: "#E5484D", isDefault: true, orgId: 1, isDeleted: false },
+  { id: 205, tagName: "Done", color: "#28A428", isDefault: true, orgId: 1, isDeleted: false },
+];
+
+const genMembers = [
+  {
+    id: 2,
+    firstName: "Marco",
+    lastName: "Cruz",
+    email: "marco@acmestudio.com",
+    orgId: 1,
+    roleId: 4,
+    isActive: true,
+    user: {
+      id: 2,
+      firstName: "Marco",
+      lastName: "Cruz",
+      email: "marco@acmestudio.com",
+      isActive: true,
+      avatar: "https://i.pravatar.cc/64?u=jane",
+      accountType: "member" as const,
+    },
+  },
+  {
+    id: 3,
+    firstName: "Priya",
+    lastName: "Nair",
+    email: "priya@acmestudio.com",
+    orgId: 1,
+    roleId: 3,
+    isActive: true,
+    user: {
+      id: 3,
+      firstName: "Priya",
+      lastName: "Nair",
+      email: "priya@acmestudio.com",
+      isActive: true,
+      avatar: "https://i.pravatar.cc/64?u=jane",
+      accountType: "member" as const,
+    },
+  },
+];
+
+const genClient = {
+  id: 4,
+  firstName: "Alex",
+  lastName: "Rivera",
+  email: "alex@clientco.com",
+  orgId: 1,
+  roleId: 2,
+  isActive: false,
+  user: {
+    id: 4,
+    firstName: "Alex",
+    lastName: "Rivera",
+    email: "alex@clientco.com",
+    isActive: false,
+    avatar: "https://i.pravatar.cc/64?u=jane",
+    accountType: "member" as const,
+  },
+};
+
+const ticketTitlePool = [
+  "Fix broken image upload on profile page",
+  "Improve loading state for dashboard widgets",
+  "Login form doesn't show validation errors",
+  "Add dark mode toggle to settings",
+  "Export button missing on mobile layout",
+  "Slow query on the tickets list endpoint",
+  "Typo in the welcome email subject line",
+  "Add pagination to the members table",
+  "Search doesn't match partial email addresses",
+  "Broken link in the invoice PDF footer",
+  "Notification bell shows stale unread count",
+  "Add bulk-assign action to the ticket list",
+  "Timezone picker resets after saving",
+  "Duplicate tags can be created with different casing",
+  "Add keyboard shortcuts for common actions",
+  "Avatar upload fails for files over 2MB",
+  "Client portal shows tickets from other orgs",
+  "Add CSV import for bulk ticket creation",
+  "Improve empty states across the dashboard",
+  "Rate limit the invite-resend endpoint",
+  "Add audit log for role permission changes",
+  "Comment mentions don't trigger a notification",
+  "Due date picker allows selecting past dates",
+  "Add a weekly digest email for open tickets",
+  "Tag colors are hard to distinguish for colorblind users",
+  "Session expires too quickly on the mobile app",
+  "Add drag-and-drop file attachments to tickets",
+  "Reports page crashes when there is no data",
+  "Add a \"my tickets\" filter shortcut",
+  "Improve error messaging on failed invites",
+];
+
+// Deterministic pseudo-random pick, so the mock data is stable across runs.
+function pick<T>(pool: T[], seed: number): T {
+  return pool[seed % pool.length];
+}
+
+function generateMockTickets(count: number, startId: number): TicketDetail[] {
+  return Array.from({ length: count }, (_, i) => {
+    const id = startId + i;
+    const tag = pick(genTags, i);
+    const repeatIndex = Math.floor(i / ticketTitlePool.length);
+    const baseTitle = pick(ticketTitlePool, i);
+    const title = repeatIndex > 0 ? `${baseTitle} (${repeatIndex + 1})` : baseTitle;
+
+    const assigneeCount = i % 3;
+    const assignees =
+      assigneeCount === 0 ? [] : genMembers.slice(0, assigneeCount);
+    const hasClient = i % 4 === 0;
+
+    const dueOffset = (i % 21) - 10; // spread roughly ±10 days around `now`
+    const dueDate = i % 6 === 5 ? null : addDays(now, dueOffset);
+
+    const createdAt = addDaysIso(now, -((i % 30) + 1));
+    const updatedAt = addDaysIso(now, -(i % 5));
+
+    return {
+      id,
+      orgId: 1,
+      title,
+      description:
+        i % 3 === 0
+          ? undefined
+          : `Auto-generated ticket #${id} for testing pagination, filters, and search.`,
+      attachments: [],
+      tag,
+      client: hasClient ? genClient : null,
+      assignees,
+      dueDate,
+      createdAt,
+      updatedAt,
+    };
+  });
+}
+
 const mockOrganizationDetails: Record<string, any> = {
   "acme-studio": {
     // Organization
@@ -557,6 +714,7 @@ const mockOrganizationDetails: Record<string, any> = {
         createdAt: "2026-01-11T09:00:00.000Z",
         updatedAt: "2026-01-11T09:00:00.000Z",
       },
+      ...generateMockTickets(100, 2001),
     ] satisfies TicketDetail[],
   },
 

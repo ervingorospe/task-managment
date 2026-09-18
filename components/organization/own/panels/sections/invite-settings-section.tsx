@@ -6,6 +6,7 @@ import Card from "@/components/ui/card";
 import { Button } from "@/components/ui/buttons/button";
 import Select from "@/components/ui/form/select";
 import { ChevronDown } from "lucide-react";
+import { useToast } from "@/providers/toast-provider";
 
 const expirationOptions = [
   { value: "1_hour", label: "1 hour" },
@@ -28,6 +29,7 @@ interface InviteSettingsValues {
 export default function InviteSettingsSection({
   initialExpiration = "1_day",
 }: InviteSettingsSectionProps) {
+  const toast = useToast();
   const { control, handleSubmit } = useForm<InviteSettingsValues>({
     defaultValues: {
       expiration: initialExpiration,
@@ -41,6 +43,7 @@ export default function InviteSettingsSection({
     console.log("PATCH invite settings", {
       inviteExpiration: values.expiration,
     });
+    toast("Invite settings updated");
   }
 
   return (

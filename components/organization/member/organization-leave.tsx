@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { DangerZoneCard, DangerZoneRow } from "@/components/ui/danger-zone-card";
 import { lazyNamed } from "@/lib/helper/lazy-named";
+import { useToast } from "@/providers/toast-provider";
 
 const ConfirmDialog = lazyNamed(
   () => import("@/components/ui/confirm-dialog"),
@@ -16,10 +17,12 @@ interface LeaveOrganizationSectionProps {
 export default function LeaveOrganizationSection({
   organizationName,
 }: LeaveOrganizationSectionProps) {
+  const toast = useToast();
   const [confirm, setConfirm] = useState(false);
 
   function handleConfirm() {
     setConfirm(false);
+    toast(`Left "${organizationName}"`, "error");
   }
 
   return (

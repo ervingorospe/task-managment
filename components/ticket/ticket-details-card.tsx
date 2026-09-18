@@ -8,6 +8,7 @@ import Card from "@/components/ui/card";
 import MultiSelectDropdown from "@/components/ui/form/multi-select-dropdown";
 import PropertyRow from "@/components/ui/property-row";
 import { InlineButton } from "@/components/ui/buttons";
+import { useToast } from "@/providers/toast-provider";
 import { getMemberName } from "@/lib/helper/member-name";
 import { formatDueDate, getDueState } from "@/lib/helper/ticket-status";
 import type { TagDetail } from "@/lib/types/organization/tag-detail.type";
@@ -31,6 +32,7 @@ export default function TicketDetailsCard({
   dueDate: initialDueDate,
   organization,
 }: TicketDetailsCardProps) {
+  const toast = useToast();
   const assignableMembers = organization.members.filter(
     (m) => m.role?.roleName !== "Client",
   );
@@ -43,16 +45,19 @@ export default function TicketDetailsCard({
 
   function handleChangeTag(nextTag: TagDetail) {
     setTag(nextTag);
+    toast(`Status changed to "${nextTag.tagName}"`);
     // TODO: PATCH /tickets/:id { tag_id: nextTag.id }
   }
 
   function handleAssign(memberIds: number[]) {
     setAssignees(assignableMembers.filter((m) => memberIds.includes(m.id)));
+    toast("Assignees updated");
     // TODO: PATCH /tickets/:id { assignee_ids: memberIds }
   }
 
   function handleDueDateChange(value: string) {
     setDueDate(value || null);
+    toast(value ? "Due date updated" : "Due date cleared");
     // TODO: PATCH /tickets/:id { due_date: value }
   }
 

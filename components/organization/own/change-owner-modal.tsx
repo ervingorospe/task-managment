@@ -5,6 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { AlertTriangle } from "lucide-react";
 import { Modal } from "@/components/ui/modal";
 import { Button } from "@/components/ui/buttons/button";
+import { useToast } from "@/providers/toast-provider";
 import {
   changeOwnerSchema,
   type ChangeOwnerValues,
@@ -21,6 +22,7 @@ export function ChangeOwnerModal({
   onClose,
   onSent,
 }: ChangeOwnerModalProps) {
+  const toast = useToast();
   const {
     register,
     handleSubmit,
@@ -40,6 +42,7 @@ export function ChangeOwnerModal({
     // TODO: POST /organizations/:id/ownership-transfer { email: values.email }
     console.log("Send ownership transfer invite to", values.email);
     onSent(values.email);
+    toast(`Ownership transfer invite sent to ${values.email}`);
     reset();
     onClose();
   }
