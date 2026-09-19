@@ -13,10 +13,13 @@ import {
   Star,
   Users,
   Inbox,
+  PanelLeftClose,
+  PanelLeftOpen,
 } from "lucide-react";
 import { useAuth } from "@/providers/auth-provider";
 import { Can } from "@/components/auth/can";
 import { PERMISSIONS, type Permission } from "@/lib/data/permissions";
+import Tooltip from "@/components/ui/tooltip";
 
 const staticNavItems: {
   href: string;
@@ -82,10 +85,52 @@ export function Sidebar() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathname]);
 
+  // Shown by default; collapsing only hides labels/sub-menus, never the
+  // whole rail, so navigation stays one click away.
+  const [collapsed, setCollapsed] = useState(false);
+
+  function navLinkClass(active: boolean) {
+    return clsx(
+      "flex items-center gap-2.5 rounded px-3 py-2 text-sm transition-colors",
+      collapsed && "justify-center px-2",
+      active
+        ? "bg-accent-subtle font-medium text-accent-text"
+        : "text-ink-muted hover:bg-canvas hover:text-ink",
+    );
+  }
+
+  function withTooltip(label: string, node: React.ReactNode) {
+    return collapsed ? <Tooltip label={label}>{node}</Tooltip> : node;
+  }
+
   return (
-    <aside className="flex w-56 shrink-0 flex-col border-r border-line bg-surface print:hidden">
-      <div className="flex h-14 items-center border-b border-line px-4">
-        <span className="text-sm font-semibold text-ink">Work Orders</span>
+    <aside
+      className={clsx(
+        "flex shrink-0 flex-col border-r border-line bg-surface transition-[width] duration-150 print:hidden",
+        collapsed ? "w-16" : "w-56",
+      )}
+    >
+      <div className="flex h-14 items-center justify-between border-b border-line px-4">
+        {!collapsed && (
+          <span className="truncate text-sm font-semibold text-ink">
+            Work Orders
+          </span>
+        )}
+        <button
+          type="button"
+          onClick={() => setCollapsed((value) => !value)}
+          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          className={clsx(
+            "rounded p-1.5 text-ink-faint hover:bg-canvas hover:text-ink",
+            collapsed && "mx-auto",
+          )}
+        >
+          {collapsed ? (
+            <PanelLeftOpen size={16} strokeWidth={2} />
+          ) : (
+            <PanelLeftClose size={16} strokeWidth={2} />
+          )}
+        </button>
       </div>
 
       <nav className="flex-1 space-y-0.5 p-2">
@@ -96,19 +141,12 @@ export function Sidebar() {
               ? pathname === href
               : pathname.startsWith(`${href}/`) || pathname === href;
 
-          const link = (
-            <Link
-              href={href}
-              className={clsx(
-                "flex items-center gap-2.5 rounded px-3 py-2 text-sm transition-colors",
-                active
-                  ? "bg-accent-subtle font-medium text-accent-text"
-                  : "text-ink-muted hover:bg-canvas hover:text-ink",
-              )}
-            >
+          const link = withTooltip(
+            label,
+            <Link href={href} className={navLinkClass(active)}>
               <Icon size={16} strokeWidth={2} />
-              {label}
-            </Link>
+              {!collapsed && label}
+            </Link>,
           );
 
           if (!permission) {
@@ -123,94 +161,93 @@ export function Sidebar() {
         })}
 
         {/* Tickets */}
-        <Link
-          href={ticketsHref}
-          className={clsx(
-            "flex items-center gap-2.5 rounded px-3 py-2 text-sm transition-colors",
-            ticketActive
-              ? "bg-accent-subtle font-medium text-accent-text"
-              : "text-ink-muted hover:bg-canvas hover:text-ink",
-          )}
-        >
-          <Ticket size={16} strokeWidth={2} />
-          Tickets
-        </Link>
+        {withTooltip(
+          "Tickets",
+          <Link href={ticketsHref} className={navLinkClass(ticketActive)}>
+            <Ticket size={16} strokeWidth={2} />
+            {!collapsed && "Tickets"}
+          </Link>,
+        )}
 
         {/* Starred */}
-        <Link
-          href={starredHref}
-          className={clsx(
-            "flex items-center gap-2.5 rounded px-3 py-2 text-sm transition-colors",
-            starredActive
-              ? "bg-accent-subtle font-medium text-accent-text"
-              : "text-ink-muted hover:bg-canvas hover:text-ink",
-          )}
-        >
-          <Star size={16} strokeWidth={2} />
-          Starred
-        </Link>
+        {withTooltip(
+          "Starred",
+          <Link href={starredHref} className={navLinkClass(starredActive)}>
+            <Star size={16} strokeWidth={2} />
+            {!collapsed && "Starred"}
+          </Link>,
+        )}
 
         {/* Requests — visible to staff (ticket.view.all) and clients (ticket.request) alike */}
         <Can
           anyOf={[PERMISSIONS.TICKET_VIEW_ALL, PERMISSIONS.TICKET_REQUEST]}
         >
-          <Link
-            href={requestsHref}
-            className={clsx(
-              "flex items-center gap-2.5 rounded px-3 py-2 text-sm transition-colors",
-              requestsActive
-                ? "bg-accent-subtle font-medium text-accent-text"
-                : "text-ink-muted hover:bg-canvas hover:text-ink",
-            )}
-          >
-            <Inbox size={16} strokeWidth={2} />
-            Requests
-          </Link>
+          {withTooltip(
+            "Requests",
+            <Link
+              href={requestsHref}
+              className={navLinkClass(requestsActive)}
+            >
+              <Inbox size={16} strokeWidth={2} />
+              {!collapsed && "Requests"}
+            </Link>,
+          )}
         </Can>
 
         {/* Members */}
         <Can action={PERMISSIONS.MEMBER_VIEW_MEMBERS}>
-          <Link
-            href={membersHref}
-            className={clsx(
-              "flex items-center gap-2.5 rounded px-3 py-2 text-sm transition-colors",
-              membersActive
-                ? "bg-accent-subtle font-medium text-accent-text"
-                : "text-ink-muted hover:bg-canvas hover:text-ink",
-            )}
-          >
-            <Users size={16} strokeWidth={2} />
-            Members
-          </Link>
+          {withTooltip(
+            "Members",
+            <Link href={membersHref} className={navLinkClass(membersActive)}>
+              <Users size={16} strokeWidth={2} />
+              {!collapsed && "Members"}
+            </Link>,
+          )}
         </Can>
 
         {/* Organization */}
         <div>
-          <button
-            type="button"
-            onClick={() => setOrgMenuOpen((value) => !value)}
-            className={clsx(
-              "flex w-full items-center justify-between gap-2.5 rounded px-3 py-2 text-sm transition-colors",
-              isOrgOwnPage
-                ? "font-medium text-accent-text"
-                : "text-ink-muted hover:bg-canvas hover:text-ink",
-            )}
-          >
-            <span className="flex items-center gap-2.5">
-              <Building2 size={16} strokeWidth={2} />
-              Organization
-            </span>
-
-            <ChevronDown
-              size={14}
+          {withTooltip(
+            "Organization",
+            <button
+              type="button"
+              onClick={() => {
+                // Collapsed: clicking just re-opens the rail (with the menu
+                // already expanded) instead of trying to fit a submenu into
+                // an icon-only strip.
+                if (collapsed) {
+                  setCollapsed(false);
+                  setOrgMenuOpen(true);
+                  return;
+                }
+                setOrgMenuOpen((value) => !value);
+              }}
               className={clsx(
-                "transition-transform",
-                orgMenuOpen && "rotate-180",
+                "flex w-full items-center gap-2.5 rounded px-3 py-2 text-sm transition-colors",
+                collapsed ? "justify-center px-2" : "justify-between",
+                isOrgOwnPage
+                  ? "font-medium text-accent-text"
+                  : "text-ink-muted hover:bg-canvas hover:text-ink",
               )}
-            />
-          </button>
+            >
+              <span className="flex items-center gap-2.5">
+                <Building2 size={16} strokeWidth={2} />
+                {!collapsed && "Organization"}
+              </span>
 
-          {orgMenuOpen && (
+              {!collapsed && (
+                <ChevronDown
+                  size={14}
+                  className={clsx(
+                    "transition-transform",
+                    orgMenuOpen && "rotate-180",
+                  )}
+                />
+              )}
+            </button>,
+          )}
+
+          {!collapsed && orgMenuOpen && (
             <div className="mt-0.5 space-y-0.5 pl-7">
               {memberships.length === 0 ? (
                 <p className="px-3 py-1.5 text-xs text-ink-faint">
