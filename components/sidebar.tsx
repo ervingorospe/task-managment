@@ -10,18 +10,26 @@ import {
   FileBarChart,
   Building2,
   ChevronDown,
-  CalendarCheck2,
   Star,
+  Users,
+  Inbox,
 } from "lucide-react";
 import { useAuth } from "@/providers/auth-provider";
+import { Can } from "@/components/auth/can";
+import { PERMISSIONS, type Permission } from "@/lib/data/permissions";
 
-const staticNavItems = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutGrid },
-  { href: "/dashboard/reports", label: "Reports", icon: FileBarChart },
+const staticNavItems: {
+  href: string;
+  label: string;
+  icon: typeof LayoutGrid;
+  permission: Permission | null;
+}[] = [
+  { href: "/dashboard", label: "Dashboard", icon: LayoutGrid, permission: null },
   {
-    href: "/dashboard/daily-journal",
-    label: "Daily Journal",
-    icon: CalendarCheck2,
+    href: "/dashboard/reports",
+    label: "Reports",
+    icon: FileBarChart,
+    permission: PERMISSIONS.REPORT_VIEW,
   },
 ];
 
@@ -42,6 +50,18 @@ export function Sidebar() {
     : "/dashboard";
 
   const starredActive = pathname === starredHref;
+
+  const requestsHref = activeOrganization
+    ? `/dashboard/organizations/${activeOrganization.settings.slug}/requests`
+    : "/dashboard";
+
+  const requestsActive = pathname === requestsHref;
+
+  const membersHref = activeOrganization
+    ? `/dashboard/organizations/${activeOrganization.settings.slug}/members`
+    : "/dashboard";
+
+  const membersActive = pathname === membersHref;
 
   // An organization's own landing page is exactly /dashboard/organizations/{slug}
   // — no further segments. That's distinct from the Tickets nav link, which
@@ -70,15 +90,14 @@ export function Sidebar() {
 
       <nav className="flex-1 space-y-0.5 p-2">
         {/* Static navigation */}
-        {staticNavItems.map(({ href, label, icon: Icon }) => {
+        {staticNavItems.map(({ href, label, icon: Icon, permission }) => {
           const active =
             href === "/dashboard"
               ? pathname === href
               : pathname.startsWith(`${href}/`) || pathname === href;
 
-          return (
+          const link = (
             <Link
-              key={href}
               href={href}
               className={clsx(
                 "flex items-center gap-2.5 rounded px-3 py-2 text-sm transition-colors",
@@ -90,6 +109,16 @@ export function Sidebar() {
               <Icon size={16} strokeWidth={2} />
               {label}
             </Link>
+          );
+
+          if (!permission) {
+            return <div key={href}>{link}</div>;
+          }
+
+          return (
+            <Can key={href} action={permission}>
+              {link}
+            </Can>
           );
         })}
 
@@ -120,6 +149,40 @@ export function Sidebar() {
           <Star size={16} strokeWidth={2} />
           Starred
         </Link>
+
+        {/* Requests — visible to staff (ticket.view.all) and clients (ticket.request) alike */}
+        <Can
+          anyOf={[PERMISSIONS.TICKET_VIEW_ALL, PERMISSIONS.TICKET_REQUEST]}
+        >
+          <Link
+            href={requestsHref}
+            className={clsx(
+              "flex items-center gap-2.5 rounded px-3 py-2 text-sm transition-colors",
+              requestsActive
+                ? "bg-accent-subtle font-medium text-accent-text"
+                : "text-ink-muted hover:bg-canvas hover:text-ink",
+            )}
+          >
+            <Inbox size={16} strokeWidth={2} />
+            Requests
+          </Link>
+        </Can>
+
+        {/* Members */}
+        <Can action={PERMISSIONS.MEMBER_VIEW_MEMBERS}>
+          <Link
+            href={membersHref}
+            className={clsx(
+              "flex items-center gap-2.5 rounded px-3 py-2 text-sm transition-colors",
+              membersActive
+                ? "bg-accent-subtle font-medium text-accent-text"
+                : "text-ink-muted hover:bg-canvas hover:text-ink",
+            )}
+          >
+            <Users size={16} strokeWidth={2} />
+            Members
+          </Link>
+        </Can>
 
         {/* Organization */}
         <div>

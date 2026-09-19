@@ -11,6 +11,7 @@ export interface TicketAttachment {
 
 export interface TicketDetail {
   id: number;
+  referenceId: string;
   orgId: number;
   title: string;
   description?: string;

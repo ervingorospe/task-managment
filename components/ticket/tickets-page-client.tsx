@@ -10,13 +10,14 @@ import TicketFormModal from "./ticket-form-modal";
 import { TicketList } from "./ticket-list";
 import {
   TicketFilterDropdown,
-  emptyTicketFilter,
   type TicketFilterState,
 } from "./ticket-filter-dropdown";
 import { useAuth, usePermission } from "@/providers/auth-provider";
 import { useToast } from "@/providers/toast-provider";
-import { usePageQueryParam } from "@/hooks/use-page-query-param";
+import { useTicketListQueryState } from "@/hooks/use-ticket-list-query-state";
 import { isTicketIncluded } from "@/lib/helper/ticket-access";
+import { getDueState } from "@/lib/helper/ticket-status";
+import { formatReferenceId } from "@/lib/helper/reference-id";
 import type { OrganizationDetail } from "@/lib/types/organization/organization-detail.type";
 import type { TicketDetail } from "@/lib/types/ticket/ticket-detail.type";
 import type { TagDetail } from "@/lib/types/organization/tag-detail.type";
@@ -45,10 +46,17 @@ export default function TicketsPageClient({
   );
   const [modalOpen, setModalOpen] = useState(false);
 
-  const [search, setSearch] = useState("");
-  const [filter, setFilter] = useState<TicketFilterState>(emptyTicketFilter);
-  const [page, setPage] = usePageQueryParam("page");
-  const [pageSize, setPageSize] = useState(15);
+  const {
+    page,
+    filter,
+    pageSize,
+    searchInput,
+    search,
+    setPage,
+    setFilter,
+    setPageSize,
+    setSearchInput,
+  } = useTicketListQueryState();
 
   const [allOrganizations, setAllOrganizations] = useState<
     OrganizationDetail[]
@@ -66,8 +74,8 @@ export default function TicketsPageClient({
   // Search, then filter, then paginate — each step operates on the
   // previous step's result, same ordering used for MembersSection earlier.
   const searched = useMemo(() => {
-    const query = search.trim().toLowerCase();
-    if (!query) return viewableTickets;
+    if (!search) return viewableTickets;
+    const query = search.toLowerCase();
     return viewableTickets.filter((t) =>
       t.title.toLowerCase().includes(query),
     );
@@ -93,6 +101,9 @@ export default function TicketsPageClient({
       if (filter.dateTo && (!ticket.dueDate || ticket.dueDate > filter.dateTo))
         return false;
 
+      if (filter.overdueOnly && getDueState(ticket) !== "overdue")
+        return false;
+
       return true;
     });
   }, [searched, filter]);
@@ -104,19 +115,12 @@ export default function TicketsPageClient({
     currentPage * pageSize,
   );
 
-  function handleSearchChange(value: string) {
-    setSearch(value);
-    setPage(1);
-  }
-
   function handleFilterChange(value: TicketFilterState) {
     setFilter(value);
-    setPage(1);
   }
 
   function handlePageSizeChange(size: number) {
     setPageSize(size);
-    setPage(1);
   }
 
   function handleCreate(values: TicketFormValues) {
@@ -129,6 +133,7 @@ export default function TicketsPageClient({
 
     const newTicket: TicketDetail = {
       id: Date.now(),
+      referenceId: formatReferenceId("tckt", targetOrg.tickets.length + 1),
       orgId: targetOrg.id,
       title: values.title,
       description: values.description || undefined,
@@ -214,9 +219,9 @@ export default function TicketsPageClient({
 
       <div className="mt-6">
         <DataTable
-          search={search}
-          onSearchChange={handleSearchChange}
-          searchPlaceholder="Search tickets by name"
+          search={searchInput}
+          onSearchChange={setSearchInput}
+          searchPlaceholder="Search tickets by name (3+ characters)"
           filterAction={
             <TicketFilterDropdown
               value={filter}

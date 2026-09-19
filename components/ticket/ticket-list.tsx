@@ -73,6 +73,16 @@ export function TicketList({
                 </button>
               </td>
 
+              {/* Reference id */}
+              <td className="w-20 whitespace-nowrap px-2 py-3 align-middle">
+                <Link
+                  href={`/dashboard/tickets/${ticket.id}`}
+                  className="font-mono text-xs text-ink-muted hover:text-accent-text"
+                >
+                  {ticket.referenceId}
+                </Link>
+              </td>
+
               {/* Title, with timeframe + due chip + client stacked below */}
               <td className="max-w-[70px] px-4 py-3">
                 <Link

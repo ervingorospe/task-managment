@@ -23,7 +23,7 @@ export function MemberListToolbar({
         containerClassName="min-w-[200px] flex-1"
         value={search}
         onChange={(e) => onSearchChange(e.target.value)}
-        placeholder="Search by name, email, or role"
+        placeholder="Search by name, email, or role (3+ characters)"
       />
 
       <select

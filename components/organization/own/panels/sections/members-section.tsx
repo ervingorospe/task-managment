@@ -15,7 +15,7 @@ import { getMemberName, getMemberEmail } from "@/lib/helper/member-name";
 import { PERMISSIONS } from "@/lib/data/permissions";
 import { Can } from "@/components/auth/can";
 import { useToast } from "@/providers/toast-provider";
-import { usePageQueryParam } from "@/hooks/use-page-query-param";
+import { useMemberListQueryState } from "@/hooks/use-member-list-query-state";
 
 const ConfirmDialog = lazyNamed(
   () => import("@/components/ui/confirm-dialog"),
@@ -48,9 +48,9 @@ export default function MembersSection({
     null,
   );
 
-  const [search, setSearch] = useState("");
   const [sortField, setSortField] = useState<MemberSortField>("name");
-  const [page, setPage] = usePageQueryParam("membersPage");
+  const { page, searchInput, search, setPage, setSearchInput } =
+    useMemberListQueryState();
   const [pageSize, setPageSize] = useState(15);
 
   const roleNameById = useMemo(() => {
@@ -63,8 +63,8 @@ export default function MembersSection({
   // previous step's result, not the raw `members` array, so filtering and
   // sorting stay correct together rather than racing each other.
   const filtered = useMemo(() => {
-    const query = search.trim().toLowerCase();
-    if (!query) return members;
+    if (!search) return members;
+    const query = search.toLowerCase();
 
     return members.filter((member) => {
       const name = getMemberName(member).toLowerCase();
@@ -94,11 +94,6 @@ export default function MembersSection({
     (currentPage - 1) * pageSize,
     currentPage * pageSize,
   );
-
-  function handleSearchChange(value: string) {
-    setSearch(value);
-    setPage(1); // reset to page 1 — otherwise a narrowed result set could leave you stranded on a now-nonexistent page
-  }
 
   function handlePageSizeChange(size: number) {
     setPageSize(size);
@@ -175,8 +170,8 @@ export default function MembersSection({
         desc={`${members.length} members`}
       >
         <MemberListToolbar
-          search={search}
-          onSearchChange={handleSearchChange}
+          search={searchInput}
+          onSearchChange={setSearchInput}
           sortField={sortField}
           onSortFieldChange={setSortField}
         />

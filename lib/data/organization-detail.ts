@@ -10,6 +10,8 @@
 
 import { rules } from "@/lib/data/default-rules";
 import { TicketDetail } from "../types/ticket/ticket-detail.type";
+import { TicketRequest } from "../types/ticket/ticket-request.type";
+import { formatReferenceId } from "../helper/reference-id";
 
 const now = "2026-01-15T09:00:00.000Z";
 
@@ -137,7 +139,11 @@ function pick<T>(pool: T[], seed: number): T {
   return pool[seed % pool.length];
 }
 
-function generateMockTickets(count: number, startId: number): TicketDetail[] {
+function generateMockTickets(
+  count: number,
+  startId: number,
+  startRef: number,
+): TicketDetail[] {
   return Array.from({ length: count }, (_, i) => {
     const id = startId + i;
     const tag = pick(genTags, i);
@@ -158,6 +164,7 @@ function generateMockTickets(count: number, startId: number): TicketDetail[] {
 
     return {
       id,
+      referenceId: formatReferenceId("tckt", startRef + i),
       orgId: 1,
       title,
       description:
@@ -488,6 +495,7 @@ const mockOrganizationDetails: Record<string, any> = {
     tickets: [
       {
         id: 1001,
+        referenceId: "tckt-00001",
         orgId: 1,
         title: "Checkout button not responding on mobile Safari",
         description:
@@ -563,6 +571,7 @@ const mockOrganizationDetails: Record<string, any> = {
       },
       {
         id: 1002,
+        referenceId: "tckt-00002",
         orgId: 1,
         title: "Add CSV export to the reports page",
         description:
@@ -602,6 +611,7 @@ const mockOrganizationDetails: Record<string, any> = {
       },
       {
         id: 1003,
+        referenceId: "tckt-00003",
         orgId: 1,
         title: "Investigate flaky invite-email delivery",
         description:
@@ -661,6 +671,7 @@ const mockOrganizationDetails: Record<string, any> = {
       },
       {
         id: 1004,
+        referenceId: "tckt-00004",
         orgId: 1,
         title: "Update onboarding copy for new logo",
         description: undefined,
@@ -701,6 +712,7 @@ const mockOrganizationDetails: Record<string, any> = {
       },
       {
         id: 1005,
+        referenceId: "tckt-00005",
         orgId: 1,
         title: "Backlog: explore dark mode support",
         description: "Not urgent — just capturing the idea while it's fresh.",
@@ -720,8 +732,69 @@ const mockOrganizationDetails: Record<string, any> = {
         createdAt: "2026-01-11T09:00:00.000Z",
         updatedAt: "2026-01-11T09:00:00.000Z",
       },
-      ...generateMockTickets(100, 2001),
+      ...generateMockTickets(100, 2001, 6),
     ] satisfies TicketDetail[],
+
+    ticketRequests: [
+      {
+        id: 5001,
+        referenceId: "req-00001",
+        orgId: 1,
+        title: "Add live chat widget to support page",
+        description:
+          "Customers keep emailing asking if we have live chat. Can we add a simple widget to the support page?",
+        attachments: [],
+        ticketId: null,
+        client: genClient,
+        status: "pending",
+        createdAt: "2026-01-14T11:00:00.000Z",
+        updatedAt: "2026-01-14T11:00:00.000Z",
+      },
+      {
+        id: 5002,
+        referenceId: "req-00002",
+        orgId: 1,
+        title: "Monthly reports need a CSV export",
+        description:
+          "We manually copy numbers into a spreadsheet every month — an export button would save a lot of time.",
+        attachments: [],
+        ticketId: null,
+        client: genClient,
+        status: "pending",
+        createdAt: "2026-01-13T09:30:00.000Z",
+        updatedAt: "2026-01-13T09:30:00.000Z",
+      },
+      {
+        id: 5003,
+        referenceId: "req-00003",
+        orgId: 1,
+        title: "Add CSV export to the reports page",
+        description:
+          "Client asked for a way to export monthly reports as CSV, not just view them in-app.",
+        attachments: [],
+        ticketId: 1002,
+        client: genClient,
+        status: "approved",
+        createdAt: "2026-01-10T08:00:00.000Z",
+        updatedAt: "2026-01-15T08:00:00.000Z",
+      },
+      {
+        id: 5004,
+        referenceId: "req-00004",
+        orgId: 1,
+        title: "Redesign the entire homepage for free",
+        description:
+          "Not part of our support agreement — declining and following up about a separate design engagement.",
+        attachments: [],
+        ticketId: null,
+        client: genClient,
+        remarks:
+          "Not part of our support agreement — this is a new-build project, not a bug fix or small change. Following up separately about a paid design engagement.",
+        status: "rejected",
+        createdAt: "2026-01-09T15:00:00.000Z",
+        updatedAt: "2026-01-09T16:00:00.000Z",
+      },
+    ] satisfies TicketRequest[],
   },
 
   "acme-studio2": {
@@ -1036,6 +1109,7 @@ const mockOrganizationDetails: Record<string, any> = {
   tickets: [
     {
       id: 1001,
+      referenceId: "tckt-00001",
       orgId: 1,
       title: "Checkout button not responding on mobile Safari",
       description:
@@ -1079,6 +1153,7 @@ const mockOrganizationDetails: Record<string, any> = {
     },
     {
       id: 1002,
+      referenceId: "tckt-00002",
       orgId: 1,
       title: "Add CSV export to the reports page",
       description:
@@ -1118,6 +1193,7 @@ const mockOrganizationDetails: Record<string, any> = {
     },
     {
       id: 1003,
+      referenceId: "tckt-00003",
       orgId: 1,
       title: "Investigate flaky invite-email delivery",
       description:
@@ -1177,6 +1253,7 @@ const mockOrganizationDetails: Record<string, any> = {
     },
     {
       id: 1004,
+      referenceId: "tckt-00004",
       orgId: 1,
       title: "Update onboarding copy for new logo",
       description: undefined,
@@ -1217,6 +1294,7 @@ const mockOrganizationDetails: Record<string, any> = {
     },
     {
       id: 1005,
+      referenceId: "tckt-00005",
       orgId: 1,
       title: "Backlog: explore dark mode support",
       description: "Not urgent — just capturing the idea while it's fresh.",
@@ -1237,6 +1315,53 @@ const mockOrganizationDetails: Record<string, any> = {
       updatedAt: "2026-01-11T09:00:00.000Z",
     },
   ] satisfies TicketDetail[],
+
+  ticketRequests: [
+    {
+      id: 5101,
+      referenceId: "req-00001",
+      orgId: 1,
+      title: "Add live chat widget to support page",
+      description:
+        "Customers keep emailing asking if we have live chat. Can we add a simple widget to the support page?",
+      attachments: [],
+      ticketId: null,
+      client: genClient,
+      status: "pending",
+      createdAt: "2026-01-14T11:00:00.000Z",
+      updatedAt: "2026-01-14T11:00:00.000Z",
+    },
+    {
+      id: 5102,
+      referenceId: "req-00002",
+      orgId: 1,
+      title: "Add CSV export to the reports page",
+      description:
+        "Client asked for a way to export monthly reports as CSV, not just view them in-app.",
+      attachments: [],
+      ticketId: 1002,
+      client: genClient,
+      status: "approved",
+      createdAt: "2026-01-10T08:00:00.000Z",
+      updatedAt: "2026-01-15T08:00:00.000Z",
+    },
+    {
+      id: 5103,
+      referenceId: "req-00003",
+      orgId: 1,
+      title: "Redesign the entire homepage for free",
+      description:
+        "Not part of our support agreement — declining and following up about a separate design engagement.",
+      attachments: [],
+      ticketId: null,
+      client: genClient,
+      remarks:
+        "Not part of our support agreement — this is a new-build project, not a bug fix or small change. Following up separately about a paid design engagement.",
+      status: "rejected",
+      createdAt: "2026-01-09T15:00:00.000Z",
+      updatedAt: "2026-01-09T16:00:00.000Z",
+    },
+  ] satisfies TicketRequest[],
 };
 
 export async function getOrganizationBySlug(slug: string): Promise<any | null> {
@@ -1258,6 +1383,19 @@ export async function getTicketById(
       (t: TicketDetail) => t.id === id,
     );
     if (ticket) return { ticket, organization };
+  }
+  return null;
+}
+
+export async function getTicketRequestById(
+  id: number,
+): Promise<{ request: TicketRequest; organization: any } | null> {
+  // TODO: GET /ticket-requests/:id (with its organization joined/included)
+  for (const organization of Object.values(mockOrganizationDetails)) {
+    const request = organization?.ticketRequests?.find(
+      (r: TicketRequest) => r.id === id,
+    );
+    if (request) return { request, organization };
   }
   return null;
 }

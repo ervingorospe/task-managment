@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Modal } from "@/components/ui/modal";
@@ -17,7 +17,8 @@ import {
   type TicketFormValues,
 } from "@/lib/schemas/ticket.schema";
 import type { OrganizationDetail } from "@/lib/types/organization/organization-detail.type";
-import { ChevronDown } from "lucide-react";
+import type { TicketAttachment } from "@/lib/types/ticket/ticket-detail.type";
+import { ChevronDown, Paperclip } from "lucide-react";
 
 interface TicketFormModalProps {
   open: boolean;
@@ -25,9 +26,22 @@ interface TicketFormModalProps {
   onSubmit: (values: TicketFormValues) => void;
   organizations: OrganizationDetail[];
   currentOrganizationId: number;
+  /** Pre-fills the form — used when creating a ticket from an approved request. */
+  initialValues?: Partial<TicketFormValues>;
+  /** Already-uploaded files carried over from a request — shown read-only, and merged into the ticket's attachments on submit. */
+  existingAttachments?: TicketAttachment[];
+  title?: string;
 }
 
-function emptyDefaults(organizationId: number): TicketFormValues {
+function formatSize(bytes: number): string {
+  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function emptyDefaults(
+  organizationId: number,
+  initialValues?: Partial<TicketFormValues>,
+): TicketFormValues {
   return {
     organizationId: String(organizationId),
     title: "",
@@ -36,6 +50,7 @@ function emptyDefaults(organizationId: number): TicketFormValues {
     clientId: null,
     dueDate: "",
     attachments: [],
+    ...initialValues,
   };
 }
 
@@ -45,6 +60,9 @@ export default function TicketFormModal({
   onSubmit,
   organizations,
   currentOrganizationId,
+  initialValues,
+  existingAttachments = [],
+  title = "Create ticket",
 }: TicketFormModalProps) {
   const {
     control,
@@ -55,23 +73,45 @@ export default function TicketFormModal({
     formState: { errors },
   } = useForm<TicketFormValues>({
     resolver: zodResolver(ticketFormSchema),
-    defaultValues: emptyDefaults(currentOrganizationId),
+    defaultValues: emptyDefaults(currentOrganizationId, initialValues),
   });
+
+  // The modal instance is reused across opens — re-seed the form each time
+  // it opens (e.g. approving a different request needs its own prefill).
+  useEffect(() => {
+    if (open) {
+      reset(emptyDefaults(currentOrganizationId, initialValues));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
 
   const selectedOrgId = watch("organizationId");
   const selectedOrg = organizations.find((o) => String(o.id) === selectedOrgId);
   const members = selectedOrg?.members ?? [];
 
+  // Members don't always come back with `role` resolved (some mock records
+  // only carry `roleId`) — fall back to matching against the org's own
+  // "Client" role id so this doesn't silently misclassify clients as
+  // assignable members (or vice versa) when that's the case.
+  const clientRoleId = selectedOrg?.roles.find(
+    (r) => r.roleName === "Client",
+  )?.id;
+  const isClient = (m: (typeof members)[number]) =>
+    m.role?.roleName === "Client" || m.roleId === clientRoleId;
+
   // Assignees: anyone who isn't a Client — clients are the requester
   // (see clientId below), not someone tickets get assigned to.
-  const assignableMembers = members.filter(
-    (m) => m.role?.roleName !== "Client",
-  );
-  const clientMembers = members.filter((m) => m.role?.roleName === "Client");
+  const assignableMembers = members.filter((m) => !isClient(m));
+  const clientMembers = members.filter(isClient);
 
   // Selections from the previous org don't carry over — a member valid
-  // in Org A isn't necessarily a member of Org B at all.
+  // in Org A isn't necessarily a member of Org B at all. Guarded against
+  // the initial org id so this doesn't also wipe out a prefill (e.g.
+  // approving a request) the moment the modal mounts.
+  const lastOrgId = useRef(selectedOrgId);
   useEffect(() => {
+    if (selectedOrgId === lastOrgId.current) return;
+    lastOrgId.current = selectedOrgId;
     setValue("assigneeIds", []);
     setValue("clientId", null);
   }, [selectedOrgId, setValue]);
@@ -91,7 +131,7 @@ export default function TicketFormModal({
     <Modal
       open={open}
       onClose={handleClose}
-      title="Create ticket"
+      title={title}
       footer={
         <>
           <Button variant="secondary" onClick={handleClose}>
@@ -129,7 +169,41 @@ export default function TicketFormModal({
           placeholder="What's going on? Supports markdown formatting."
         />
 
-        <FileAttachmentInput name="attachments" control={control} />
+        {existingAttachments.length > 0 && (
+          <div>
+            <label className="mb-1 block text-sm font-medium text-ink">
+              Attached with the request
+            </label>
+            <ul className="space-y-1">
+              {existingAttachments.map((file) => (
+                <li key={file.id}>
+                  <a
+                    href={file.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-1.5 rounded border border-line bg-canvas px-2.5 py-1.5 text-xs text-ink hover:text-accent-text"
+                  >
+                    <Paperclip size={12} className="shrink-0 text-ink-faint" />
+                    <span className="truncate">{file.name}</span>
+                    <span className="shrink-0 text-ink-faint">
+                      ({formatSize(file.size)})
+                    </span>
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        <FileAttachmentInput
+          name="attachments"
+          control={control}
+          label={
+            existingAttachments.length > 0
+              ? "Add more attachments"
+              : "Attachments"
+          }
+        />
 
         <div className="w-full">
           <label className="mb-1 block text-sm font-medium text-ink">

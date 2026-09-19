@@ -17,6 +17,7 @@ export interface TicketFilterState {
   tagIds: number[];
   dateFrom: string | null;
   dateTo: string | null;
+  overdueOnly: boolean;
 }
 
 export const emptyTicketFilter: TicketFilterState = {
@@ -24,6 +25,7 @@ export const emptyTicketFilter: TicketFilterState = {
   tagIds: [],
   dateFrom: null,
   dateTo: null,
+  overdueOnly: false,
 };
 
 const MAX_VISIBLE_MEMBERS = 10;
@@ -33,7 +35,8 @@ function countActive(filter: TicketFilterState): number {
     filter.memberIds.length +
     filter.tagIds.length +
     (filter.dateFrom ? 1 : 0) +
-    (filter.dateTo ? 1 : 0)
+    (filter.dateTo ? 1 : 0) +
+    (filter.overdueOnly ? 1 : 0)
   );
 }
 
@@ -249,6 +252,21 @@ function TicketFilterContent({
           </div>
         </PropertyRow>
       </div>
+
+      {/* Overdue only */}
+      <PropertyRow label="Status" className="mt-4">
+        <CheckboxBase
+          checked={draft.overdueOnly}
+          onChange={() =>
+            setDraft((prev) => ({
+              ...prev,
+              overdueOnly: !prev.overdueOnly,
+            }))
+          }
+          label="Overdue only"
+          className="px-1 py-0.5"
+        />
+      </PropertyRow>
 
       {/* Due Date Range */}
       <PropertyRow label="Due date range" className="mt-4">

@@ -1,8 +1,7 @@
 "use client";
 
-import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
 import { Paperclip } from "lucide-react";
+import { ClampedText } from "@/components/ui/clamped-text";
 import type { TicketAttachment } from "@/lib/types/ticket/ticket-detail.type";
 import { toPlainText } from "@/lib/helper/render-description";
 
@@ -26,49 +25,15 @@ export default function TicketDescriptionCell({
   description,
   attachments,
 }: TicketDescriptionCellProps) {
-  const contentRef = useRef<HTMLParagraphElement>(null);
-  const [isTruncated, setIsTruncated] = useState(false);
-
   const hasContent = Boolean(description?.trim());
   const plainText = toPlainText(description);
-
-  useEffect(() => {
-    const element = contentRef.current;
-
-    if (!element || !hasContent) {
-      setIsTruncated(false);
-      return;
-    }
-
-    // Let the browser render the HTML first.
-    requestAnimationFrame(() => {
-      if (!contentRef.current) return;
-
-      const el = contentRef.current;
-
-      setIsTruncated(el.scrollHeight > el.clientHeight + 1);
-    });
-  }, [description, hasContent]);
 
   return (
     <div className="max-w-md">
       {!hasContent ? (
         <span className="text-ink-faint">—</span>
       ) : (
-        <>
-          <p ref={contentRef} className="ticket-description-preview">
-            {plainText}
-          </p>
-
-          {isTruncated && (
-            <Link
-              href={`/dashboard/tickets/${ticketId}`}
-              className="mt-1 inline-block text-xs font-medium text-accent-text hover:underline"
-            >
-              View more
-            </Link>
-          )}
-        </>
+        <ClampedText text={plainText} href={`/dashboard/tickets/${ticketId}`} />
       )}
 
       {attachments.length > 0 && (

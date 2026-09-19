@@ -19,17 +19,21 @@ import { DueChip } from "./due-chip";
 
 interface TicketDetailsCardProps {
   tag: TagDetail;
+  onChangeTag: (tag: TagDetail) => void;
   client: MemberDetail | null;
   assignees: MemberDetail[];
   dueDate: string | null;
+  onDueDateChange: (dueDate: string | null) => void;
   organization: OrganizationDetail;
 }
 
 export default function TicketDetailsCard({
-  tag: initialTag,
+  tag,
+  onChangeTag,
   client,
   assignees: initialAssignees,
-  dueDate: initialDueDate,
+  dueDate,
+  onDueDateChange,
   organization,
 }: TicketDetailsCardProps) {
   const toast = useToast();
@@ -37,14 +41,12 @@ export default function TicketDetailsCard({
     (m) => m.role?.roleName !== "Client",
   );
 
-  const [tag, setTag] = useState(initialTag);
   const [assignees, setAssignees] = useState(initialAssignees);
-  const [dueDate, setDueDate] = useState(initialDueDate);
 
   const dueState = getDueState({ tag, dueDate });
 
   function handleChangeTag(nextTag: TagDetail) {
-    setTag(nextTag);
+    onChangeTag(nextTag);
     toast(`Status changed to "${nextTag.tagName}"`);
     // TODO: PATCH /tickets/:id { tag_id: nextTag.id }
   }
@@ -56,7 +58,7 @@ export default function TicketDetailsCard({
   }
 
   function handleDueDateChange(value: string) {
-    setDueDate(value || null);
+    onDueDateChange(value || null);
     toast(value ? "Due date updated" : "Due date cleared");
     // TODO: PATCH /tickets/:id { due_date: value }
   }

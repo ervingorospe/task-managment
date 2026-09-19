@@ -6,6 +6,7 @@ import { TagDetail } from "./tag-detail.type";
 import { User } from "../user/user.type";
 import { OrgCapacity } from "./organization-capacity.type";
 import { TicketDetail } from "../ticket/ticket-detail.type";
+import { TicketRequest } from "../ticket/ticket-request.type";
 
 export interface OrganizationDetail {
   id: number;
@@ -26,4 +27,5 @@ export interface OrganizationDetail {
   pendingInvites?: MemberInviteDetail[];
   pendingOwnershipTransfer?: MemberInviteDetail;
   tickets: TicketDetail[];
+  ticketRequests: TicketRequest[];
 }
