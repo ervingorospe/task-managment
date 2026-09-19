@@ -1,6 +1,6 @@
 "use client";
 
-import { memo } from "react";
+import { memo, type ReactNode } from "react";
 import Link from "next/link";
 import Tooltip from "@/components/ui/tooltip";
 import Avatar from "@/components/ui/avatar";
@@ -25,6 +25,7 @@ interface TicketListProps {
   onToggleStar: (ticketId: number) => void;
   emptyTitle?: string;
   emptySubtitle?: string;
+  emptyAction?: ReactNode;
 }
 
 function formatTimeframe(ticket: TicketDetail) {
@@ -41,9 +42,14 @@ function TicketListComponent({
   onToggleStar,
   emptyTitle = "No tickets yet",
   emptySubtitle = "Create your first ticket to get started.",
+  emptyAction,
 }: TicketListProps) {
   if (tickets.length === 0) {
-    return <EmptyState title={emptyTitle} subtitle={emptySubtitle} />;
+    return (
+      <EmptyState title={emptyTitle} subtitle={emptySubtitle}>
+        {emptyAction}
+      </EmptyState>
+    );
   }
 
   return (

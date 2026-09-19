@@ -11,6 +11,7 @@ import TicketFormModal from "./ticket-form-modal";
 import { TicketList } from "./ticket-list";
 import {
   TicketFilterDropdown,
+  emptyTicketFilter,
   type TicketFilterState,
 } from "./ticket-filter-dropdown";
 import { useAuth, usePermission } from "@/providers/auth-provider";
@@ -157,6 +158,23 @@ export default function TicketsPageClient({
       filtered.slice((currentPage - 1) * pageSize, currentPage * pageSize),
     [filtered, currentPage, pageSize],
   );
+
+  // Distinguishes "nothing exists yet" from "your search/filters matched
+  // nothing" so the empty state points at the right fix.
+  const hasActiveQuery =
+    Boolean(search) ||
+    filter.tagIds.length > 0 ||
+    filter.memberIds.length > 0 ||
+    Boolean(filter.dateFrom) ||
+    Boolean(filter.dateTo) ||
+    filter.overdueOnly;
+  const noResultsFromQuery =
+    viewableTickets.length > 0 && filtered.length === 0 && hasActiveQuery;
+
+  const handleClearFilters = useCallback(() => {
+    setFilter(emptyTicketFilter);
+    setSearchInput("");
+  }, [setFilter, setSearchInput]);
 
   const handleFilterChange = useCallback(
     (value: TicketFilterState) => {
@@ -316,11 +334,30 @@ export default function TicketsPageClient({
             onChangeTag={handleChangeTag}
             onAssign={handleAssign}
             onToggleStar={handleToggleStar}
-            emptyTitle={starredOnly ? "No starred tickets" : undefined}
+            emptyTitle={
+              noResultsFromQuery
+                ? "No matching tickets"
+                : starredOnly
+                  ? "No starred tickets"
+                  : undefined
+            }
             emptySubtitle={
-              starredOnly
-                ? "Star a ticket from the list to pin it here."
-                : undefined
+              noResultsFromQuery
+                ? "Try adjusting your search or filters."
+                : starredOnly
+                  ? "Star a ticket from the list to pin it here."
+                  : undefined
+            }
+            emptyAction={
+              noResultsFromQuery ? (
+                <Button
+                  variant="secondary"
+                  className="mt-3"
+                  onClick={handleClearFilters}
+                >
+                  Clear filters
+                </Button>
+              ) : undefined
             }
           />
         </DataTable>

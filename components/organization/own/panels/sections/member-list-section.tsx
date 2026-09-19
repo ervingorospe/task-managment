@@ -1,6 +1,6 @@
 "use client";
 
-import { memo } from "react";
+import { memo, type ReactNode } from "react";
 import { UserX, UserCheck, Trash2, Shuffle } from "lucide-react";
 import List from "@/components/ui/list";
 import Avatar from "@/components/ui/avatar";
@@ -18,6 +18,9 @@ interface MemberListProps {
   onToggleActive: (member: MemberDetail) => void;
   onRemove: (member: MemberDetail) => void;
   onChangeRole: (member: MemberDetail) => void;
+  emptyTitle?: string;
+  emptySubtitle?: string;
+  emptyAction?: ReactNode;
 }
 
 function MemberListSection({
@@ -26,13 +29,15 @@ function MemberListSection({
   onToggleActive,
   onRemove,
   onChangeRole,
+  emptyTitle = "No members yet",
+  emptySubtitle = "Members who accept an invitation will appear here.",
+  emptyAction,
 }: MemberListProps) {
   if (members.length === 0) {
     return (
-      <EmptyState
-        title="No members yet"
-        subtitle="Members who accept an invitation will appear here."
-      />
+      <EmptyState title={emptyTitle} subtitle={emptySubtitle}>
+        {emptyAction}
+      </EmptyState>
     );
   }
 

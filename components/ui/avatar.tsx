@@ -1,7 +1,7 @@
 import Image from "next/image";
 import clsx from "clsx";
 
-type AvatarSize = "sm" | "md" | "lg";
+type AvatarSize = "sm" | "md" | "lg" | "xl";
 
 const sizeMap: Record<
   AvatarSize,
@@ -10,6 +10,7 @@ const sizeMap: Record<
   sm: { box: "h-6 w-6", text: "text-[10px]", pixels: 24 },
   md: { box: "h-8 w-8", text: "text-sm", pixels: 32 },
   lg: { box: "h-11 w-11", text: "text-base", pixels: 44 },
+  xl: { box: "h-20 w-20", text: "text-2xl", pixels: 80 },
 };
 
 interface AvatarProps {

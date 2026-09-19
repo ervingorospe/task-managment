@@ -12,6 +12,7 @@ import { RequestList } from "./request-list";
 import { RejectRequestModal } from "./reject-request-modal";
 import {
   RequestFilterDropdown,
+  emptyRequestFilter,
   type RequestFilterState,
 } from "./request-filter-dropdown";
 import { useAuth, usePermission } from "@/providers/auth-provider";
@@ -161,6 +162,21 @@ export default function RequestsPageClient({
       filtered.slice((currentPage - 1) * pageSize, currentPage * pageSize),
     [filtered, currentPage, pageSize],
   );
+
+  // Distinguishes "nothing exists yet" from "your search/filters matched
+  // nothing" so the empty state points at the right fix.
+  const hasActiveQuery =
+    Boolean(search) ||
+    filter.statuses.length > 0 ||
+    Boolean(filter.dateFrom) ||
+    Boolean(filter.dateTo);
+  const noResultsFromQuery =
+    visibleRequests.length > 0 && filtered.length === 0 && hasActiveQuery;
+
+  const handleClearFilters = useCallback(() => {
+    setFilter(emptyRequestFilter);
+    setSearchInput("");
+  }, [setFilter, setSearchInput]);
 
   const handleFilterChange = useCallback(
     (value: RequestFilterState) => {
@@ -335,12 +351,29 @@ export default function RequestsPageClient({
               onApprove={setApproveTarget}
               onReject={setRejectTarget}
               emptyTitle={
-                canViewAllTickets ? "No requests yet" : "No requests submitted"
+                noResultsFromQuery
+                  ? "No matching requests"
+                  : canViewAllTickets
+                    ? "No requests yet"
+                    : "No requests submitted"
               }
               emptySubtitle={
-                canViewAllTickets
-                  ? "Requests submitted by clients will show up here."
-                  : 'Use "New request" to ask the team for a new ticket.'
+                noResultsFromQuery
+                  ? "Try adjusting your search or filters."
+                  : canViewAllTickets
+                    ? "Requests submitted by clients will show up here."
+                    : 'Use "New request" to ask the team for a new ticket.'
+              }
+              emptyAction={
+                noResultsFromQuery ? (
+                  <Button
+                    variant="secondary"
+                    className="mt-3"
+                    onClick={handleClearFilters}
+                  >
+                    Clear filters
+                  </Button>
+                ) : undefined
               }
             />
           </div>

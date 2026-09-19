@@ -3,6 +3,7 @@ import { ChevronRight, Plus } from "lucide-react";
 import { Button } from "@/components/ui/buttons/button";
 import List from "@/components/ui/list";
 import Avatar from "@/components/ui/avatar";
+import EmptyState from "@/components/ui/empty-state";
 import { getOwnedOrganizations } from "@/lib/data/organizations";
 import { AccountTypeGuard } from "@/components/auth/account-type.guard";
 import { ACCOUNT_TYPE } from "@/lib/constants/accoun-type.constant";
@@ -32,17 +33,15 @@ export default async function MyOrganizationsPage() {
       </div>
 
       {!hasOrganizations ? (
-        <div className="mt-6 rounded border border-dashed border-line p-10 text-center">
-          <p className="text-sm font-medium text-ink">
-            You don&apos;t own any organizations yet.
-          </p>
-          <p className="mt-1 text-sm text-ink-muted">
-            Create an organization to start managing your team, roles, and
-            projects.
-          </p>
-          <Link href="/dashboard/my-organizations/create">
-            <Button className="mt-4">Create Organization</Button>
-          </Link>
+        <div className="mt-6">
+          <EmptyState
+            title="You don't own any organizations yet."
+            subtitle="Create an organization to start managing your team, roles, and projects."
+          >
+            <Link href="/dashboard/my-organizations/create">
+              <Button className="mt-4">Create Organization</Button>
+            </Link>
+          </EmptyState>
         </div>
       ) : (
         <List className="mt-6">

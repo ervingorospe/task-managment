@@ -8,6 +8,7 @@ import {
 } from "@/components/organization/member/member-list-toolbar";
 import { Pagination } from "@/components/ui/pagination";
 import Card from "@/components/ui/card";
+import { Button } from "@/components/ui/buttons/button";
 import { lazyNamed } from "@/lib/helper/lazy-named";
 import { MemberDetail } from "@/lib/types/organization/member-detail.type";
 import { RoleDetail } from "@/lib/types/organization/role-detail.type";
@@ -150,6 +151,15 @@ export default function MembersSection({
     setPendingAction({ type: "remove", member });
   }, []);
 
+  // Distinguishes "no members at all" from "your search matched nothing"
+  // so the empty state points at the right fix.
+  const noResultsFromQuery =
+    members.length > 0 && sorted.length === 0 && Boolean(search);
+
+  const handleClearSearch = useCallback(() => {
+    setSearchInput("");
+  }, [setSearchInput]);
+
   const dialogCopy = pendingAction
     ? pendingAction.type === "toggle"
       ? pendingAction.member.isActive
@@ -196,6 +206,21 @@ export default function MembersSection({
           onToggleActive={handleToggleActive}
           onRemove={handleRemove}
           onChangeRole={setActiveRoleMember}
+          emptyTitle={noResultsFromQuery ? "No matching members" : undefined}
+          emptySubtitle={
+            noResultsFromQuery ? "Try a different search term." : undefined
+          }
+          emptyAction={
+            noResultsFromQuery ? (
+              <Button
+                variant="secondary"
+                className="mt-3"
+                onClick={handleClearSearch}
+              >
+                Clear search
+              </Button>
+            ) : undefined
+          }
         />
 
         <Pagination

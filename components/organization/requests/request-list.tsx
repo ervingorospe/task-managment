@@ -1,6 +1,6 @@
 "use client";
 
-import { memo } from "react";
+import { memo, type ReactNode } from "react";
 import Link from "next/link";
 import { Check, Paperclip, X } from "lucide-react";
 import EmptyState from "@/components/ui/empty-state";
@@ -17,6 +17,7 @@ interface RequestListProps {
   onReject: (request: TicketRequest) => void;
   emptyTitle?: string;
   emptySubtitle?: string;
+  emptyAction?: ReactNode;
 }
 
 function formatDate(iso: string) {
@@ -34,9 +35,14 @@ function RequestListComponent({
   onReject,
   emptyTitle = "No requests yet",
   emptySubtitle = "Requests submitted by clients will show up here.",
+  emptyAction,
 }: RequestListProps) {
   if (requests.length === 0) {
-    return <EmptyState title={emptyTitle} subtitle={emptySubtitle} />;
+    return (
+      <EmptyState title={emptyTitle} subtitle={emptySubtitle}>
+        {emptyAction}
+      </EmptyState>
+    );
   }
 
   return (

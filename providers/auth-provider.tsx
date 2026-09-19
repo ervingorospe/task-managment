@@ -30,6 +30,9 @@ interface AuthContextValue {
   login: (email: string, password: string) => LoginResult;
   logout: () => void;
   switchOrganization: (organizationId: number) => void;
+  updateProfile: (
+    patch: Partial<Pick<CurrentUser, "firstName" | "lastName" | "email" | "avatar">>,
+  ) => void;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -64,6 +67,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setActiveOrgId(null);
   }
 
+  function updateProfile(
+    patch: Partial<Pick<CurrentUser, "firstName" | "lastName" | "email" | "avatar">>,
+  ) {
+    setCurrentUser((prev) => (prev ? { ...prev, ...patch } : prev));
+    // TODO: PATCH /users/me
+  }
+
   function switchOrganization(organizationId: number) {
     if (!currentUser) return;
 
@@ -95,6 +105,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         login,
         logout,
         switchOrganization,
+        updateProfile,
       }}
     >
       {children}

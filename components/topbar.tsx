@@ -84,7 +84,7 @@ export function Topbar() {
             </p>
           </div>
 
-          <Dropdown.DropdownItem href="/profile">
+          <Dropdown.DropdownItem href="/dashboard/profile">
             <User size={15} />
             Profile
           </Dropdown.DropdownItem>
