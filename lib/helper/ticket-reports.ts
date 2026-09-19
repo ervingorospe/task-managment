@@ -1,6 +1,7 @@
 import type { TicketDetail } from "../types/ticket/ticket-detail.type";
 import type { TagDetail } from "../types/organization/tag-detail.type";
 import { getDueState } from "./ticket-status";
+import { getMemberName } from "./member-name";
 
 export interface DateRange {
   from: string | null; // YYYY-MM-DD
@@ -49,6 +50,36 @@ export function getStatusBreakdown(
   }
 
   return Array.from(byTag.values()).sort((a, b) => b.count - a.count);
+}
+
+export interface AssigneeBreakdownRow {
+  memberId: number;
+  name: string;
+  count: number;
+}
+
+/** How many tickets each member is currently assigned to, busiest first. */
+export function getAssigneeBreakdown(
+  tickets: TicketDetail[],
+): AssigneeBreakdownRow[] {
+  const byMember = new Map<number, AssigneeBreakdownRow>();
+
+  for (const ticket of tickets) {
+    for (const member of ticket.assignees) {
+      const existing = byMember.get(member.id);
+      if (existing) {
+        existing.count += 1;
+      } else {
+        byMember.set(member.id, {
+          memberId: member.id,
+          name: getMemberName(member),
+          count: 1,
+        });
+      }
+    }
+  }
+
+  return Array.from(byMember.values()).sort((a, b) => b.count - a.count);
 }
 
 export interface DueSummary {
@@ -273,6 +304,69 @@ export function getMonthComparisonSeries(
     return {
       id: month,
       label: formatMonthLabel(month),
+      color: MONTH_COMPARISON_COLORS[i],
+      points,
+    };
+  });
+}
+
+export interface YearComparisonOptions {
+  yearA: string; // "YYYY"
+  yearB: string; // "YYYY"
+  tagIds: number[]; // empty = all tags
+  overdueOnly: boolean;
+}
+
+const MONTH_LABELS = [
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec",
+];
+
+/**
+ * One series per selected year, bucketed by month (1..12) so two different
+ * years can share the same x-axis — the year-level counterpart to
+ * getMonthComparisonSeries's day-of-month bucketing.
+ */
+export function getYearComparisonSeries(
+  tickets: TicketDetail[],
+  options: YearComparisonOptions,
+): TrendSeries[] {
+  const { yearA, yearB, tagIds, overdueOnly } = options;
+
+  return [yearA, yearB].map((year, i) => {
+    const counts = new Map<number, number>();
+
+    for (const t of tickets) {
+      if (t.createdAt.slice(0, 4) !== year) continue;
+      if (tagIds.length > 0 && !tagIds.includes(t.tag.id)) continue;
+      if (overdueOnly && getDueState(t) !== "overdue") continue;
+
+      const month = Number(t.createdAt.slice(5, 7));
+      counts.set(month, (counts.get(month) ?? 0) + 1);
+    }
+
+    const points: TrendPoint[] = [];
+    for (let month = 1; month <= 12; month++) {
+      points.push({
+        x: month,
+        y: counts.get(month) ?? 0,
+        xLabel: MONTH_LABELS[month - 1],
+      });
+    }
+
+    return {
+      id: year,
+      label: year,
       color: MONTH_COMPARISON_COLORS[i],
       points,
     };

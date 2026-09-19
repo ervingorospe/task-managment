@@ -24,11 +24,11 @@ export default function DashboardLayout({
   if (!isAuthenticated) return null;
 
   return (
-    <div className="flex min-h-screen bg-canvas">
+    <div className="flex min-h-screen bg-canvas print:block">
       <Sidebar />
-      <div className="flex flex-1 flex-col pb-[100px]">
+      <div className="flex flex-1 flex-col pb-[100px] print:pb-0">
         <Topbar />
-        <main className="flex-1 p-6">{children}</main>
+        <main className="flex-1 p-6 print:p-0">{children}</main>
       </div>
     </div>
   );

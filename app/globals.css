@@ -252,3 +252,19 @@
   line-height: 1.5;
   color: #5b6b65;
 }
+
+/* =========================================================
+   Printing (e.g. "Download PDF" on the Reports page, which
+   just triggers the browser's print dialog)
+   ========================================================= */
+
+@media print {
+  * {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .print-avoid-break {
+    break-inside: avoid;
+  }
+}

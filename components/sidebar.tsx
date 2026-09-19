@@ -83,7 +83,7 @@ export function Sidebar() {
   }, [pathname]);
 
   return (
-    <aside className="flex w-56 shrink-0 flex-col border-r border-line bg-surface">
+    <aside className="flex w-56 shrink-0 flex-col border-r border-line bg-surface print:hidden">
       <div className="flex h-14 items-center border-b border-line px-4">
         <span className="text-sm font-semibold text-ink">Work Orders</span>
       </div>

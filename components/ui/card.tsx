@@ -16,7 +16,7 @@ export default function Card({
   children,
 }: CardProps) {
   return (
-    <div className="rounded border border-line bg-surface p-6">
+    <div className="print-avoid-break rounded border border-line bg-surface p-6">
       <div className="space-y-5">
         <div className="flex items-start justify-between">
           <div>

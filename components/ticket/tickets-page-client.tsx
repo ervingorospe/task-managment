@@ -1,11 +1,12 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Plus } from "lucide-react";
+import { AlertTriangle, Plus, Tag as TagIcon, Ticket as TicketIcon } from "lucide-react";
 import { Can } from "@/components/auth/can";
 import { PERMISSIONS } from "@/lib/data/permissions";
 import { Button } from "@/components/ui/buttons/button";
 import { DataTable } from "@/components/ui/data-table";
+import { MiniStatCard, type MiniStat } from "@/components/ui/mini-stat-card";
 import TicketFormModal from "./ticket-form-modal";
 import { TicketList } from "./ticket-list";
 import {
@@ -17,6 +18,7 @@ import { useToast } from "@/providers/toast-provider";
 import { useTicketListQueryState } from "@/hooks/use-ticket-list-query-state";
 import { isTicketIncluded } from "@/lib/helper/ticket-access";
 import { getDueState } from "@/lib/helper/ticket-status";
+import { getStatusBreakdown } from "@/lib/helper/ticket-reports";
 import { formatReferenceId } from "@/lib/helper/reference-id";
 import type { OrganizationDetail } from "@/lib/types/organization/organization-detail.type";
 import type { TicketDetail } from "@/lib/types/ticket/ticket-detail.type";
@@ -107,6 +109,38 @@ export default function TicketsPageClient({
       return true;
     });
   }, [searched, filter]);
+
+  const overdueCount = viewableTickets.filter(
+    (t) => getDueState(t) === "overdue",
+  ).length;
+  const statusRows = getStatusBreakdown(viewableTickets);
+
+  const statTiles: MiniStat[] = [
+    {
+      label: "Total",
+      value: viewableTickets.length,
+      icon: TicketIcon,
+      tint: "bg-accent-subtle",
+      iconColor: "text-accent-text",
+      valueColor: "text-ink",
+      barColor: "bg-accent",
+    },
+    {
+      label: "Overdue",
+      value: overdueCount,
+      icon: AlertTriangle,
+      tint: overdueCount > 0 ? "bg-danger-subtle" : "bg-canvas",
+      iconColor: overdueCount > 0 ? "text-danger" : "text-ink-faint",
+      valueColor: overdueCount > 0 ? "text-danger" : "text-ink",
+      barColor: overdueCount > 0 ? "bg-danger" : "bg-line",
+    },
+    ...statusRows.map((row) => ({
+      label: row.tagName,
+      value: row.count,
+      icon: TagIcon,
+      accentColor: row.color,
+    })),
+  ];
 
   const totalPages = Math.max(Math.ceil(filtered.length / pageSize), 1);
   const currentPage = Math.min(page, totalPages);
@@ -215,6 +249,12 @@ export default function TicketsPageClient({
             </Button>
           </Can>
         )}
+      </div>
+
+      <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-7">
+        {statTiles.map((stat) => (
+          <MiniStatCard key={stat.label} {...stat} />
+        ))}
       </div>
 
       <div className="mt-6">

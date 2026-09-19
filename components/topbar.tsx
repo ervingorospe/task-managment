@@ -6,7 +6,6 @@ import Avatar from "@/components/ui/avatar";
 import Dropdown from "@/components/ui/dropdown";
 import {
   ChevronDown,
-  Bell,
   User,
   Settings,
   LogOut,
@@ -44,7 +43,7 @@ export function Topbar() {
   }
 
   return (
-    <header className="flex h-14 items-center justify-between bg-accent px-4">
+    <header className="flex h-14 items-center justify-between bg-accent px-4 print:hidden">
       <Dropdown
         align="start"
         trigger={
@@ -65,10 +64,6 @@ export function Topbar() {
       </Dropdown>
 
       <div className="flex items-center gap-3">
-        <button className="rounded p-1.5 text-ink/70 hover:bg-black/5 hover:text-ink">
-          <Bell size={17} />
-        </button>
-
         <Dropdown
           side="bottom"
           align="end"

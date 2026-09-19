@@ -1,7 +1,9 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { AlertTriangle, CheckCircle2, Ticket as TicketIcon } from "lucide-react";
 import Card from "@/components/ui/card";
+import { StatTileCard, type StatTile } from "@/components/ui/stat-tile-card";
 import {
   filterTicketsByDateRange,
   getDueSummary,
@@ -11,6 +13,7 @@ import {
   type TrendSelection,
 } from "@/lib/helper/ticket-reports";
 import { StatusBreakdownChart } from "./status-breakdown-chart";
+import { StatusPieChart } from "./status-pie-chart";
 import { TrendLineChart } from "./trend-line-chart";
 import { DateRangeControl } from "./date-range-control";
 import { TrendSeriesSelect } from "./trend-series-select";
@@ -53,10 +56,37 @@ export default function TicketReports({ organization }: TicketReportsProps) {
     [rangedTickets, organization.tags, trendSelection, dateRange],
   );
 
-  const stats = [
-    { label: "Total tickets", value: tickets.length },
-    { label: "Overdue", value: dueSummary.overdue, flagged: true },
-    { label: "On time", value: dueSummary.onTime },
+  const statTiles: StatTile[] = [
+    {
+      label: "Total tickets",
+      value: tickets.length,
+      caption: "across every status",
+      icon: TicketIcon,
+      tint: "bg-accent-subtle",
+      iconColor: "text-accent-text",
+      valueColor: "text-ink",
+      barColor: "bg-accent",
+    },
+    {
+      label: "Overdue",
+      value: dueSummary.overdue,
+      caption: "past their due date",
+      icon: AlertTriangle,
+      tint: dueSummary.overdue > 0 ? "bg-danger-subtle" : "bg-canvas",
+      iconColor: dueSummary.overdue > 0 ? "text-danger" : "text-ink-faint",
+      valueColor: dueSummary.overdue > 0 ? "text-danger" : "text-ink",
+      barColor: dueSummary.overdue > 0 ? "bg-danger" : "bg-line",
+    },
+    {
+      label: "On time",
+      value: dueSummary.onTime,
+      caption: "on track to meet their due date",
+      icon: CheckCircle2,
+      tint: "bg-accent-subtle",
+      iconColor: "text-accent-text",
+      valueColor: "text-ink",
+      barColor: "bg-accent",
+    },
   ];
 
   return (
@@ -68,18 +98,9 @@ export default function TicketReports({ organization }: TicketReportsProps) {
         </p>
       </div>
 
-      <div className="grid grid-cols-3 gap-px overflow-hidden rounded border border-line bg-line">
-        {stats.map((stat) => (
-          <div key={stat.label} className="bg-surface p-4">
-            <p className="text-sm text-ink-muted">{stat.label}</p>
-            <p
-              className={`mt-1 text-2xl font-semibold ${
-                stat.flagged && stat.value > 0 ? "text-danger" : "text-ink"
-              }`}
-            >
-              {stat.value}
-            </p>
-          </div>
+      <div className="grid grid-cols-3 gap-4">
+        {statTiles.map((stat) => (
+          <StatTileCard key={stat.label} {...stat} />
         ))}
       </div>
 
@@ -91,7 +112,10 @@ export default function TicketReports({ organization }: TicketReportsProps) {
         title="Status breakdown"
         subtitle="How many tickets sit in each stage — scoped to the date range above, when set."
       >
-        <StatusBreakdownChart rows={statusRows} />
+        <div className="grid gap-6 lg:grid-cols-2">
+          <StatusPieChart rows={statusRows} />
+          <StatusBreakdownChart rows={statusRows} />
+        </div>
       </Card>
 
       <Card
@@ -112,8 +136,8 @@ export default function TicketReports({ organization }: TicketReportsProps) {
       </Card>
 
       <Card
-        title="Compare two months"
-        subtitle="See how ticket creation compares month to month, by tag or overdue status."
+        title="Compare two periods"
+        subtitle="See how ticket creation compares month to month or year to year, by tag or overdue status."
       >
         <MonthComparisonChart tickets={tickets} tags={organization.tags} />
       </Card>

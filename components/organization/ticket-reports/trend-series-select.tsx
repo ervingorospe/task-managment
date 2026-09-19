@@ -24,37 +24,48 @@ export function TrendSeriesSelect({
     });
   }
 
+  const selectedLabels = [
+    value.created && "Created",
+    value.dueDate && "Due date",
+    ...tags.filter((t) => value.tagIds.includes(t.id)).map((t) => t.tagName),
+  ].filter(Boolean);
+
   return (
-    <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-      <CheckboxBase
-        checked={value.created}
-        onChange={() => onChange({ ...value, created: !value.created })}
-        label="Created"
-      />
-      <CheckboxBase
-        checked={value.dueDate}
-        onChange={() => onChange({ ...value, dueDate: !value.dueDate })}
-        label="Due date"
-      />
-
-      <span className="h-4 w-px bg-line" />
-
-      {tags.map((tag) => (
+    <>
+      <p className="hidden text-sm text-ink-muted print:block">
+        Plotting: {selectedLabels.length > 0 ? selectedLabels.join(", ") : "nothing selected"}
+      </p>
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 print:hidden">
         <CheckboxBase
-          key={tag.id}
-          checked={value.tagIds.includes(tag.id)}
-          onChange={() => toggleTag(tag.id)}
-          label={
-            <span className="flex items-center gap-1.5">
-              <span
-                className="h-2 w-2 rounded-full"
-                style={{ backgroundColor: tag.color }}
-              />
-              {tag.tagName}
-            </span>
-          }
+          checked={value.created}
+          onChange={() => onChange({ ...value, created: !value.created })}
+          label="Created"
         />
-      ))}
-    </div>
+        <CheckboxBase
+          checked={value.dueDate}
+          onChange={() => onChange({ ...value, dueDate: !value.dueDate })}
+          label="Due date"
+        />
+
+        <span className="h-4 w-px bg-line" />
+
+        {tags.map((tag) => (
+          <CheckboxBase
+            key={tag.id}
+            checked={value.tagIds.includes(tag.id)}
+            onChange={() => toggleTag(tag.id)}
+            label={
+              <span className="flex items-center gap-1.5">
+                <span
+                  className="h-2 w-2 rounded-full"
+                  style={{ backgroundColor: tag.color }}
+                />
+                {tag.tagName}
+              </span>
+            }
+          />
+        ))}
+      </div>
+    </>
   );
 }

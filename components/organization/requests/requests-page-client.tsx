@@ -1,10 +1,11 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Plus } from "lucide-react";
+import { CheckCircle2, Clock, Inbox, Plus, XCircle } from "lucide-react";
 import { PERMISSIONS } from "@/lib/data/permissions";
 import { Button } from "@/components/ui/buttons/button";
 import { DataTable } from "@/components/ui/data-table";
+import { MiniStatCard, type MiniStat } from "@/components/ui/mini-stat-card";
 import TicketFormModal from "@/components/ticket/ticket-form-modal";
 import { RequestFormModal } from "./request-form-modal";
 import { RequestList } from "./request-list";
@@ -97,6 +98,55 @@ export default function RequestsPageClient({
       return true;
     });
   }, [searched, filter]);
+
+  const pendingCount = visibleRequests.filter(
+    (r) => r.status === "pending",
+  ).length;
+  const approvedCount = visibleRequests.filter(
+    (r) => r.status === "approved",
+  ).length;
+  const rejectedCount = visibleRequests.filter(
+    (r) => r.status === "rejected",
+  ).length;
+
+  const statTiles: MiniStat[] = [
+    {
+      label: "Total",
+      value: visibleRequests.length,
+      icon: Inbox,
+      tint: "bg-accent-subtle",
+      iconColor: "text-accent-text",
+      valueColor: "text-ink",
+      barColor: "bg-accent",
+    },
+    {
+      label: "Pending",
+      value: pendingCount,
+      icon: Clock,
+      tint: pendingCount > 0 ? "bg-warning-subtle" : "bg-canvas",
+      iconColor: pendingCount > 0 ? "text-warning" : "text-ink-faint",
+      valueColor: pendingCount > 0 ? "text-warning" : "text-ink",
+      barColor: pendingCount > 0 ? "bg-warning" : "bg-line",
+    },
+    {
+      label: "Approved",
+      value: approvedCount,
+      icon: CheckCircle2,
+      tint: "bg-accent-subtle",
+      iconColor: "text-accent-text",
+      valueColor: "text-ink",
+      barColor: "bg-accent",
+    },
+    {
+      label: "Rejected",
+      value: rejectedCount,
+      icon: XCircle,
+      tint: rejectedCount > 0 ? "bg-danger-subtle" : "bg-canvas",
+      iconColor: rejectedCount > 0 ? "text-danger" : "text-ink-faint",
+      valueColor: "text-ink",
+      barColor: rejectedCount > 0 ? "bg-danger" : "bg-line",
+    },
+  ];
 
   const totalPages = Math.max(Math.ceil(filtered.length / pageSize), 1);
   const currentPage = Math.min(page, totalPages);
@@ -232,6 +282,12 @@ export default function RequestsPageClient({
             <Plus size={15} className="mr-1.5" /> New request
           </Button>
         )}
+      </div>
+
+      <div className="mt-4 grid grid-cols-2 gap-3 sm:max-w-lg sm:grid-cols-4">
+        {statTiles.map((stat) => (
+          <MiniStatCard key={stat.label} {...stat} />
+        ))}
       </div>
 
       <div className="mt-6">

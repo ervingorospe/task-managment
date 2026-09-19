@@ -28,3 +28,18 @@ export function formatFileSize(bytes: number): string {
   if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
+
+export function isDueThisWeek(
+  ticket: Pick<TicketDetail, "dueDate" | "tag">,
+): boolean {
+  if (!ticket.dueDate) return false;
+  if (getDueState(ticket) === "overdue") return false;
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const in7Days = new Date(today);
+  in7Days.setDate(in7Days.getDate() + 7);
+
+  const due = new Date(`${ticket.dueDate}T00:00:00`);
+  return due >= today && due <= in7Days;
+}
