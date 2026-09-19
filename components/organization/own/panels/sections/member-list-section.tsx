@@ -1,5 +1,6 @@
 "use client";
 
+import { memo } from "react";
 import { UserX, UserCheck, Trash2, Shuffle } from "lucide-react";
 import List from "@/components/ui/list";
 import Avatar from "@/components/ui/avatar";
@@ -19,7 +20,7 @@ interface MemberListProps {
   onChangeRole: (member: MemberDetail) => void;
 }
 
-export default function MemberListSection({
+function MemberListSection({
   members,
   roles,
   onToggleActive,
@@ -120,3 +121,5 @@ export default function MemberListSection({
     </Can>
   );
 }
+
+export default memo(MemberListSection);

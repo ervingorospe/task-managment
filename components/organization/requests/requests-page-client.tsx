@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { CheckCircle2, Clock, Inbox, Plus, XCircle } from "lucide-react";
 import { PERMISSIONS } from "@/lib/data/permissions";
 import { Button } from "@/components/ui/buttons/button";
@@ -99,171 +99,194 @@ export default function RequestsPageClient({
     });
   }, [searched, filter]);
 
-  const pendingCount = visibleRequests.filter(
-    (r) => r.status === "pending",
-  ).length;
-  const approvedCount = visibleRequests.filter(
-    (r) => r.status === "approved",
-  ).length;
-  const rejectedCount = visibleRequests.filter(
-    (r) => r.status === "rejected",
-  ).length;
+  const pendingCount = useMemo(
+    () => visibleRequests.filter((r) => r.status === "pending").length,
+    [visibleRequests],
+  );
+  const approvedCount = useMemo(
+    () => visibleRequests.filter((r) => r.status === "approved").length,
+    [visibleRequests],
+  );
+  const rejectedCount = useMemo(
+    () => visibleRequests.filter((r) => r.status === "rejected").length,
+    [visibleRequests],
+  );
 
-  const statTiles: MiniStat[] = [
-    {
-      label: "Total",
-      value: visibleRequests.length,
-      icon: Inbox,
-      tint: "bg-accent-subtle",
-      iconColor: "text-accent-text",
-      valueColor: "text-ink",
-      barColor: "bg-accent",
-    },
-    {
-      label: "Pending",
-      value: pendingCount,
-      icon: Clock,
-      tint: pendingCount > 0 ? "bg-warning-subtle" : "bg-canvas",
-      iconColor: pendingCount > 0 ? "text-warning" : "text-ink-faint",
-      valueColor: pendingCount > 0 ? "text-warning" : "text-ink",
-      barColor: pendingCount > 0 ? "bg-warning" : "bg-line",
-    },
-    {
-      label: "Approved",
-      value: approvedCount,
-      icon: CheckCircle2,
-      tint: "bg-accent-subtle",
-      iconColor: "text-accent-text",
-      valueColor: "text-ink",
-      barColor: "bg-accent",
-    },
-    {
-      label: "Rejected",
-      value: rejectedCount,
-      icon: XCircle,
-      tint: rejectedCount > 0 ? "bg-danger-subtle" : "bg-canvas",
-      iconColor: rejectedCount > 0 ? "text-danger" : "text-ink-faint",
-      valueColor: "text-ink",
-      barColor: rejectedCount > 0 ? "bg-danger" : "bg-line",
-    },
-  ];
+  const statTiles: MiniStat[] = useMemo(
+    () => [
+      {
+        label: "Total",
+        value: visibleRequests.length,
+        icon: Inbox,
+        tint: "bg-accent-subtle",
+        iconColor: "text-accent-text",
+        valueColor: "text-ink",
+        barColor: "bg-accent",
+      },
+      {
+        label: "Pending",
+        value: pendingCount,
+        icon: Clock,
+        tint: pendingCount > 0 ? "bg-warning-subtle" : "bg-canvas",
+        iconColor: pendingCount > 0 ? "text-warning" : "text-ink-faint",
+        valueColor: pendingCount > 0 ? "text-warning" : "text-ink",
+        barColor: pendingCount > 0 ? "bg-warning" : "bg-line",
+      },
+      {
+        label: "Approved",
+        value: approvedCount,
+        icon: CheckCircle2,
+        tint: "bg-accent-subtle",
+        iconColor: "text-accent-text",
+        valueColor: "text-ink",
+        barColor: "bg-accent",
+      },
+      {
+        label: "Rejected",
+        value: rejectedCount,
+        icon: XCircle,
+        tint: rejectedCount > 0 ? "bg-danger-subtle" : "bg-canvas",
+        iconColor: rejectedCount > 0 ? "text-danger" : "text-ink-faint",
+        valueColor: "text-ink",
+        barColor: rejectedCount > 0 ? "bg-danger" : "bg-line",
+      },
+    ],
+    [visibleRequests.length, pendingCount, approvedCount, rejectedCount],
+  );
 
   const totalPages = Math.max(Math.ceil(filtered.length / pageSize), 1);
   const currentPage = Math.min(page, totalPages);
-  const paginated = filtered.slice(
-    (currentPage - 1) * pageSize,
-    currentPage * pageSize,
+  const paginated = useMemo(
+    () =>
+      filtered.slice((currentPage - 1) * pageSize, currentPage * pageSize),
+    [filtered, currentPage, pageSize],
   );
 
-  function handleFilterChange(value: RequestFilterState) {
-    setFilter(value);
-  }
+  const handleFilterChange = useCallback(
+    (value: RequestFilterState) => {
+      setFilter(value);
+    },
+    [setFilter],
+  );
 
-  function handlePageSizeChange(size: number) {
-    setPageSize(size);
-  }
+  const handlePageSizeChange = useCallback(
+    (size: number) => {
+      setPageSize(size);
+    },
+    [setPageSize],
+  );
 
-  function handleCreateRequest(values: TicketRequestFormValues) {
-    if (!currentMember) return;
+  const handleCreateRequest = useCallback(
+    (values: TicketRequestFormValues) => {
+      if (!currentMember) return;
 
-    const newRequest: TicketRequest = {
-      id: Date.now(),
-      referenceId: formatReferenceId("req", requests.length + 1),
-      orgId: organization.id,
-      title: values.title,
-      description: values.description || undefined,
-      attachments: values.attachments.map((file, i) => ({
+      const newRequest: TicketRequest = {
+        id: Date.now(),
+        referenceId: formatReferenceId("req", requests.length + 1),
+        orgId: organization.id,
+        title: values.title,
+        description: values.description || undefined,
+        attachments: values.attachments.map((file, i) => ({
+          id: Date.now() + i,
+          name: file.name,
+          url: URL.createObjectURL(file),
+          size: file.size,
+        })),
+        ticketId: null,
+        client: currentMember,
+        status: "pending",
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+
+      setRequests((prev) => [newRequest, ...prev]);
+      toast(`Request "${newRequest.title}" submitted`);
+      // TODO: POST /organizations/:orgId/ticket-requests
+    },
+    [currentMember, requests.length, organization.id, toast],
+  );
+
+  const handleReject = useCallback(
+    (remarks: string) => {
+      if (!rejectTarget) return;
+
+      setRequests((prev) =>
+        prev.map((r) =>
+          r.id === rejectTarget.id
+            ? {
+                ...r,
+                status: "rejected",
+                remarks,
+                updatedAt: new Date().toISOString(),
+              }
+            : r,
+        ),
+      );
+      toast(`Request "${rejectTarget.title}" rejected`, "error");
+      // TODO: PATCH /ticket-requests/:id { status: "rejected", remarks }
+    },
+    [rejectTarget, toast],
+  );
+
+  const handleApproveSubmit = useCallback(
+    (values: TicketFormValues) => {
+      if (!approveTarget) return;
+
+      const targetTodoTag =
+        organization.tags.find((t) => t.tagName === "To Do") ??
+        organization.tags[0];
+      if (!targetTodoTag) return;
+
+      const newAttachments = values.attachments.map((file, i) => ({
         id: Date.now() + i,
         name: file.name,
         url: URL.createObjectURL(file),
         size: file.size,
-      })),
-      ticketId: null,
-      client: currentMember,
-      status: "pending",
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
+      }));
 
-    setRequests((prev) => [newRequest, ...prev]);
-    toast(`Request "${newRequest.title}" submitted`);
-    // TODO: POST /organizations/:orgId/ticket-requests
-  }
+      const newTicket: TicketDetail = {
+        id: Date.now(),
+        referenceId: formatReferenceId("tckt", tickets.length + 1),
+        orgId: organization.id,
+        title: values.title,
+        description: values.description || undefined,
+        // Carries over whatever the client attached to the request, plus
+        // anything staff additionally attached while approving.
+        attachments: [...approveTarget.attachments, ...newAttachments],
+        tag: targetTodoTag,
+        client:
+          organization.members.find(
+            (m) => String(m.id) === values.clientId,
+          ) ?? approveTarget.client,
+        assignees: organization.members.filter((m) =>
+          values.assigneeIds.includes(m.id),
+        ),
+        dueDate: values.dueDate || null,
+        starred: false,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
 
-  function handleReject(remarks: string) {
-    if (!rejectTarget) return;
-
-    setRequests((prev) =>
-      prev.map((r) =>
-        r.id === rejectTarget.id
-          ? {
-              ...r,
-              status: "rejected",
-              remarks,
-              updatedAt: new Date().toISOString(),
-            }
-          : r,
-      ),
-    );
-    toast(`Request "${rejectTarget.title}" rejected`, "error");
-    // TODO: PATCH /ticket-requests/:id { status: "rejected", remarks }
-  }
-
-  function handleApproveSubmit(values: TicketFormValues) {
-    if (!approveTarget) return;
-
-    const targetTodoTag =
-      organization.tags.find((t) => t.tagName === "To Do") ??
-      organization.tags[0];
-    if (!targetTodoTag) return;
-
-    const newAttachments = values.attachments.map((file, i) => ({
-      id: Date.now() + i,
-      name: file.name,
-      url: URL.createObjectURL(file),
-      size: file.size,
-    }));
-
-    const newTicket: TicketDetail = {
-      id: Date.now(),
-      referenceId: formatReferenceId("tckt", tickets.length + 1),
-      orgId: organization.id,
-      title: values.title,
-      description: values.description || undefined,
-      // Carries over whatever the client attached to the request, plus
-      // anything staff additionally attached while approving.
-      attachments: [...approveTarget.attachments, ...newAttachments],
-      tag: targetTodoTag,
-      client:
-        organization.members.find((m) => String(m.id) === values.clientId) ??
-        approveTarget.client,
-      assignees: organization.members.filter((m) =>
-        values.assigneeIds.includes(m.id),
-      ),
-      dueDate: values.dueDate || null,
-      starred: false,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-
-    setTickets((prev) => [newTicket, ...prev]);
-    setRequests((prev) =>
-      prev.map((r) =>
-        r.id === approveTarget.id
-          ? {
-              ...r,
-              status: "approved",
-              ticketId: newTicket.id,
-              updatedAt: new Date().toISOString(),
-            }
-          : r,
-      ),
-    );
-    toast(`Request approved — ticket "${newTicket.title}" created`);
-    setApproveTarget(null);
-    // TODO: POST /organizations/:orgId/tickets (from request), then
-    // PATCH /ticket-requests/:id { status: "approved", ticket_id }
-  }
+      setTickets((prev) => [newTicket, ...prev]);
+      setRequests((prev) =>
+        prev.map((r) =>
+          r.id === approveTarget.id
+            ? {
+                ...r,
+                status: "approved",
+                ticketId: newTicket.id,
+                updatedAt: new Date().toISOString(),
+              }
+            : r,
+        ),
+      );
+      toast(`Request approved — ticket "${newTicket.title}" created`);
+      setApproveTarget(null);
+      // TODO: POST /organizations/:orgId/tickets (from request), then
+      // PATCH /ticket-requests/:id { status: "approved", ticket_id }
+    },
+    [approveTarget, organization, tickets.length, toast],
+  );
 
   return (
     <div>

@@ -56,41 +56,44 @@ export default function TicketReports({ organization }: TicketReportsProps) {
     [rangedTickets, organization.tags, trendSelection, dateRange],
   );
 
-  const statTiles: StatTile[] = [
-    {
-      label: "Total tickets",
-      value: tickets.length,
-      caption: "across every status",
-      icon: TicketIcon,
-      tint: "bg-accent-subtle",
-      iconColor: "text-accent-text",
-      valueColor: "text-ink",
-      barColor: "bg-accent",
-    },
-    {
-      label: "Overdue",
-      value: dueSummary.overdue,
-      caption: "past their due date",
-      icon: AlertTriangle,
-      tint: dueSummary.overdue > 0 ? "bg-danger-subtle" : "bg-canvas",
-      iconColor: dueSummary.overdue > 0 ? "text-danger" : "text-ink-faint",
-      valueColor: dueSummary.overdue > 0 ? "text-danger" : "text-ink",
-      barColor: dueSummary.overdue > 0 ? "bg-danger" : "bg-line",
-    },
-    {
-      label: "On time",
-      value: dueSummary.onTime,
-      caption: "on track to meet their due date",
-      icon: CheckCircle2,
-      tint: "bg-accent-subtle",
-      iconColor: "text-accent-text",
-      valueColor: "text-ink",
-      barColor: "bg-accent",
-    },
-  ];
+  const statTiles: StatTile[] = useMemo(
+    () => [
+      {
+        label: "Total tickets",
+        value: tickets.length,
+        caption: "across every status",
+        icon: TicketIcon,
+        tint: "bg-accent-subtle",
+        iconColor: "text-accent-text",
+        valueColor: "text-ink",
+        barColor: "bg-accent",
+      },
+      {
+        label: "Overdue",
+        value: dueSummary.overdue,
+        caption: "past their due date",
+        icon: AlertTriangle,
+        tint: dueSummary.overdue > 0 ? "bg-danger-subtle" : "bg-canvas",
+        iconColor: dueSummary.overdue > 0 ? "text-danger" : "text-ink-faint",
+        valueColor: dueSummary.overdue > 0 ? "text-danger" : "text-ink",
+        barColor: dueSummary.overdue > 0 ? "bg-danger" : "bg-line",
+      },
+      {
+        label: "On time",
+        value: dueSummary.onTime,
+        caption: "on track to meet their due date",
+        icon: CheckCircle2,
+        tint: "bg-accent-subtle",
+        iconColor: "text-accent-text",
+        valueColor: "text-ink",
+        barColor: "bg-accent",
+      },
+    ],
+    [tickets.length, dueSummary],
+  );
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <div>
         <h2 className="text-base font-semibold text-ink">Ticket reports</h2>
         <p className="mt-1 text-sm text-ink-muted">

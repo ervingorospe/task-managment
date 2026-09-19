@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { AlertTriangle, Plus, Tag as TagIcon, Ticket as TicketIcon } from "lucide-react";
 import { Can } from "@/components/auth/can";
 import { PERMISSIONS } from "@/lib/data/permissions";
@@ -39,8 +39,9 @@ export default function TicketsPageClient({
   const toast = useToast();
   const canViewAllTickets = usePermission(PERMISSIONS.TICKET_VIEW_ALL);
   const { tags, members } = organization;
-  const assignableMembers = members.filter(
-    (m) => m.role?.roleName !== "Client",
+  const assignableMembers = useMemo(
+    () => members.filter((m) => m.role?.roleName !== "Client"),
+    [members],
   );
 
   const [tickets, setTickets] = useState<TicketDetail[]>(
@@ -110,124 +111,155 @@ export default function TicketsPageClient({
     });
   }, [searched, filter]);
 
-  const overdueCount = viewableTickets.filter(
-    (t) => getDueState(t) === "overdue",
-  ).length;
-  const statusRows = getStatusBreakdown(viewableTickets);
+  const overdueCount = useMemo(
+    () => viewableTickets.filter((t) => getDueState(t) === "overdue").length,
+    [viewableTickets],
+  );
+  const statusRows = useMemo(
+    () => getStatusBreakdown(viewableTickets),
+    [viewableTickets],
+  );
 
-  const statTiles: MiniStat[] = [
-    {
-      label: "Total",
-      value: viewableTickets.length,
-      icon: TicketIcon,
-      tint: "bg-accent-subtle",
-      iconColor: "text-accent-text",
-      valueColor: "text-ink",
-      barColor: "bg-accent",
-    },
-    {
-      label: "Overdue",
-      value: overdueCount,
-      icon: AlertTriangle,
-      tint: overdueCount > 0 ? "bg-danger-subtle" : "bg-canvas",
-      iconColor: overdueCount > 0 ? "text-danger" : "text-ink-faint",
-      valueColor: overdueCount > 0 ? "text-danger" : "text-ink",
-      barColor: overdueCount > 0 ? "bg-danger" : "bg-line",
-    },
-    ...statusRows.map((row) => ({
-      label: row.tagName,
-      value: row.count,
-      icon: TagIcon,
-      accentColor: row.color,
-    })),
-  ];
+  const statTiles: MiniStat[] = useMemo(
+    () => [
+      {
+        label: "Total",
+        value: viewableTickets.length,
+        icon: TicketIcon,
+        tint: "bg-accent-subtle",
+        iconColor: "text-accent-text",
+        valueColor: "text-ink",
+        barColor: "bg-accent",
+      },
+      {
+        label: "Overdue",
+        value: overdueCount,
+        icon: AlertTriangle,
+        tint: overdueCount > 0 ? "bg-danger-subtle" : "bg-canvas",
+        iconColor: overdueCount > 0 ? "text-danger" : "text-ink-faint",
+        valueColor: overdueCount > 0 ? "text-danger" : "text-ink",
+        barColor: overdueCount > 0 ? "bg-danger" : "bg-line",
+      },
+      ...statusRows.map((row) => ({
+        label: row.tagName,
+        value: row.count,
+        icon: TagIcon,
+        accentColor: row.color,
+      })),
+    ],
+    [viewableTickets.length, overdueCount, statusRows],
+  );
 
   const totalPages = Math.max(Math.ceil(filtered.length / pageSize), 1);
   const currentPage = Math.min(page, totalPages);
-  const paginated = filtered.slice(
-    (currentPage - 1) * pageSize,
-    currentPage * pageSize,
+  const paginated = useMemo(
+    () =>
+      filtered.slice((currentPage - 1) * pageSize, currentPage * pageSize),
+    [filtered, currentPage, pageSize],
   );
 
-  function handleFilterChange(value: TicketFilterState) {
-    setFilter(value);
-  }
+  const handleFilterChange = useCallback(
+    (value: TicketFilterState) => {
+      setFilter(value);
+    },
+    [setFilter],
+  );
 
-  function handlePageSizeChange(size: number) {
-    setPageSize(size);
-  }
+  const handlePageSizeChange = useCallback(
+    (size: number) => {
+      setPageSize(size);
+    },
+    [setPageSize],
+  );
 
-  function handleCreate(values: TicketFormValues) {
-    const targetOrg =
-      allOrganizations.find((o) => String(o.id) === values.organizationId) ??
-      organization;
-    const targetTodoTag =
-      targetOrg.tags.find((t) => t.tagName === "To Do") ?? targetOrg.tags[0];
-    if (!targetTodoTag) return;
+  const handleCreate = useCallback(
+    (values: TicketFormValues) => {
+      const targetOrg =
+        allOrganizations.find(
+          (o) => String(o.id) === values.organizationId,
+        ) ?? organization;
+      const targetTodoTag =
+        targetOrg.tags.find((t) => t.tagName === "To Do") ?? targetOrg.tags[0];
+      if (!targetTodoTag) return;
 
-    const newTicket: TicketDetail = {
-      id: Date.now(),
-      referenceId: formatReferenceId("tckt", targetOrg.tickets.length + 1),
-      orgId: targetOrg.id,
-      title: values.title,
-      description: values.description || undefined,
-      attachments: values.attachments.map((file, i) => ({
-        id: Date.now() + i,
-        name: file.name,
-        url: URL.createObjectURL(file),
-        size: file.size,
-      })),
-      tag: targetTodoTag,
-      client:
-        targetOrg.members.find((m) => String(m.id) === values.clientId) ?? null,
-      assignees: targetOrg.members.filter((m) =>
-        values.assigneeIds.includes(m.id),
-      ),
-      dueDate: values.dueDate || null,
-      starred: false,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
+      const newTicket: TicketDetail = {
+        id: Date.now(),
+        referenceId: formatReferenceId("tckt", targetOrg.tickets.length + 1),
+        orgId: targetOrg.id,
+        title: values.title,
+        description: values.description || undefined,
+        attachments: values.attachments.map((file, i) => ({
+          id: Date.now() + i,
+          name: file.name,
+          url: URL.createObjectURL(file),
+          size: file.size,
+        })),
+        tag: targetTodoTag,
+        client:
+          targetOrg.members.find((m) => String(m.id) === values.clientId) ??
+          null,
+        assignees: targetOrg.members.filter((m) =>
+          values.assigneeIds.includes(m.id),
+        ),
+        dueDate: values.dueDate || null,
+        starred: false,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
 
-    if (targetOrg.id === organization.id) {
-      setTickets((prev) => [newTicket, ...prev]);
-    }
-    toast(`Ticket "${newTicket.title}" created`);
-    // TODO: POST /organizations/:orgId/tickets in the background.
-  }
+      if (targetOrg.id === organization.id) {
+        setTickets((prev) => [newTicket, ...prev]);
+      }
+      toast(`Ticket "${newTicket.title}" created`);
+      // TODO: POST /organizations/:orgId/tickets in the background.
+    },
+    [allOrganizations, organization, toast],
+  );
 
-  function handleChangeTag(ticketId: number, tag: TagDetail) {
-    setTickets((prev) =>
-      prev.map((t) => (t.id === ticketId ? { ...t, tag } : t)),
-    );
-    toast(`Status changed to "${tag.tagName}"`);
-    // TODO: PATCH /tickets/:id { tag_id: tag.id }
-  }
+  const handleChangeTag = useCallback(
+    (ticketId: number, tag: TagDetail) => {
+      setTickets((prev) =>
+        prev.map((t) => (t.id === ticketId ? { ...t, tag } : t)),
+      );
+      toast(`Status changed to "${tag.tagName}"`);
+      // TODO: PATCH /tickets/:id { tag_id: tag.id }
+    },
+    [toast],
+  );
 
-  function handleAssign(ticketId: number, memberIds: number[]) {
-    setTickets((prev) =>
-      prev.map((t) =>
-        t.id === ticketId
-          ? { ...t, assignees: members.filter((m) => memberIds.includes(m.id)) }
-          : t,
-      ),
-    );
-    toast("Assignees updated");
-    // TODO: PATCH /tickets/:id { assignee_ids: memberIds }
-  }
+  const handleAssign = useCallback(
+    (ticketId: number, memberIds: number[]) => {
+      setTickets((prev) =>
+        prev.map((t) =>
+          t.id === ticketId
+            ? {
+                ...t,
+                assignees: members.filter((m) => memberIds.includes(m.id)),
+              }
+            : t,
+        ),
+      );
+      toast("Assignees updated");
+      // TODO: PATCH /tickets/:id { assignee_ids: memberIds }
+    },
+    [members, toast],
+  );
 
-  function handleToggleStar(ticketId: number) {
-    let nowStarred = false;
-    setTickets((prev) =>
-      prev.map((t) => {
-        if (t.id !== ticketId) return t;
-        nowStarred = !t.starred;
-        return { ...t, starred: nowStarred };
-      }),
-    );
-    toast(nowStarred ? "Ticket starred" : "Ticket unstarred");
-    // TODO: PATCH /tickets/:id { starred: nowStarred }
-  }
+  const handleToggleStar = useCallback(
+    (ticketId: number) => {
+      let nowStarred = false;
+      setTickets((prev) =>
+        prev.map((t) => {
+          if (t.id !== ticketId) return t;
+          nowStarred = !t.starred;
+          return { ...t, starred: nowStarred };
+        }),
+      );
+      toast(nowStarred ? "Ticket starred" : "Ticket unstarred");
+      // TODO: PATCH /tickets/:id { starred: nowStarred }
+    },
+    [toast],
+  );
 
   return (
     <div>

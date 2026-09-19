@@ -1,5 +1,6 @@
 "use client";
 
+import { memo } from "react";
 import Link from "next/link";
 import Tooltip from "@/components/ui/tooltip";
 import Avatar from "@/components/ui/avatar";
@@ -31,7 +32,7 @@ function formatTimeframe(ticket: TicketDetail) {
   return `Due on ${formatDueDate(ticket.dueDate) ?? "—"}`;
 }
 
-export function TicketList({
+function TicketListComponent({
   tickets,
   availableTags,
   assignableMembers,
@@ -171,3 +172,5 @@ export function TicketList({
     </table>
   );
 }
+
+export const TicketList = memo(TicketListComponent);

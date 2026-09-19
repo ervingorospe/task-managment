@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import MemberListSection from "./member-list-section";
 import {
   MemberListToolbar,
@@ -90,17 +90,20 @@ export default function MembersSection({
 
   const totalPages = Math.max(Math.ceil(sorted.length / pageSize), 1);
   const currentPage = Math.min(page, totalPages);
-  const paginated = sorted.slice(
-    (currentPage - 1) * pageSize,
-    currentPage * pageSize,
+  const paginated = useMemo(
+    () => sorted.slice((currentPage - 1) * pageSize, currentPage * pageSize),
+    [sorted, currentPage, pageSize],
   );
 
-  function handlePageSizeChange(size: number) {
-    setPageSize(size);
-    setPage(1);
-  }
+  const handlePageSizeChange = useCallback(
+    (size: number) => {
+      setPageSize(size);
+      setPage(1);
+    },
+    [setPage],
+  );
 
-  function handleConfirm() {
+  const handleConfirm = useCallback(() => {
     if (!pendingAction) return;
     const { type, member } = pendingAction;
 
@@ -122,19 +125,30 @@ export default function MembersSection({
     }
 
     setPendingAction(null);
-  }
+  }, [pendingAction, toast]);
 
-  function handleConfirmRoleChange(roleId: number) {
-    if (!activeRoleMember) return;
-    setMembers((prev) =>
-      prev.map((m) =>
-        m.id === activeRoleMember.id ? { ...m, roleId: roleId } : m,
-      ),
-    );
-    toast(`${getMemberName(activeRoleMember)}'s role updated`);
-    setActiveRoleMember(null);
-    // TODO: PATCH /organizations/:orgId/members/:id { roleId: roleId }
-  }
+  const handleConfirmRoleChange = useCallback(
+    (roleId: number) => {
+      if (!activeRoleMember) return;
+      setMembers((prev) =>
+        prev.map((m) =>
+          m.id === activeRoleMember.id ? { ...m, roleId: roleId } : m,
+        ),
+      );
+      toast(`${getMemberName(activeRoleMember)}'s role updated`);
+      setActiveRoleMember(null);
+      // TODO: PATCH /organizations/:orgId/members/:id { roleId: roleId }
+    },
+    [activeRoleMember, toast],
+  );
+
+  const handleToggleActive = useCallback((member: MemberDetail) => {
+    setPendingAction({ type: "toggle", member });
+  }, []);
+
+  const handleRemove = useCallback((member: MemberDetail) => {
+    setPendingAction({ type: "remove", member });
+  }, []);
 
   const dialogCopy = pendingAction
     ? pendingAction.type === "toggle"
@@ -179,10 +193,8 @@ export default function MembersSection({
         <MemberListSection
           members={paginated}
           roles={roles}
-          onToggleActive={(member) =>
-            setPendingAction({ type: "toggle", member })
-          }
-          onRemove={(member) => setPendingAction({ type: "remove", member })}
+          onToggleActive={handleToggleActive}
+          onRemove={handleRemove}
           onChangeRole={setActiveRoleMember}
         />
 

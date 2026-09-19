@@ -1,5 +1,6 @@
 "use client";
 
+import { memo } from "react";
 import Link from "next/link";
 import { Check, Paperclip, X } from "lucide-react";
 import EmptyState from "@/components/ui/empty-state";
@@ -26,7 +27,7 @@ function formatDate(iso: string) {
   });
 }
 
-export function RequestList({
+function RequestListComponent({
   requests,
   canManage,
   onApprove,
@@ -122,3 +123,5 @@ export function RequestList({
     </div>
   );
 }
+
+export const RequestList = memo(RequestListComponent);

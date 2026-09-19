@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   AlertTriangle,
   CalendarClock,
@@ -42,6 +42,112 @@ export default function ReportsClient() {
     tagIds: [],
   });
 
+  const currentMember = useMemo(
+    () => organization?.members.find((m) => m.user?.id === currentUser?.id),
+    [organization, currentUser?.id],
+  );
+
+  const visibleTickets = useMemo(() => {
+    if (!organization) return [];
+    return canViewAll
+      ? organization.tickets
+      : organization.tickets.filter((t) =>
+          isTicketIncluded(t, currentUser?.id),
+        );
+  }, [organization, canViewAll, currentUser?.id]);
+
+  const visibleRequests = useMemo(() => {
+    if (!organization) return [];
+    return canViewAll
+      ? organization.ticketRequests
+      : organization.ticketRequests.filter(
+          (r) => r.client.id === currentMember?.id,
+        );
+  }, [organization, canViewAll, currentMember?.id]);
+
+  const overdueTickets = useMemo(
+    () => visibleTickets.filter((t) => getDueState(t) === "overdue"),
+    [visibleTickets],
+  );
+  const dueThisWeekCount = useMemo(
+    () => visibleTickets.filter(isDueThisWeek).length,
+    [visibleTickets],
+  );
+  const pendingRequestsCount = useMemo(
+    () => visibleRequests.filter((r) => r.status === "pending").length,
+    [visibleRequests],
+  );
+
+  const statTiles: StatTile[] = useMemo(
+    () => [
+      {
+        label: "Total tickets",
+        value: visibleTickets.length,
+        caption: "across every status",
+        icon: TicketIcon,
+        tint: "bg-accent-subtle",
+        iconColor: "text-accent-text",
+        valueColor: "text-ink",
+        barColor: "bg-accent",
+      },
+      {
+        label: "Overdue",
+        value: overdueTickets.length,
+        caption: "past their due date",
+        icon: AlertTriangle,
+        tint: overdueTickets.length > 0 ? "bg-danger-subtle" : "bg-canvas",
+        iconColor:
+          overdueTickets.length > 0 ? "text-danger" : "text-ink-faint",
+        valueColor: overdueTickets.length > 0 ? "text-danger" : "text-ink",
+        barColor: overdueTickets.length > 0 ? "bg-danger" : "bg-line",
+      },
+      {
+        label: "Due this week",
+        value: dueThisWeekCount,
+        caption: "in the next 7 days",
+        icon: CalendarClock,
+        tint: dueThisWeekCount > 0 ? "bg-warning-subtle" : "bg-canvas",
+        iconColor: dueThisWeekCount > 0 ? "text-warning" : "text-ink-faint",
+        valueColor: "text-ink",
+        barColor: dueThisWeekCount > 0 ? "bg-warning" : "bg-line",
+      },
+      {
+        label: "Pending requests",
+        value: pendingRequestsCount,
+        caption: "awaiting a decision",
+        icon: Inbox,
+        tint: pendingRequestsCount > 0 ? "bg-warning-subtle" : "bg-canvas",
+        iconColor:
+          pendingRequestsCount > 0 ? "text-warning" : "text-ink-faint",
+        valueColor: pendingRequestsCount > 0 ? "text-warning" : "text-ink",
+        barColor: pendingRequestsCount > 0 ? "bg-warning" : "bg-line",
+      },
+    ],
+    [
+      visibleTickets.length,
+      overdueTickets.length,
+      dueThisWeekCount,
+      pendingRequestsCount,
+    ],
+  );
+
+  const statusRows = useMemo(
+    () => getStatusBreakdown(visibleTickets),
+    [visibleTickets],
+  );
+  const assigneeRows = useMemo(
+    () => getAssigneeBreakdown(visibleTickets),
+    [visibleTickets],
+  );
+  const trendSeries = useMemo(
+    () =>
+      getTrendSeries(visibleTickets, organization?.tags ?? [], {
+        selection: trendSelection,
+        range: { from: null, to: null },
+      }),
+    [visibleTickets, organization, trendSelection],
+  );
+
   if (!activeOrganization) {
     return (
       <div className="space-y-8">
@@ -57,78 +163,6 @@ export default function ReportsClient() {
   }
 
   if (!organization) return null;
-
-  const currentMember = organization.members.find(
-    (m) => m.user?.id === currentUser?.id,
-  );
-
-  const visibleTickets = canViewAll
-    ? organization.tickets
-    : organization.tickets.filter((t) => isTicketIncluded(t, currentUser?.id));
-
-  const visibleRequests = canViewAll
-    ? organization.ticketRequests
-    : organization.ticketRequests.filter(
-        (r) => r.client.id === currentMember?.id,
-      );
-
-  const overdueTickets = visibleTickets.filter(
-    (t) => getDueState(t) === "overdue",
-  );
-  const dueThisWeekCount = visibleTickets.filter(isDueThisWeek).length;
-  const pendingRequestsCount = visibleRequests.filter(
-    (r) => r.status === "pending",
-  ).length;
-
-  const statTiles: StatTile[] = [
-    {
-      label: "Total tickets",
-      value: visibleTickets.length,
-      caption: "across every status",
-      icon: TicketIcon,
-      tint: "bg-accent-subtle",
-      iconColor: "text-accent-text",
-      valueColor: "text-ink",
-      barColor: "bg-accent",
-    },
-    {
-      label: "Overdue",
-      value: overdueTickets.length,
-      caption: "past their due date",
-      icon: AlertTriangle,
-      tint: overdueTickets.length > 0 ? "bg-danger-subtle" : "bg-canvas",
-      iconColor: overdueTickets.length > 0 ? "text-danger" : "text-ink-faint",
-      valueColor: overdueTickets.length > 0 ? "text-danger" : "text-ink",
-      barColor: overdueTickets.length > 0 ? "bg-danger" : "bg-line",
-    },
-    {
-      label: "Due this week",
-      value: dueThisWeekCount,
-      caption: "in the next 7 days",
-      icon: CalendarClock,
-      tint: dueThisWeekCount > 0 ? "bg-warning-subtle" : "bg-canvas",
-      iconColor: dueThisWeekCount > 0 ? "text-warning" : "text-ink-faint",
-      valueColor: "text-ink",
-      barColor: dueThisWeekCount > 0 ? "bg-warning" : "bg-line",
-    },
-    {
-      label: "Pending requests",
-      value: pendingRequestsCount,
-      caption: "awaiting a decision",
-      icon: Inbox,
-      tint: pendingRequestsCount > 0 ? "bg-warning-subtle" : "bg-canvas",
-      iconColor: pendingRequestsCount > 0 ? "text-warning" : "text-ink-faint",
-      valueColor: pendingRequestsCount > 0 ? "text-warning" : "text-ink",
-      barColor: pendingRequestsCount > 0 ? "bg-warning" : "bg-line",
-    },
-  ];
-
-  const statusRows = getStatusBreakdown(visibleTickets);
-  const assigneeRows = getAssigneeBreakdown(visibleTickets);
-  const trendSeries = getTrendSeries(visibleTickets, organization.tags, {
-    selection: trendSelection,
-    range: { from: null, to: null },
-  });
 
   return (
     <div className="space-y-8">
