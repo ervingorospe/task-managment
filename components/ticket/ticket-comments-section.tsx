@@ -91,9 +91,12 @@ export default function TicketCommentsSection({
   const { currentUser } = useAuth();
   const toast = useToast();
   const logTicketActivity = useLogActivity("ticket");
-  const ticketTitle =
-    organization.tickets.find((t) => t.id === ticketId)?.title ??
-    "this ticket";
+  const ticketForActivity = organization.tickets.find((t) => t.id === ticketId);
+  const ticketTitle = ticketForActivity?.title ?? "this ticket";
+  const activityInvolvedUserIds = [
+    client?.user?.id,
+    ...assignees.map((a) => a.user?.id),
+  ];
 
   const [comments, setComments] = useState<TicketComment[]>(
     initialComments ?? [],
@@ -189,6 +192,8 @@ export default function TicketCommentsSection({
       action: "commented",
       entityId: ticketId,
       entityLabel: ticketTitle,
+      referenceId: ticketForActivity?.referenceId,
+      involvedUserIds: activityInvolvedUserIds,
       description: `commented on "${ticketTitle}"`,
     });
     toast("Comment added");
@@ -226,6 +231,8 @@ export default function TicketCommentsSection({
       action: "comment_edited",
       entityId: ticketId,
       entityLabel: ticketTitle,
+      referenceId: ticketForActivity?.referenceId,
+      involvedUserIds: activityInvolvedUserIds,
       description: `edited a comment on "${ticketTitle}"`,
     });
     toast("Comment updated");
@@ -242,6 +249,8 @@ export default function TicketCommentsSection({
       action: "comment_removed",
       entityId: ticketId,
       entityLabel: ticketTitle,
+      referenceId: ticketForActivity?.referenceId,
+      involvedUserIds: activityInvolvedUserIds,
       description: `removed a comment on "${ticketTitle}"`,
     });
     toast("Comment removed", "error");

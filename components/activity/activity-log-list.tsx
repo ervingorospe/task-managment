@@ -41,6 +41,12 @@ function ActivityLogListComponent({
                 {entry.description}
               </p>
               <p className="mt-0.5 text-xs text-ink-faint">
+                {entry.referenceId && (
+                  <span className="font-mono text-ink-muted">
+                    {entry.referenceId}
+                  </span>
+                )}
+                {entry.referenceId && " · "}
                 {formatDate(entry.createdAt)} · {formatRelative(entry.createdAt)}
               </p>
             </div>

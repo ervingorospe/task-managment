@@ -7,36 +7,55 @@ import { Pagination } from "@/components/ui/pagination";
 import { ActivityFilterDropdown } from "./activity-filter-dropdown";
 import { ActivityLogList } from "./activity-log-list";
 import { useActivityLog } from "@/providers/activity-log-provider";
-import { useAuth } from "@/providers/auth-provider";
+import { useAuth, hasPermission } from "@/providers/auth-provider";
 import { useActiveOrganizationDetail } from "@/hooks/use-active-organization-detail";
 import { useActivityLogQueryState } from "@/hooks/use-activity-log-query-state";
 import { PageHeaderSkeleton, ListSkeleton } from "@/components/ui/skeletons";
+import { PERMISSIONS } from "@/lib/data/permissions";
+import { isActivityEntryIncluded } from "@/lib/helper/activity-access";
 
 export default function ActivityLogClient() {
-  const { activeOrganization } = useAuth();
+  const { activeOrganization, activeMembership, currentUser } = useAuth();
   const { entries } = useActivityLog();
   const organization = useActiveOrganizationDetail();
 
   const { page, filter, pageSize, setPage, setFilter, setPageSize } =
     useActivityLogQueryState();
 
+  const canViewAll = hasPermission(
+    activeMembership?.role.rules ?? [],
+    PERMISSIONS.ACTIVITY_LOG_VIEW_ALL,
+  );
+
   const orgEntries = useMemo(
     () => entries.filter((entry) => entry.orgId === activeOrganization?.id),
     [entries, activeOrganization?.id],
   );
 
+  /**
+   * activity.log.view.all sees every entry; activity.log.view.included only
+   * sees entries they acted in, or that touch a ticket/request/membership
+   * they're part of — mirrors ticket.view.included.
+   */
+  const visibleEntries = useMemo(() => {
+    if (canViewAll) return orgEntries;
+    return orgEntries.filter((entry) =>
+      isActivityEntryIncluded(entry, currentUser?.id),
+    );
+  }, [orgEntries, canViewAll, currentUser?.id]);
+
   const authors = useMemo(() => {
     const seen = new Map<number, string>();
-    for (const entry of orgEntries) {
+    for (const entry of visibleEntries) {
       if (!seen.has(entry.actorId)) seen.set(entry.actorId, entry.actorName);
     }
     return Array.from(seen, ([id, name]) => ({ id, name })).sort((a, b) =>
       a.name.localeCompare(b.name),
     );
-  }, [orgEntries]);
+  }, [visibleEntries]);
 
   const filtered = useMemo(() => {
-    return orgEntries.filter((entry) => {
+    return visibleEntries.filter((entry) => {
       if (
         filter.modules.length > 0 &&
         !filter.modules.includes(entry.module)
@@ -55,7 +74,7 @@ export default function ActivityLogClient() {
 
       return true;
     });
-  }, [orgEntries, filter]);
+  }, [visibleEntries, filter]);
 
   const totalPages = Math.max(Math.ceil(filtered.length / pageSize), 1);
   const currentPage = Math.min(page, totalPages);

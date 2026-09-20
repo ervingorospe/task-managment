@@ -28,7 +28,11 @@ export const mockDefaultRoles: RoleDetail[] = [
     isLocked: false,
     orgId: null,
     isDeleted: false,
-    rules: rulesFor(["ticket.request", "ticket.view.included"]),
+    rules: rulesFor([
+      "ticket.request",
+      "ticket.view.included",
+      "activity.log.view.included",
+    ]),
   },
   {
     id: 3,
@@ -46,6 +50,7 @@ export const mockDefaultRoles: RoleDetail[] = [
       "ticket.change.status",
       "ticket.assign",
       "ticket.change.owner",
+      "activity.log.view.included",
     ]),
   },
   {
@@ -80,6 +85,8 @@ export const mockDefaultRoles: RoleDetail[] = [
       "member.view.owner",
       "member.view.clients",
       "member.set.active",
+      "activity.log.view.all",
+      "activity.log.view.included",
     ]),
   },
 ];

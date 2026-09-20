@@ -235,6 +235,11 @@ export default function TicketsPageClient({
         action: "created",
         entityId: newTicket.id,
         entityLabel: newTicket.title,
+        referenceId: newTicket.referenceId,
+        involvedUserIds: [
+          newTicket.client?.user?.id,
+          ...newTicket.assignees.map((a) => a.user?.id),
+        ],
         description: `created ticket "${newTicket.title}"`,
       });
       toast(`Ticket "${newTicket.title}" created`);
@@ -255,6 +260,11 @@ export default function TicketsPageClient({
           action: "status_changed",
           entityId: ticketId,
           entityLabel: target.title,
+          referenceId: target.referenceId,
+          involvedUserIds: [
+            target.client?.user?.id,
+            ...target.assignees.map((a) => a.user?.id),
+          ],
           description: `changed status of "${target.title}" to ${tag.tagName}`,
         });
       }
@@ -278,11 +288,18 @@ export default function TicketsPageClient({
         ),
       );
       if (target) {
+        const newAssignees = members.filter((m) => memberIds.includes(m.id));
         logTicketActivity({
           orgId: organization.id,
           action: "assigned",
           entityId: ticketId,
           entityLabel: target.title,
+          referenceId: target.referenceId,
+          involvedUserIds: [
+            target.client?.user?.id,
+            ...target.assignees.map((a) => a.user?.id),
+            ...newAssignees.map((a) => a.user?.id),
+          ],
           description: `updated assignees on "${target.title}"`,
         });
       }

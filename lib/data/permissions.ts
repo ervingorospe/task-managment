@@ -40,6 +40,10 @@ export const PERMISSIONS = {
   REPORT_GENERATE: "report.generate",
   REPORT_VIEW: "report.view",
   REPORT_DOWNLOAD: "report.download",
+
+  // Activity Log Rules
+  ACTIVITY_LOG_VIEW_ALL: "activity.log.view.all",
+  ACTIVITY_LOG_VIEW_INCLUDED: "activity.log.view.included",
 } as const;
 
 export type Permission = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];

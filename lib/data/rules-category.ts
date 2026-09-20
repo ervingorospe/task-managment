@@ -6,4 +6,5 @@ export const rulesCategories = [
   { id: 3, name: "Role" },
   { id: 5, name: "Ticket" },
   { id: 6, name: "Report" },
+  { id: 7, name: "Activity Log" },
 ];

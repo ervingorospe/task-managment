@@ -11,6 +11,10 @@ interface LogActivityParams {
   entityId: number;
   entityLabel: string;
   description: string;
+  /** Ticket/request reference id at the time of the action, e.g. "tckt-00001". */
+  referenceId?: string;
+  /** Other users this entry concerns, besides the actor (who's always included). */
+  involvedUserIds?: (number | null | undefined)[];
 }
 
 /** Curries `logActivity` with the current user and a fixed module, so call
@@ -22,15 +26,26 @@ export function useLogActivity(module: ActivityModule) {
   return useCallback(
     (params: LogActivityParams) => {
       if (!currentUser) return;
+
+      const involvedUserIds = Array.from(
+        new Set(
+          [currentUser.id, ...(params.involvedUserIds ?? [])].filter(
+            (id): id is number => typeof id === "number",
+          ),
+        ),
+      );
+
       logActivity({
         orgId: params.orgId,
         module,
         action: params.action,
         entityId: params.entityId,
         entityLabel: params.entityLabel,
+        referenceId: params.referenceId,
         actorId: currentUser.id,
         actorName: `${currentUser.firstName} ${currentUser.lastName}`,
         actorAvatar: currentUser.avatar,
+        involvedUserIds,
         description: params.description,
       });
     },

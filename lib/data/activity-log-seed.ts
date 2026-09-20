@@ -6,7 +6,19 @@ import type { ActivityLogEntry } from "@/lib/types/activity/activity-log-entry.t
  * (ticket/request creation, comments, role/tag creation) rather than
  * hand-writing entries with guessed ids — every id here is guaranteed to
  * exist because it's pulled from the same objects the rest of the app reads.
+ *
+ * The log itself is standalone (no foreign keys, no joins at read time), so
+ * every id/name/reference this generator can resolve from the mock data is
+ * baked directly onto the row here, once, at "write" time.
  */
+function resolveUserId(member: any): number | undefined {
+  return member?.user?.id ?? member?.id;
+}
+
+function dedupe(ids: (number | undefined)[]): number[] {
+  return Array.from(new Set(ids.filter((id): id is number => id != null)));
+}
+
 function buildSeed(): ActivityLogEntry[] {
   const entries: ActivityLogEntry[] = [];
   let nextId = 1;
@@ -22,7 +34,8 @@ function buildSeed(): ActivityLogEntry[] {
       const clientName = ticket.client
         ? `${ticket.client.user?.firstName ?? ticket.client.firstName} ${ticket.client.user?.lastName ?? ticket.client.lastName}`
         : ownerName;
-      const clientId = ticket.client?.user?.id ?? ticket.client?.id ?? org.owner.id;
+      const clientId = resolveUserId(ticket.client) ?? org.owner.id;
+      const assigneeIds = (ticket.assignees ?? []).map(resolveUserId);
 
       push({
         orgId: org.id,
@@ -30,8 +43,10 @@ function buildSeed(): ActivityLogEntry[] {
         action: "created",
         entityId: ticket.id,
         entityLabel: ticket.title,
+        referenceId: ticket.referenceId,
         actorId: clientId,
         actorName: clientName,
+        involvedUserIds: dedupe([clientId, ...assigneeIds]),
         description: `created ticket "${ticket.title}"`,
         createdAt: ticket.createdAt,
       });
@@ -43,9 +58,15 @@ function buildSeed(): ActivityLogEntry[] {
           action: "commented",
           entityId: ticket.id,
           entityLabel: ticket.title,
+          referenceId: ticket.referenceId,
           actorId: comment.author.id,
           actorName: `${comment.author.firstName} ${comment.author.lastName}`,
           actorAvatar: comment.author.avatar,
+          involvedUserIds: dedupe([
+            comment.author.id,
+            clientId,
+            ...assigneeIds,
+          ]),
           description: `commented on "${ticket.title}"`,
           createdAt: comment.createdAt,
         });
@@ -53,16 +74,19 @@ function buildSeed(): ActivityLogEntry[] {
 
       if (ticket.updatedAt && ticket.updatedAt !== ticket.createdAt) {
         const assignee = ticket.assignees?.[0];
+        const actorId = resolveUserId(assignee) ?? org.owner.id;
         push({
           orgId: org.id,
           module: "ticket",
           action: "status_changed",
           entityId: ticket.id,
           entityLabel: ticket.title,
-          actorId: assignee?.user?.id ?? assignee?.id ?? org.owner.id,
+          referenceId: ticket.referenceId,
+          actorId,
           actorName: assignee
             ? `${assignee.user?.firstName ?? assignee.firstName} ${assignee.user?.lastName ?? assignee.lastName}`
             : ownerName,
+          involvedUserIds: dedupe([actorId, clientId, ...assigneeIds]),
           description: `changed status of "${ticket.title}" to ${ticket.tag.tagName}`,
           createdAt: ticket.updatedAt,
         });
@@ -71,6 +95,7 @@ function buildSeed(): ActivityLogEntry[] {
 
     for (const request of org.ticketRequests ?? []) {
       const clientName = `${request.client.firstName} ${request.client.lastName}`;
+      const clientId = resolveUserId(request.client) ?? org.owner.id;
 
       push({
         orgId: org.id,
@@ -78,8 +103,10 @@ function buildSeed(): ActivityLogEntry[] {
         action: "created",
         entityId: request.id,
         entityLabel: request.title,
-        actorId: request.client.id,
+        referenceId: request.referenceId,
+        actorId: clientId,
         actorName: clientName,
+        involvedUserIds: dedupe([clientId]),
         description: `submitted request "${request.title}"`,
         createdAt: request.createdAt,
       });
@@ -91,8 +118,10 @@ function buildSeed(): ActivityLogEntry[] {
           action: "approved",
           entityId: request.id,
           entityLabel: request.title,
+          referenceId: request.referenceId,
           actorId: org.owner.id,
           actorName: ownerName,
+          involvedUserIds: dedupe([org.owner.id, clientId]),
           description: `approved request "${request.title}"`,
           createdAt: request.updatedAt,
         });
@@ -103,8 +132,10 @@ function buildSeed(): ActivityLogEntry[] {
           action: "rejected",
           entityId: request.id,
           entityLabel: request.title,
+          referenceId: request.referenceId,
           actorId: org.owner.id,
           actorName: ownerName,
+          involvedUserIds: dedupe([org.owner.id, clientId]),
           description: request.remarks
             ? `rejected request "${request.title}": ${request.remarks}`
             : `rejected request "${request.title}"`,
@@ -115,14 +146,16 @@ function buildSeed(): ActivityLogEntry[] {
 
     for (const member of org.members ?? []) {
       const name = `${member.user?.firstName ?? member.firstName} ${member.user?.lastName ?? member.lastName}`;
+      const memberUserId = resolveUserId(member);
       push({
         orgId: org.id,
         module: "member",
         action: "joined",
         entityId: member.id,
         entityLabel: name,
-        actorId: member.id,
+        actorId: memberUserId ?? member.id,
         actorName: name,
+        involvedUserIds: dedupe([memberUserId]),
         description: `joined the organization`,
         createdAt: member.createdAt ?? org.createdAt,
       });
@@ -138,6 +171,7 @@ function buildSeed(): ActivityLogEntry[] {
         entityLabel: role.roleName,
         actorId: org.owner.id,
         actorName: ownerName,
+        involvedUserIds: dedupe([org.owner.id]),
         description: `created role "${role.roleName}"`,
         createdAt: role.createdAt ?? org.createdAt,
       });
@@ -153,6 +187,7 @@ function buildSeed(): ActivityLogEntry[] {
         entityLabel: tag.tagName,
         actorId: org.owner.id,
         actorName: ownerName,
+        involvedUserIds: dedupe([org.owner.id]),
         description: `created tag "${tag.tagName}"`,
         createdAt: org.createdAt,
       });

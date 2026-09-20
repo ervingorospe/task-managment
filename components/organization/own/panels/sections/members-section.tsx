@@ -122,6 +122,7 @@ export default function MembersSection({
         action: willActivate ? "activated" : "deactivated",
         entityId: member.id,
         entityLabel: getMemberName(member),
+        involvedUserIds: [member.user?.id],
         description: `${willActivate ? "activated" : "deactivated"} ${getMemberName(member)}`,
       });
       toast(
@@ -136,6 +137,7 @@ export default function MembersSection({
         action: "removed",
         entityId: member.id,
         entityLabel: getMemberName(member),
+        involvedUserIds: [member.user?.id],
         description: `removed ${getMemberName(member)} from the organization`,
       });
       toast(`${getMemberName(member)} removed`, "error");
@@ -160,6 +162,7 @@ export default function MembersSection({
         action: "role_changed",
         entityId: activeRoleMember.id,
         entityLabel: getMemberName(activeRoleMember),
+        involvedUserIds: [activeRoleMember.user?.id],
         description: `changed ${getMemberName(activeRoleMember)}'s role to ${roleName}`,
       });
       toast(`${getMemberName(activeRoleMember)}'s role updated`);

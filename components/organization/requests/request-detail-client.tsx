@@ -169,6 +169,8 @@ export default function RequestDetailClient({
       action: "rejected",
       entityId: request.id,
       entityLabel: request.title,
+      referenceId: request.referenceId,
+      involvedUserIds: [request.client.user?.id],
       description: `rejected request "${request.title}": ${remarks}`,
     });
     toast(`Request "${request.title}" rejected`, "error");
@@ -220,6 +222,8 @@ export default function RequestDetailClient({
       action: "approved",
       entityId: request.id,
       entityLabel: request.title,
+      referenceId: request.referenceId,
+      involvedUserIds: [request.client.user?.id],
       description: `approved request "${request.title}"`,
     });
     logTicketActivity({
@@ -227,6 +231,11 @@ export default function RequestDetailClient({
       action: "created",
       entityId: newTicket.id,
       entityLabel: newTicket.title,
+      referenceId: newTicket.referenceId,
+      involvedUserIds: [
+        newTicket.client?.user?.id,
+        ...newTicket.assignees.map((a) => a.user?.id),
+      ],
       description: `created ticket "${newTicket.title}" from a request`,
     });
     toast(`Request approved — ticket "${newTicket.title}" created`);

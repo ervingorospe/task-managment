@@ -59,6 +59,11 @@ export default function TicketDetailClient({
         action: "title_updated",
         entityId: ticket.id,
         entityLabel: next,
+        referenceId: ticket.referenceId,
+        involvedUserIds: [
+          ticket.client?.user?.id,
+          ...ticket.assignees.map((a) => a.user?.id),
+        ],
         description: `renamed ticket "${title}" to "${next}"`,
       });
     }
@@ -77,6 +82,11 @@ export default function TicketDetailClient({
       action: "removed",
       entityId: ticket.id,
       entityLabel: title,
+      referenceId: ticket.referenceId,
+      involvedUserIds: [
+        ticket.client?.user?.id,
+        ...ticket.assignees.map((a) => a.user?.id),
+      ],
       description: `deleted ticket "${title}"`,
     });
     toast(`Ticket "${title}" removed`, "error");
@@ -194,6 +204,7 @@ export default function TicketDetailClient({
         <div className="space-y-6">
           <TicketDetailsCard
             ticketId={ticket.id}
+            referenceId={ticket.referenceId}
             ticketTitle={title}
             tag={tag}
             onChangeTag={setTag}

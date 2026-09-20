@@ -201,4 +201,19 @@ export const rules = [
     desc: "Can download a generated report.",
     categoryId: 6,
   },
+
+  {
+    id: 37,
+    action: "activity.log.view.all",
+    name: "View All Activity",
+    desc: "Can view every action logged across the organization.",
+    categoryId: 7,
+  },
+  {
+    id: 38,
+    action: "activity.log.view.included",
+    name: "View Included Activity",
+    desc: "Can only view activity for tickets they're assigned to, or actions they were part of.",
+    categoryId: 7,
+  },
 ];

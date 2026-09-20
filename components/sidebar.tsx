@@ -44,12 +44,6 @@ const insightNavItems: StaticNavItem[] = [
     icon: FileBarChart,
     permission: PERMISSIONS.REPORT_VIEW,
   },
-  {
-    href: "/dashboard/activity",
-    label: "Activity Log",
-    icon: History,
-    permission: null,
-  },
 ];
 
 export function Sidebar() {
@@ -81,6 +75,8 @@ export function Sidebar() {
     : "/dashboard";
 
   const membersActive = pathname === membersHref;
+
+  const activityActive = pathname.startsWith("/dashboard/activity");
 
   // An organization's own landing page is exactly /dashboard/organizations/{slug}
   // — no further segments. That's distinct from the Tickets nav link, which
@@ -228,8 +224,27 @@ export function Sidebar() {
           )}
         </Can>
 
-        {/* Reports / Activity Log */}
+        {/* Reports */}
         {insightNavItems.map(renderStaticNavItem)}
+
+        {/* Activity Log — visible to anyone who can see all activity or just their own */}
+        <Can
+          anyOf={[
+            PERMISSIONS.ACTIVITY_LOG_VIEW_ALL,
+            PERMISSIONS.ACTIVITY_LOG_VIEW_INCLUDED,
+          ]}
+        >
+          {withTooltip(
+            "Activity Log",
+            <Link
+              href="/dashboard/activity"
+              className={navLinkClass(activityActive)}
+            >
+              <History size={16} strokeWidth={2} />
+              {!collapsed && "Activity Log"}
+            </Link>,
+          )}
+        </Can>
 
         {/* Organization */}
         <div>

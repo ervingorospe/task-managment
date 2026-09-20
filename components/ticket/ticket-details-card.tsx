@@ -20,6 +20,7 @@ import { DueChip } from "./due-chip";
 
 interface TicketDetailsCardProps {
   ticketId: number;
+  referenceId: string;
   ticketTitle: string;
   tag: TagDetail;
   onChangeTag: (tag: TagDetail) => void;
@@ -32,6 +33,7 @@ interface TicketDetailsCardProps {
 
 export default function TicketDetailsCard({
   ticketId,
+  referenceId,
   ticketTitle,
   tag,
   onChangeTag,
@@ -58,6 +60,8 @@ export default function TicketDetailsCard({
       action: "status_changed",
       entityId: ticketId,
       entityLabel: ticketTitle,
+      referenceId,
+      involvedUserIds: [client?.user?.id, ...assignees.map((a) => a.user?.id)],
       description: `changed status of "${ticketTitle}" to ${nextTag.tagName}`,
     });
     toast(`Status changed to "${nextTag.tagName}"`);
@@ -65,12 +69,21 @@ export default function TicketDetailsCard({
   }
 
   function handleAssign(memberIds: number[]) {
-    setAssignees(assignableMembers.filter((m) => memberIds.includes(m.id)));
+    const newAssignees = assignableMembers.filter((m) =>
+      memberIds.includes(m.id),
+    );
+    setAssignees(newAssignees);
     logTicketActivity({
       orgId: organization.id,
       action: "assigned",
       entityId: ticketId,
       entityLabel: ticketTitle,
+      referenceId,
+      involvedUserIds: [
+        client?.user?.id,
+        ...assignees.map((a) => a.user?.id),
+        ...newAssignees.map((a) => a.user?.id),
+      ],
       description: `updated assignees on "${ticketTitle}"`,
     });
     toast("Assignees updated");
@@ -84,6 +97,8 @@ export default function TicketDetailsCard({
       action: "due_date_changed",
       entityId: ticketId,
       entityLabel: ticketTitle,
+      referenceId,
+      involvedUserIds: [client?.user?.id, ...assignees.map((a) => a.user?.id)],
       description: value
         ? `changed due date of "${ticketTitle}" to ${value}`
         : `cleared the due date on "${ticketTitle}"`,

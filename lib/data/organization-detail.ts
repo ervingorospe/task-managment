@@ -255,7 +255,11 @@ export const mockOrganizationDetails: Record<string, any> = {
         isDeleted: false,
         createdAt: now,
         updatedAt: now,
-        rules: rulesForRole(["ticket.request", "ticket.view.included"]),
+        rules: rulesForRole([
+          "ticket.request",
+          "ticket.view.included",
+          "activity.log.view.included",
+        ]),
       },
       {
         id: 3,
@@ -274,6 +278,7 @@ export const mockOrganizationDetails: Record<string, any> = {
           "ticket.change.status",
           "ticket.change.owner",
           "ticket.assign",
+          "activity.log.view.included",
         ]),
       },
       {
@@ -310,6 +315,8 @@ export const mockOrganizationDetails: Record<string, any> = {
           "member.view.owner",
           "member.view.clients",
           "member.set.active",
+          "activity.log.view.all",
+          "activity.log.view.included",
         ]),
       },
     ],
@@ -868,7 +875,11 @@ export const mockOrganizationDetails: Record<string, any> = {
         isDeleted: false,
         createdAt: now,
         updatedAt: now,
-        rules: rulesForRole(["ticket.request", "ticket.view.included"]),
+        rules: rulesForRole([
+          "ticket.request",
+          "ticket.view.included",
+          "activity.log.view.included",
+        ]),
       },
       {
         id: 3,
@@ -887,6 +898,7 @@ export const mockOrganizationDetails: Record<string, any> = {
           "ticket.change.status",
           "ticket.change.owner",
           "ticket.assign",
+          "activity.log.view.included",
         ]),
       },
       {
@@ -923,6 +935,8 @@ export const mockOrganizationDetails: Record<string, any> = {
           "member.view.owner",
           "member.view.clients",
           "member.set.active",
+          "activity.log.view.all",
+          "activity.log.view.included",
         ]),
       },
     ],

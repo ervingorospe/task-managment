@@ -224,6 +224,8 @@ export default function RequestsPageClient({
         action: "created",
         entityId: newRequest.id,
         entityLabel: newRequest.title,
+        referenceId: newRequest.referenceId,
+        involvedUserIds: [newRequest.client.user?.id],
         description: `submitted request "${newRequest.title}"`,
       });
       toast(`Request "${newRequest.title}" submitted`);
@@ -253,6 +255,8 @@ export default function RequestsPageClient({
         action: "rejected",
         entityId: rejectTarget.id,
         entityLabel: rejectTarget.title,
+        referenceId: rejectTarget.referenceId,
+        involvedUserIds: [rejectTarget.client.user?.id],
         description: `rejected request "${rejectTarget.title}": ${remarks}`,
       });
       toast(`Request "${rejectTarget.title}" rejected`, "error");
@@ -318,6 +322,8 @@ export default function RequestsPageClient({
         action: "approved",
         entityId: approveTarget.id,
         entityLabel: approveTarget.title,
+        referenceId: approveTarget.referenceId,
+        involvedUserIds: [approveTarget.client.user?.id],
         description: `approved request "${approveTarget.title}"`,
       });
       logTicketActivity({
@@ -325,6 +331,11 @@ export default function RequestsPageClient({
         action: "created",
         entityId: newTicket.id,
         entityLabel: newTicket.title,
+        referenceId: newTicket.referenceId,
+        involvedUserIds: [
+          newTicket.client?.user?.id,
+          ...newTicket.assignees.map((a) => a.user?.id),
+        ],
         description: `created ticket "${newTicket.title}" from a request`,
       });
       toast(`Request approved — ticket "${newTicket.title}" created`);
