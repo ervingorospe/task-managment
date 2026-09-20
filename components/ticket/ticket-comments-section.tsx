@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/buttons/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { useAuth } from "@/providers/auth-provider";
 import { useToast } from "@/providers/toast-provider";
+import { useLogActivity } from "@/hooks/use-log-activity";
 import { formatDateTime } from "@/lib/helper/format-date";
 import { getMemberName } from "@/lib/helper/member-name";
 import { getMentionableMembers } from "@/lib/helper/mentionable-members";
@@ -89,6 +90,10 @@ export default function TicketCommentsSection({
 }: TicketCommentsSectionProps) {
   const { currentUser } = useAuth();
   const toast = useToast();
+  const logTicketActivity = useLogActivity("ticket");
+  const ticketTitle =
+    organization.tickets.find((t) => t.id === ticketId)?.title ??
+    "this ticket";
 
   const [comments, setComments] = useState<TicketComment[]>(
     initialComments ?? [],
@@ -179,6 +184,13 @@ export default function TicketCommentsSection({
     setComments((prev) => [...prev, comment]);
     setCommentDraft("");
     setMentionState(null);
+    logTicketActivity({
+      orgId: organization.id,
+      action: "commented",
+      entityId: ticketId,
+      entityLabel: ticketTitle,
+      description: `commented on "${ticketTitle}"`,
+    });
     toast("Comment added");
     // TODO: POST /tickets/:id/comments { comment: text }
   }
@@ -209,6 +221,13 @@ export default function TicketCommentsSection({
     setEditingCommentId(null);
     setEditCommentDraft("");
     setMentionState(null);
+    logTicketActivity({
+      orgId: organization.id,
+      action: "comment_edited",
+      entityId: ticketId,
+      entityLabel: ticketTitle,
+      description: `edited a comment on "${ticketTitle}"`,
+    });
     toast("Comment updated");
     // TODO: PATCH /tickets/:id/comments/:commentId { comment: text }
   }
@@ -218,6 +237,13 @@ export default function TicketCommentsSection({
 
     setComments((prev) => prev.filter((c) => c.id !== commentToDelete.id));
     setCommentToDelete(null);
+    logTicketActivity({
+      orgId: organization.id,
+      action: "comment_removed",
+      entityId: ticketId,
+      entityLabel: ticketTitle,
+      description: `removed a comment on "${ticketTitle}"`,
+    });
     toast("Comment removed", "error");
     // TODO: DELETE /tickets/:id/comments/:commentId
   }

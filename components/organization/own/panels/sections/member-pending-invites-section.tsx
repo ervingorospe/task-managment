@@ -1,14 +1,16 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import PendingInviteList from "@/components/organization/member/pending-invite-list";
 import Card from "@/components/ui/card";
+import { Pagination } from "@/components/ui/pagination";
 import { lazyNamed } from "@/lib/helper/lazy-named";
 import { MemberInviteDetail } from "@/lib/types/organization/member-invite-detail.type";
 import { RoleDetail } from "@/lib/types/organization/role-detail.type";
 import { PERMISSIONS } from "@/lib/data/permissions";
 import { Can } from "@/components/auth/can";
 import { useToast } from "@/providers/toast-provider";
+import { useLogActivity } from "@/hooks/use-log-activity";
 
 const ConfirmDialog = lazyNamed(
   () => import("@/components/ui/confirm-dialog"),
@@ -29,6 +31,7 @@ export default function MemberPendingInvites({
   roles,
 }: InvitePeopleSectionProps) {
   const toast = useToast();
+  const logMemberActivity = useLogActivity("member");
   const [pendingInvites, setPendingInvites] = useState<MemberInviteDetail[]>(
     invites ?? [],
   );
@@ -37,6 +40,24 @@ export default function MemberPendingInvites({
   >({});
   const [pendingRemoveInvite, setPendingRemoveInvite] =
     useState<MemberInviteDetail | null>(null);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(15);
+
+  const totalPages = Math.max(Math.ceil(pendingInvites.length / pageSize), 1);
+  const currentPage = Math.min(page, totalPages);
+  const paginatedInvites = useMemo(
+    () =>
+      pendingInvites.slice(
+        (currentPage - 1) * pageSize,
+        currentPage * pageSize,
+      ),
+    [pendingInvites, currentPage, pageSize],
+  );
+
+  function handlePageSizeChange(size: number) {
+    setPageSize(size);
+    setPage(1);
+  }
 
   useEffect(() => {
     const interval = window.setInterval(() => {
@@ -59,9 +80,19 @@ export default function MemberPendingInvites({
   }, []);
 
   function handleRemoveInvite(id: number) {
+    const invite = pendingInvites.find((i) => i.id === id);
     setPendingInvites((prev) => prev.filter((invite) => invite.id !== id));
     // TODO: await DELETE /organizations/:orgId/invites/:id
     console.log("Remove invite:", id);
+    if (invite) {
+      logMemberActivity({
+        orgId: Number(orgId),
+        action: "invite_removed",
+        entityId: invite.id,
+        entityLabel: invite.email,
+        description: `removed the invitation sent to ${invite.email}`,
+      });
+    }
     toast("Invitation removed", "error");
   }
 
@@ -82,6 +113,17 @@ export default function MemberPendingInvites({
       ...current,
       [id]: RESEND_COOLDOWN_SECONDS,
     }));
+
+    const invite = pendingInvites.find((i) => i.id === id);
+    if (invite) {
+      logMemberActivity({
+        orgId: Number(orgId),
+        action: "invite_resent",
+        entityId: invite.id,
+        entityLabel: invite.email,
+        description: `resent the invitation to ${invite.email}`,
+      });
+    }
     toast("Invitation resent");
   }
 
@@ -93,12 +135,23 @@ export default function MemberPendingInvites({
         desc={`${pendingInvites.length} invited`}
       >
         <PendingInviteList
-          invites={pendingInvites}
+          invites={paginatedInvites}
           roles={roles}
           resendCooldowns={resendCooldowns}
           onRemove={(invite) => setPendingRemoveInvite(invite)}
           onResend={handleResendInvite}
         />
+
+        {pendingInvites.length > 0 && (
+          <Pagination
+            page={currentPage}
+            totalPages={totalPages}
+            totalItems={pendingInvites.length}
+            pageSize={pageSize}
+            onPageChange={setPage}
+            onPageSizeChange={handlePageSizeChange}
+          />
+        )}
       </Card>
 
       {pendingRemoveInvite && (

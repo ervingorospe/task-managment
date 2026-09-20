@@ -16,6 +16,7 @@ import {
 } from "./ticket-filter-dropdown";
 import { useAuth, usePermission } from "@/providers/auth-provider";
 import { useToast } from "@/providers/toast-provider";
+import { useLogActivity } from "@/hooks/use-log-activity";
 import { useTicketListQueryState } from "@/hooks/use-ticket-list-query-state";
 import { isTicketIncluded } from "@/lib/helper/ticket-access";
 import { getDueState } from "@/lib/helper/ticket-status";
@@ -38,6 +39,7 @@ export default function TicketsPageClient({
 }: TicketsPageClientProps) {
   const { currentUser } = useAuth();
   const toast = useToast();
+  const logTicketActivity = useLogActivity("ticket");
   const canViewAllTickets = usePermission(PERMISSIONS.TICKET_VIEW_ALL);
   const { tags, members } = organization;
   const assignableMembers = useMemo(
@@ -228,25 +230,43 @@ export default function TicketsPageClient({
       if (targetOrg.id === organization.id) {
         setTickets((prev) => [newTicket, ...prev]);
       }
+      logTicketActivity({
+        orgId: targetOrg.id,
+        action: "created",
+        entityId: newTicket.id,
+        entityLabel: newTicket.title,
+        description: `created ticket "${newTicket.title}"`,
+      });
       toast(`Ticket "${newTicket.title}" created`);
       // TODO: POST /organizations/:orgId/tickets in the background.
     },
-    [allOrganizations, organization, toast],
+    [allOrganizations, organization, toast, logTicketActivity],
   );
 
   const handleChangeTag = useCallback(
     (ticketId: number, tag: TagDetail) => {
+      const target = tickets.find((t) => t.id === ticketId);
       setTickets((prev) =>
         prev.map((t) => (t.id === ticketId ? { ...t, tag } : t)),
       );
+      if (target) {
+        logTicketActivity({
+          orgId: organization.id,
+          action: "status_changed",
+          entityId: ticketId,
+          entityLabel: target.title,
+          description: `changed status of "${target.title}" to ${tag.tagName}`,
+        });
+      }
       toast(`Status changed to "${tag.tagName}"`);
       // TODO: PATCH /tickets/:id { tag_id: tag.id }
     },
-    [toast],
+    [toast, tickets, organization.id, logTicketActivity],
   );
 
   const handleAssign = useCallback(
     (ticketId: number, memberIds: number[]) => {
+      const target = tickets.find((t) => t.id === ticketId);
       setTickets((prev) =>
         prev.map((t) =>
           t.id === ticketId
@@ -257,10 +277,19 @@ export default function TicketsPageClient({
             : t,
         ),
       );
+      if (target) {
+        logTicketActivity({
+          orgId: organization.id,
+          action: "assigned",
+          entityId: ticketId,
+          entityLabel: target.title,
+          description: `updated assignees on "${target.title}"`,
+        });
+      }
       toast("Assignees updated");
       // TODO: PATCH /tickets/:id { assignee_ids: memberIds }
     },
-    [members, toast],
+    [members, toast, tickets, organization.id, logTicketActivity],
   );
 
   const handleToggleStar = useCallback(

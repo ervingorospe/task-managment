@@ -17,6 +17,7 @@ import {
 } from "./request-filter-dropdown";
 import { useAuth, usePermission } from "@/providers/auth-provider";
 import { useToast } from "@/providers/toast-provider";
+import { useLogActivity } from "@/hooks/use-log-activity";
 import { formatReferenceId } from "@/lib/helper/reference-id";
 import { useRequestListQueryState } from "@/hooks/use-request-list-query-state";
 import type { OrganizationDetail } from "@/lib/types/organization/organization-detail.type";
@@ -34,6 +35,8 @@ export default function RequestsPageClient({
 }: RequestsPageClientProps) {
   const { currentUser, activeMembership } = useAuth();
   const toast = useToast();
+  const logRequestActivity = useLogActivity("request");
+  const logTicketActivity = useLogActivity("ticket");
   const canCreateTicket = usePermission(PERMISSIONS.TICKET_CREATE);
   const canViewAllTickets = usePermission(PERMISSIONS.TICKET_VIEW_ALL);
 
@@ -216,10 +219,17 @@ export default function RequestsPageClient({
       };
 
       setRequests((prev) => [newRequest, ...prev]);
+      logRequestActivity({
+        orgId: organization.id,
+        action: "created",
+        entityId: newRequest.id,
+        entityLabel: newRequest.title,
+        description: `submitted request "${newRequest.title}"`,
+      });
       toast(`Request "${newRequest.title}" submitted`);
       // TODO: POST /organizations/:orgId/ticket-requests
     },
-    [currentMember, requests.length, organization.id, toast],
+    [currentMember, requests.length, organization.id, toast, logRequestActivity],
   );
 
   const handleReject = useCallback(
@@ -238,10 +248,17 @@ export default function RequestsPageClient({
             : r,
         ),
       );
+      logRequestActivity({
+        orgId: organization.id,
+        action: "rejected",
+        entityId: rejectTarget.id,
+        entityLabel: rejectTarget.title,
+        description: `rejected request "${rejectTarget.title}": ${remarks}`,
+      });
       toast(`Request "${rejectTarget.title}" rejected`, "error");
       // TODO: PATCH /ticket-requests/:id { status: "rejected", remarks }
     },
-    [rejectTarget, toast],
+    [rejectTarget, toast, organization.id, logRequestActivity],
   );
 
   const handleApproveSubmit = useCallback(
@@ -296,12 +313,33 @@ export default function RequestsPageClient({
             : r,
         ),
       );
+      logRequestActivity({
+        orgId: organization.id,
+        action: "approved",
+        entityId: approveTarget.id,
+        entityLabel: approveTarget.title,
+        description: `approved request "${approveTarget.title}"`,
+      });
+      logTicketActivity({
+        orgId: organization.id,
+        action: "created",
+        entityId: newTicket.id,
+        entityLabel: newTicket.title,
+        description: `created ticket "${newTicket.title}" from a request`,
+      });
       toast(`Request approved — ticket "${newTicket.title}" created`);
       setApproveTarget(null);
       // TODO: POST /organizations/:orgId/tickets (from request), then
       // PATCH /ticket-requests/:id { status: "approved", ticket_id }
     },
-    [approveTarget, organization, tickets.length, toast],
+    [
+      approveTarget,
+      organization,
+      tickets.length,
+      toast,
+      logRequestActivity,
+      logTicketActivity,
+    ],
   );
 
   return (

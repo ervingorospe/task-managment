@@ -13,6 +13,7 @@ import {
   Star,
   Users,
   Inbox,
+  History,
   PanelLeftClose,
   PanelLeftOpen,
 } from "lucide-react";
@@ -21,18 +22,33 @@ import { Can } from "@/components/auth/can";
 import { PERMISSIONS, type Permission } from "@/lib/data/permissions";
 import Tooltip from "@/components/ui/tooltip";
 
-const staticNavItems: {
+type StaticNavItem = {
   href: string;
   label: string;
   icon: typeof LayoutGrid;
   permission: Permission | null;
-}[] = [
+};
+
+// Dashboard leads; day-to-day work items (Tickets/Starred/Requests/Members,
+// rendered separately below since their hrefs depend on activeOrganization)
+// come next; Reports/Activity Log are insights, so they sit after those;
+// Organization management is always last.
+const primaryNavItems: StaticNavItem[] = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutGrid, permission: null },
+];
+
+const insightNavItems: StaticNavItem[] = [
   {
     href: "/dashboard/reports",
     label: "Reports",
     icon: FileBarChart,
     permission: PERMISSIONS.REPORT_VIEW,
+  },
+  {
+    href: "/dashboard/activity",
+    label: "Activity Log",
+    icon: History,
+    permission: null,
   },
 ];
 
@@ -103,6 +119,36 @@ export function Sidebar() {
     return collapsed ? <Tooltip label={label}>{node}</Tooltip> : node;
   }
 
+  function renderStaticNavItem({
+    href,
+    label,
+    icon: Icon,
+    permission,
+  }: StaticNavItem) {
+    const active =
+      href === "/dashboard"
+        ? pathname === href
+        : pathname.startsWith(`${href}/`) || pathname === href;
+
+    const link = withTooltip(
+      label,
+      <Link href={href} className={navLinkClass(active)}>
+        <Icon size={16} strokeWidth={2} />
+        {!collapsed && label}
+      </Link>,
+    );
+
+    if (!permission) {
+      return <div key={href}>{link}</div>;
+    }
+
+    return (
+      <Can key={href} action={permission}>
+        {link}
+      </Can>
+    );
+  }
+
   return (
     <aside
       className={clsx(
@@ -134,31 +180,8 @@ export function Sidebar() {
       </div>
 
       <nav className="flex-1 space-y-0.5 p-2">
-        {/* Static navigation */}
-        {staticNavItems.map(({ href, label, icon: Icon, permission }) => {
-          const active =
-            href === "/dashboard"
-              ? pathname === href
-              : pathname.startsWith(`${href}/`) || pathname === href;
-
-          const link = withTooltip(
-            label,
-            <Link href={href} className={navLinkClass(active)}>
-              <Icon size={16} strokeWidth={2} />
-              {!collapsed && label}
-            </Link>,
-          );
-
-          if (!permission) {
-            return <div key={href}>{link}</div>;
-          }
-
-          return (
-            <Can key={href} action={permission}>
-              {link}
-            </Can>
-          );
-        })}
+        {/* Dashboard */}
+        {primaryNavItems.map(renderStaticNavItem)}
 
         {/* Tickets */}
         {withTooltip(
@@ -204,6 +227,9 @@ export function Sidebar() {
             </Link>,
           )}
         </Can>
+
+        {/* Reports / Activity Log */}
+        {insightNavItems.map(renderStaticNavItem)}
 
         {/* Organization */}
         <div>

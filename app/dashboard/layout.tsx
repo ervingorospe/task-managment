@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/providers/auth-provider";
+import { ActivityLogProvider } from "@/providers/activity-log-provider";
 import { Sidebar } from "@/components/sidebar";
 import { Topbar } from "@/components/topbar";
 
@@ -24,12 +25,14 @@ export default function DashboardLayout({
   if (!isAuthenticated) return null;
 
   return (
-    <div className="flex min-h-screen bg-canvas print:block">
-      <Sidebar />
-      <div className="flex flex-1 flex-col pb-[100px] print:pb-0">
-        <Topbar />
-        <main className="flex-1 p-6 print:p-0">{children}</main>
+    <ActivityLogProvider>
+      <div className="flex min-h-screen bg-canvas print:block">
+        <Sidebar />
+        <div className="flex flex-1 flex-col pb-[100px] print:pb-0">
+          <Topbar />
+          <main className="flex-1 p-6 print:p-0">{children}</main>
+        </div>
       </div>
-    </div>
+    </ActivityLogProvider>
   );
 }

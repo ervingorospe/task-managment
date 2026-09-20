@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/buttons/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Can } from "@/components/auth/can";
 import { useToast } from "@/providers/toast-provider";
+import { useLogActivity } from "@/hooks/use-log-activity";
 import { PERMISSIONS } from "@/lib/data/permissions";
 import { DueChip } from "./due-chip";
 import { getDueState } from "@/lib/helper/ticket-status";
@@ -31,6 +32,7 @@ export default function TicketDetailClient({
 }: TicketDetailClientProps) {
   const router = useRouter();
   const toast = useToast();
+  const logTicketActivity = useLogActivity("ticket");
   const slug = organization.settings?.slug;
 
   const [title, setTitle] = useState(ticket.title);
@@ -50,7 +52,16 @@ export default function TicketDetailClient({
     setTitle((prev) => next || prev);
     setTitleDraft(next || title);
     setIsEditingTitle(false);
-    if (changed) toast("Ticket title updated");
+    if (changed) {
+      toast("Ticket title updated");
+      logTicketActivity({
+        orgId: organization.id,
+        action: "title_updated",
+        entityId: ticket.id,
+        entityLabel: next,
+        description: `renamed ticket "${title}" to "${next}"`,
+      });
+    }
     // TODO: PATCH /tickets/:id { title }
   }
 
@@ -61,6 +72,13 @@ export default function TicketDetailClient({
 
   function handleDelete() {
     // TODO: DELETE /tickets/:id
+    logTicketActivity({
+      orgId: organization.id,
+      action: "removed",
+      entityId: ticket.id,
+      entityLabel: title,
+      description: `deleted ticket "${title}"`,
+    });
     toast(`Ticket "${title}" removed`, "error");
     router.push(
       slug ? `/dashboard/organizations/${slug}/tickets` : "/dashboard",
@@ -175,6 +193,8 @@ export default function TicketDetailClient({
 
         <div className="space-y-6">
           <TicketDetailsCard
+            ticketId={ticket.id}
+            ticketTitle={title}
             tag={tag}
             onChangeTag={setTag}
             client={ticket.client}
@@ -184,12 +204,7 @@ export default function TicketDetailClient({
             organization={organization}
           />
 
-          <TicketActivityCard
-            tag={tag}
-            createdAt={ticket.createdAt}
-            updatedAt={ticket.updatedAt}
-            comments={ticket.comments}
-          />
+          <TicketActivityCard ticketId={ticket.id} tag={tag} />
         </div>
       </div>
 

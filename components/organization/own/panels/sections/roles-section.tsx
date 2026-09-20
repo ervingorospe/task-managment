@@ -9,6 +9,7 @@ import { resolveRules } from "@/lib/helper/resolve-rules";
 import { Can } from "@/components/auth/can";
 import { PERMISSIONS } from "@/lib/data/permissions";
 import { useToast } from "@/providers/toast-provider";
+import { useLogActivity } from "@/hooks/use-log-activity";
 
 const ConfirmDialog = lazyNamed(
   () => import("@/components/ui/confirm-dialog"),
@@ -31,6 +32,7 @@ export default function RolesSection({
   orgId,
 }: RolesSectionProps) {
   const toast = useToast();
+  const logRoleActivity = useLogActivity("role");
   const [roles, setRoles] = useState<RoleDetail[]>(initialRoles);
   const [deletingRole, setDeletingRole] = useState<RoleDetail | null>(null);
 
@@ -55,6 +57,13 @@ export default function RolesSection({
     };
 
     setRoles((prev) => [...prev, newRole]);
+    logRoleActivity({
+      orgId: Number(orgId),
+      action: "created",
+      entityId: newRole.id,
+      entityLabel: newRole.roleName,
+      description: `created role "${newRole.roleName}"`,
+    });
     toast(`Role "${newRole.roleName}" added`);
     // TODO: POST /organizations/:orgId/roles in the background.
     return undefined;
@@ -83,6 +92,13 @@ export default function RolesSection({
           : r,
       ),
     );
+    logRoleActivity({
+      orgId: Number(orgId),
+      action: "updated",
+      entityId: id,
+      entityLabel: values.roleName,
+      description: `updated role "${values.roleName}"`,
+    });
     toast(`Role "${values.roleName}" updated`);
     // TODO: PATCH /organizations/:orgId/roles/:id in the background.
     return undefined;
@@ -92,6 +108,13 @@ export default function RolesSection({
     if (!deletingRole) return;
     setRoles((prev) => prev.filter((r) => r.id !== deletingRole.id));
     setDeletingRole(null);
+    logRoleActivity({
+      orgId: Number(orgId),
+      action: "removed",
+      entityId: deletingRole.id,
+      entityLabel: deletingRole.roleName,
+      description: `deleted role "${deletingRole.roleName}"`,
+    });
     toast(`Role "${deletingRole.roleName}" deleted`, "error");
     // TODO: DELETE /organizations/:orgId/roles/:id
   }

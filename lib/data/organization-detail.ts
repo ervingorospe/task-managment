@@ -183,7 +183,7 @@ function generateMockTickets(
   });
 }
 
-const mockOrganizationDetails: Record<string, any> = {
+export const mockOrganizationDetails: Record<string, any> = {
   "acme-studio": {
     // Organization
     id: 1,
@@ -799,7 +799,7 @@ const mockOrganizationDetails: Record<string, any> = {
 
   "acme-studio2": {
     // Organization
-    id: 1,
+    id: 2,
     organizationName: "Acme Studio2",
     organizationDesc: "A small studio building tools for independent creators.",
     email: "hello@acmestudio.com",

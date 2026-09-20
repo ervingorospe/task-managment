@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/buttons/button";
 import { RoleDetail } from "@/lib/types/organization/role-detail.type";
 import { MemberInviteDetail } from "@/lib/types/organization/member-invite-detail.type";
 import { useToast } from "@/providers/toast-provider";
+import { useLogActivity } from "@/hooks/use-log-activity";
 
 interface InvitePeopleSectionProps {
   orgId: number;
@@ -24,6 +25,7 @@ export default function MemberInvitesSection({
   // here move into MemberPendingInvites once "sent." For the mock phase,
   // this local list just represents "invites queued in this session."
   const toast = useToast();
+  const logMemberActivity = useLogActivity("member");
   const atCapacity = currentTotalInvites >= capacity;
   const [invites, setInvites] = useState<MemberInviteDetail[]>([]);
 
@@ -35,6 +37,15 @@ export default function MemberInvitesSection({
 
     if (newInvites.length === 0) return;
     setInvites((prev) => [...prev, ...newInvites]);
+    for (const invite of newInvites) {
+      logMemberActivity({
+        orgId,
+        action: "invited",
+        entityId: invite.id,
+        entityLabel: invite.email,
+        description: `invited ${invite.email} to join the organization`,
+      });
+    }
     toast(
       newInvites.length === 1
         ? `Invite queued for ${newInvites[0].email}`

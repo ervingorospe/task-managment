@@ -9,6 +9,7 @@ import MultiSelectDropdown from "@/components/ui/form/multi-select-dropdown";
 import PropertyRow from "@/components/ui/property-row";
 import { InlineButton } from "@/components/ui/buttons";
 import { useToast } from "@/providers/toast-provider";
+import { useLogActivity } from "@/hooks/use-log-activity";
 import { getMemberName } from "@/lib/helper/member-name";
 import { formatDueDate, getDueState } from "@/lib/helper/ticket-status";
 import type { TagDetail } from "@/lib/types/organization/tag-detail.type";
@@ -18,6 +19,8 @@ import { TagPicker } from "./tag-picker";
 import { DueChip } from "./due-chip";
 
 interface TicketDetailsCardProps {
+  ticketId: number;
+  ticketTitle: string;
   tag: TagDetail;
   onChangeTag: (tag: TagDetail) => void;
   client: MemberDetail | null;
@@ -28,6 +31,8 @@ interface TicketDetailsCardProps {
 }
 
 export default function TicketDetailsCard({
+  ticketId,
+  ticketTitle,
   tag,
   onChangeTag,
   client,
@@ -37,6 +42,7 @@ export default function TicketDetailsCard({
   organization,
 }: TicketDetailsCardProps) {
   const toast = useToast();
+  const logTicketActivity = useLogActivity("ticket");
   const assignableMembers = organization.members.filter(
     (m) => m.role?.roleName !== "Client",
   );
@@ -47,18 +53,41 @@ export default function TicketDetailsCard({
 
   function handleChangeTag(nextTag: TagDetail) {
     onChangeTag(nextTag);
+    logTicketActivity({
+      orgId: organization.id,
+      action: "status_changed",
+      entityId: ticketId,
+      entityLabel: ticketTitle,
+      description: `changed status of "${ticketTitle}" to ${nextTag.tagName}`,
+    });
     toast(`Status changed to "${nextTag.tagName}"`);
     // TODO: PATCH /tickets/:id { tag_id: nextTag.id }
   }
 
   function handleAssign(memberIds: number[]) {
     setAssignees(assignableMembers.filter((m) => memberIds.includes(m.id)));
+    logTicketActivity({
+      orgId: organization.id,
+      action: "assigned",
+      entityId: ticketId,
+      entityLabel: ticketTitle,
+      description: `updated assignees on "${ticketTitle}"`,
+    });
     toast("Assignees updated");
     // TODO: PATCH /tickets/:id { assignee_ids: memberIds }
   }
 
   function handleDueDateChange(value: string) {
     onDueDateChange(value || null);
+    logTicketActivity({
+      orgId: organization.id,
+      action: "due_date_changed",
+      entityId: ticketId,
+      entityLabel: ticketTitle,
+      description: value
+        ? `changed due date of "${ticketTitle}" to ${value}`
+        : `cleared the due date on "${ticketTitle}"`,
+    });
     toast(value ? "Due date updated" : "Due date cleared");
     // TODO: PATCH /tickets/:id { due_date: value }
   }

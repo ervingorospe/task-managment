@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type ComponentType } from "react";
+import { useMemo, useState, type ComponentType } from "react";
 import Link from "next/link";
 import {
   Check,
@@ -9,9 +9,13 @@ import {
   Clock,
   Eye,
   FileText,
+  MessageSquare,
   Paperclip,
+  Pencil,
+  RefreshCw,
   Send,
   Ticket as TicketIcon,
+  Trash2,
   X,
   XCircle,
 } from "lucide-react";
@@ -27,6 +31,8 @@ import { RejectRequestModal } from "./reject-request-modal";
 import { PERMISSIONS } from "@/lib/data/permissions";
 import { usePermission } from "@/providers/auth-provider";
 import { useToast } from "@/providers/toast-provider";
+import { useActivityLog } from "@/providers/activity-log-provider";
+import { useLogActivity } from "@/hooks/use-log-activity";
 import { formatReferenceId } from "@/lib/helper/reference-id";
 import { renderDescription } from "@/lib/helper/render-description";
 import { formatDate, formatRelative } from "@/lib/helper/format-date";
@@ -42,6 +48,15 @@ interface RequestDetailClientProps {
   request: TicketRequest;
   organization: OrganizationDetail;
 }
+
+const ACTIVITY_ACTION_ICON: Record<string, ComponentType<LucideProps>> = {
+  created: Send,
+  approved: CheckCircle2,
+  rejected: XCircle,
+  commented: MessageSquare,
+  edited: Pencil,
+  removed: Trash2,
+};
 
 const STATUS_STYLE: Record<
   TicketRequestStatus,
@@ -87,6 +102,9 @@ export default function RequestDetailClient({
 }: RequestDetailClientProps) {
   const toast = useToast();
   const canCreateTicket = usePermission(PERMISSIONS.TICKET_CREATE);
+  const { entries } = useActivityLog();
+  const logRequestActivity = useLogActivity("request");
+  const logTicketActivity = useLogActivity("ticket");
 
   const [request, setRequest] = useState(initialRequest);
   const [tickets, setTickets] = useState<TicketDetail[]>(
@@ -104,6 +122,41 @@ export default function RequestDetailClient({
   const status = STATUS_STYLE[request.status];
   const StatusIcon = status.icon;
 
+  const requestEntries = useMemo(
+    () =>
+      entries
+        .filter((e) => e.module === "request" && e.entityId === request.id)
+        .sort((a, b) => (a.createdAt < b.createdAt ? -1 : 1)),
+    [entries, request.id],
+  );
+
+  const activitySteps = useMemo(() => {
+    const steps: {
+      key: string;
+      icon: ComponentType<LucideProps>;
+      label: string;
+      date?: string;
+      tone: "done" | "active" | "upcoming" | "danger";
+    }[] = requestEntries.map((entry) => ({
+      key: `entry-${entry.id}`,
+      icon: ACTIVITY_ACTION_ICON[entry.action] ?? RefreshCw,
+      label: `${entry.actorName} ${entry.description}`,
+      date: `${formatDate(entry.createdAt)} · ${formatRelative(entry.createdAt)}`,
+      tone: entry.action === "rejected" ? "danger" : "done",
+    }));
+
+    if (request.status === "pending") {
+      steps.push({
+        key: "awaiting",
+        icon: Eye,
+        label: "Awaiting review",
+        tone: "active",
+      });
+    }
+
+    return steps;
+  }, [requestEntries, request.status]);
+
   function handleReject(remarks: string) {
     setRequest((prev) => ({
       ...prev,
@@ -111,6 +164,13 @@ export default function RequestDetailClient({
       remarks,
       updatedAt: new Date().toISOString(),
     }));
+    logRequestActivity({
+      orgId: organization.id,
+      action: "rejected",
+      entityId: request.id,
+      entityLabel: request.title,
+      description: `rejected request "${request.title}": ${remarks}`,
+    });
     toast(`Request "${request.title}" rejected`, "error");
     // TODO: PATCH /ticket-requests/:id { status: "rejected", remarks }
   }
@@ -155,6 +215,20 @@ export default function RequestDetailClient({
       ticketId: newTicket.id,
       updatedAt: new Date().toISOString(),
     }));
+    logRequestActivity({
+      orgId: organization.id,
+      action: "approved",
+      entityId: request.id,
+      entityLabel: request.title,
+      description: `approved request "${request.title}"`,
+    });
+    logTicketActivity({
+      orgId: organization.id,
+      action: "created",
+      entityId: newTicket.id,
+      entityLabel: newTicket.title,
+      description: `created ticket "${newTicket.title}" from a request`,
+    });
     toast(`Request approved — ticket "${newTicket.title}" created`);
     setApproveOpen(false);
     // TODO: POST /organizations/:orgId/tickets (from request), then
@@ -317,48 +391,18 @@ export default function RequestDetailClient({
         {/* Sidebar */}
         <div className="space-y-6">
           <Card>
-            <SectionHeading icon={Clock}>Timeline</SectionHeading>
+            <SectionHeading icon={Clock}>Activity</SectionHeading>
             <ol className="mt-4">
-              <TimelineStep
-                icon={Send}
-                label="Request submitted"
-                date={`${formatDate(request.createdAt)} · ${formatRelative(request.createdAt)}`}
-                tone="done"
-              />
-              <TimelineStep
-                icon={Eye}
-                label={
-                  request.status === "pending"
-                    ? "Awaiting review"
-                    : "Reviewed"
-                }
-                tone={request.status === "pending" ? "active" : "done"}
-              />
-              <TimelineStep
-                icon={
-                  request.status === "rejected" ? XCircle : CheckCircle2
-                }
-                label={
-                  request.status === "approved"
-                    ? "Approved"
-                    : request.status === "rejected"
-                      ? "Rejected"
-                      : "Decision"
-                }
-                date={
-                  request.status !== "pending"
-                    ? `${formatDate(request.updatedAt)} · ${formatRelative(request.updatedAt)}`
-                    : undefined
-                }
-                tone={
-                  request.status === "approved"
-                    ? "done"
-                    : request.status === "rejected"
-                      ? "danger"
-                      : "upcoming"
-                }
-                isLast
-              />
+              {activitySteps.map((step, i) => (
+                <TimelineStep
+                  key={step.key}
+                  icon={step.icon}
+                  label={step.label}
+                  date={step.date}
+                  tone={step.tone}
+                  isLast={i === activitySteps.length - 1}
+                />
+              ))}
             </ol>
           </Card>
 

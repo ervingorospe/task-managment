@@ -17,6 +17,7 @@ import { PERMISSIONS } from "@/lib/data/permissions";
 import { Can } from "@/components/auth/can";
 import { useToast } from "@/providers/toast-provider";
 import { useMemberListQueryState } from "@/hooks/use-member-list-query-state";
+import { useLogActivity } from "@/hooks/use-log-activity";
 
 const ConfirmDialog = lazyNamed(
   () => import("@/components/ui/confirm-dialog"),
@@ -41,6 +42,7 @@ export default function MembersSection({
   roles,
 }: InvitePeopleSectionProps) {
   const toast = useToast();
+  const logMemberActivity = useLogActivity("member");
   const [members, setMembers] = useState<MemberDetail[]>(initialMembers);
   const [pendingAction, setPendingAction] = useState<PendingAction | null>(
     null,
@@ -109,11 +111,19 @@ export default function MembersSection({
     const { type, member } = pendingAction;
 
     if (type === "toggle") {
+      const willActivate = !member.isActive;
       setMembers((prev) =>
         prev.map((m) =>
           m.id === member.id ? { ...m, isActive: !m.isActive } : m,
         ),
       );
+      logMemberActivity({
+        orgId: Number(orgId),
+        action: willActivate ? "activated" : "deactivated",
+        entityId: member.id,
+        entityLabel: getMemberName(member),
+        description: `${willActivate ? "activated" : "deactivated"} ${getMemberName(member)}`,
+      });
       toast(
         `${getMemberName(member)} ${member.isActive ? "deactivated" : "activated"}`,
         member.isActive ? "error" : "success",
@@ -121,26 +131,42 @@ export default function MembersSection({
       // TODO: PATCH /organizations/:orgId/members/:id { isActive }
     } else {
       setMembers((prev) => prev.filter((m) => m.id !== member.id));
+      logMemberActivity({
+        orgId: Number(orgId),
+        action: "removed",
+        entityId: member.id,
+        entityLabel: getMemberName(member),
+        description: `removed ${getMemberName(member)} from the organization`,
+      });
       toast(`${getMemberName(member)} removed`, "error");
       // TODO: DELETE /organizations/:orgId/members/:id
     }
 
     setPendingAction(null);
-  }, [pendingAction, toast]);
+  }, [pendingAction, toast, orgId, logMemberActivity]);
 
   const handleConfirmRoleChange = useCallback(
     (roleId: number) => {
       if (!activeRoleMember) return;
+      const roleName =
+        roles.find((r) => r.id === roleId)?.roleName ?? "a new role";
       setMembers((prev) =>
         prev.map((m) =>
           m.id === activeRoleMember.id ? { ...m, roleId: roleId } : m,
         ),
       );
+      logMemberActivity({
+        orgId: Number(orgId),
+        action: "role_changed",
+        entityId: activeRoleMember.id,
+        entityLabel: getMemberName(activeRoleMember),
+        description: `changed ${getMemberName(activeRoleMember)}'s role to ${roleName}`,
+      });
       toast(`${getMemberName(activeRoleMember)}'s role updated`);
       setActiveRoleMember(null);
       // TODO: PATCH /organizations/:orgId/members/:id { roleId: roleId }
     },
-    [activeRoleMember, toast],
+    [activeRoleMember, toast, orgId, roles, logMemberActivity],
   );
 
   const handleToggleActive = useCallback((member: MemberDetail) => {
