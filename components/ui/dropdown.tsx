@@ -62,6 +62,15 @@ function Dropdown({
     const rect = el.getBoundingClientRect();
     const gap = 8;
 
+    // window.innerWidth/innerHeight include the scrollbar's own thickness,
+    // but the page's actual layout box (and therefore rect.right/rect.top)
+    // does not — so a right/bottom offset measured against window.inner*
+    // drifts by the scrollbar's width the moment one appears. clientWidth/
+    // clientHeight exclude the scrollbar, matching what rect is measured
+    // against, so the panel stays glued to the trigger either way.
+    const viewportWidth = document.documentElement.clientWidth;
+    const viewportHeight = document.documentElement.clientHeight;
+
     // The panel's aligned edge sits flush with the trigger's edge (see the
     // left/right assignments below), so the arrow's distance from that edge
     // to the trigger's center is always half the trigger's width — clamped
@@ -74,9 +83,9 @@ function Dropdown({
 
     setPosition({
       top: rect.bottom + gap,
-      bottom: window.innerHeight - rect.top + gap,
+      bottom: viewportHeight - rect.top + gap,
       left: rect.left,
-      right: window.innerWidth - rect.right,
+      right: viewportWidth - rect.right,
       arrowOffset,
     });
   }, []);
