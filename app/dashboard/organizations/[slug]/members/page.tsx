@@ -33,7 +33,7 @@ export default async function MembersPage({ params }: MembersPageProps) {
           </div>
 
           <div className="mt-6">
-            <OrganizationMembers organization={organization} />
+            <OrganizationMembers organization={organization} showInvites={false} />
           </div>
         </div>
       </Can>

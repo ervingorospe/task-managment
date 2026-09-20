@@ -47,6 +47,21 @@ export default function TagsSection({
     // TODO: PATCH /organizations/:orgId/tags/:id in the background.
   }
 
+  function renameTag(id: number, name: string): string | undefined {
+    if (
+      tags.some(
+        (t) => t.id !== id && t.tagName.toLowerCase() === name.toLowerCase(),
+      )
+    ) {
+      return `A tag named "${name}" already exists`;
+    }
+
+    setTags((prev) => prev.map((t) => (t.id === id ? { ...t, tagName: name } : t)));
+    toast("Tag renamed");
+    // TODO: PATCH /organizations/:orgId/tags/:id in the background.
+    return undefined;
+  }
+
   function handleConfirmDelete() {
     if (!deletingTagId) return;
     const removedTag = tags.find((t) => t.id === deletingTagId);
@@ -68,6 +83,7 @@ export default function TagsSection({
         addTag={addTag}
         onDeleteTag={setDeletingTagId}
         updateTagColor={updateTagColor}
+        renameTag={renameTag}
         capacity={capacity}
       />
 

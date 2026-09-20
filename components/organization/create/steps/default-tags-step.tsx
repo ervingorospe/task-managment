@@ -39,6 +39,23 @@ export default function DefaultTagsStep() {
     );
   }
 
+  function renameTag(id: number, name: string): string | undefined {
+    if (
+      tags.some(
+        (t) => t.id !== id && t.tagName.toLowerCase() === name.toLowerCase(),
+      )
+    ) {
+      return `A tag named "${name}" already exists`;
+    }
+
+    setValue(
+      "tags",
+      tags.map((t) => (t.id === id ? { ...t, tagName: name } : t)),
+      { shouldValidate: true, shouldDirty: true },
+    );
+    return undefined;
+  }
+
   // No confirmation here, on purpose — same reasoning as RolesStep: nothing
   // real exists yet during setup for a delete to affect.
   function onDeleteTag(id: number) {
@@ -57,6 +74,7 @@ export default function DefaultTagsStep() {
       capacity={capacity.tags}
       addTag={addTag}
       updateTagColor={updateTagColor}
+      renameTag={renameTag}
       onDeleteTag={onDeleteTag}
     />
   );

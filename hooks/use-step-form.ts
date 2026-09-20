@@ -29,7 +29,7 @@ export function useStepForm<TSchema extends ZodType<FieldValues>>(
     defaultValues: mergedDefaults,
   });
 
-  const { watch, trigger, formState } = form;
+  const { watch, trigger, getValues, formState } = form;
 
   useEffect(() => {
     trigger();
@@ -38,6 +38,16 @@ export function useStepForm<TSchema extends ZodType<FieldValues>>(
   useEffect(() => {
     setStepValid(formState.isValid);
   }, [formState.isValid, setStepValid]);
+
+  // Seeds the step's current values into the shared formData right away —
+  // `watch`'s callback below only fires on a *change*, so a step whose
+  // defaults (an auto-picked timezone, preloaded roles/tags) are simply
+  // accepted without ever being touched would otherwise never make it into
+  // formData, and silently drop out of the payload built on the final step.
+  useEffect(() => {
+    updateFormData(getValues() as Partial<FormValues>);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     const subscription = watch((values) => {

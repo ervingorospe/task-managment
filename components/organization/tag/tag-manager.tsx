@@ -17,6 +17,7 @@ interface TagManagerProps {
   addTag: (name: string) => string | undefined;
   onDeleteTag: (id: number) => void;
   updateTagColor: (id: number, color: string) => void;
+  renameTag: (id: number, name: string) => string | undefined;
 }
 
 export default function TagManager({
@@ -27,6 +28,7 @@ export default function TagManager({
   addTag,
   onDeleteTag,
   updateTagColor,
+  renameTag,
 }: TagManagerProps) {
   const atCapacity = tags.length >= capacity;
   const [inputValue, setInputValue] = useState("");
@@ -102,6 +104,7 @@ export default function TagManager({
           tags={tags}
           onUpdateTagColor={updateTagColor}
           onRemoveTag={onDeleteTag}
+          onRenameTag={renameTag}
         />
       </div>
     </Can>

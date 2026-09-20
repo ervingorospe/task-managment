@@ -1,9 +1,13 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import OrganizationStepContent from "@/components/organization/create/organization-step-content";
 import Stepper from "@/components/ui/stepper/stepper";
 import StepperActions from "@/components/ui/stepper/stepper-actions";
 import { StepperProvider, useStepper } from "@/providers/stepper.provider";
+import { useAuth } from "@/providers/auth-provider";
+import { useToast } from "@/providers/toast-provider";
+import { buildCreateOrganizationPayload } from "@/lib/helper/build-create-organization-payload";
 
 const organizationSteps = [
   "Basic Info",
@@ -15,10 +19,20 @@ const organizationSteps = [
 
 function CreateOrganizationInner() {
   const { formData } = useStepper();
+  const { currentUser } = useAuth();
+  const toast = useToast();
+  const router = useRouter();
 
   function handleCreateOrganization() {
-    // TODO: send to Organization service
-    console.log("organization payload", formData);
+    if (!currentUser) return;
+
+    const payload = buildCreateOrganizationPayload(formData, currentUser.id);
+
+    // TODO: POST /organizations, body: payload
+    console.log("organization payload", payload);
+
+    toast(`Organization "${payload.organizationName}" created`);
+    router.push("/dashboard/my-organizations");
   }
 
   return (

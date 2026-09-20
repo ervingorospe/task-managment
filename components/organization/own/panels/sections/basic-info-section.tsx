@@ -26,16 +26,16 @@ interface BasicInformationProps {
 }
 
 const defaultValues: BasicInfoValues = {
-  name: "",
+  organizationName: "",
   email: "",
   website: "",
-  description: "",
+  organizationDesc: "",
 };
 
 const inputFields: InputFieldConfig<BasicInfoValues>[] = [
   {
     fieldType: FIELD_TYPES.INPUT,
-    name: "name",
+    name: "organizationName",
     label: "Organization Name",
     placeholder: "Acme Studio",
     type: "text",
@@ -60,7 +60,7 @@ const inputFields: InputFieldConfig<BasicInfoValues>[] = [
   },
   {
     fieldType: FIELD_TYPES.TEXTAREA,
-    name: "description",
+    name: "organizationDesc",
     label: "Description",
     placeholder: "What does your organization do?",
     optional: true,
@@ -75,10 +75,10 @@ export default function BasicInformation({
   const [isEditing, setIsEditing] = useState(false);
 
   const [displayInfo, setDisplayInfo] = useState({
-    name: organization.organizationName,
+    organizationName: organization.organizationName,
     email: organization.email ?? "",
     website: organization.website ?? "",
-    description: organization.organizationDesc ?? "",
+    organizationDesc: organization.organizationDesc ?? "",
   });
 
   const {
@@ -206,7 +206,7 @@ export default function BasicInformation({
       ) : (
         <div className="grid gap-5 sm:grid-cols-2">
           <PropertyRow label="Organization Name" variant="plain">
-            <p className="text-sm text-ink">{displayInfo.name}</p>
+            <p className="text-sm text-ink">{displayInfo.organizationName}</p>
           </PropertyRow>
 
           <PropertyRow label="Email" variant="plain">
@@ -240,7 +240,7 @@ export default function BasicInformation({
             className="sm:col-span-2"
           >
             <p className="text-sm text-ink">
-              {displayInfo.description || "No description provided"}
+              {displayInfo.organizationDesc || "No description provided"}
             </p>
           </PropertyRow>
         </div>

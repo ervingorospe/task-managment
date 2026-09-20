@@ -24,6 +24,7 @@ export default function IconButton({
       title={label}
       className={clsx(
         "rounded p-1.5 text-ink-faint transition-colors",
+        "disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-ink-faint",
         danger
           ? "hover:bg-danger-subtle hover:text-danger"
           : "hover:bg-canvas hover:text-ink",

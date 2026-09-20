@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 export const basicInfoSchema = z.object({
-  name: z
+  organizationName: z
     .string()
     .trim()
     .min(2, "Organization name must be at least 2 characters")
@@ -18,7 +18,7 @@ export const basicInfoSchema = z.object({
     .url("Enter a valid URL, e.g. https://example.com")
     .optional()
     .or(z.literal("")),
-  description: z.string().trim().max(300).optional().or(z.literal("")),
+  organizationDesc: z.string().trim().max(300).optional().or(z.literal("")),
 });
 export type BasicInfoValues = z.infer<typeof basicInfoSchema>;
 

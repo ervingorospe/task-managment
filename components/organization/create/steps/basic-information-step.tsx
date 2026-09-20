@@ -9,16 +9,16 @@ import { Input, Textarea } from "@/components/ui/form";
 import { FIELD_TYPES, InputFieldConfig } from "@/lib/types/form.type";
 
 const defaultValues: BasicInfoValues = {
-  name: "",
+  organizationName: "",
   email: "",
   website: "",
-  description: "",
+  organizationDesc: "",
 };
 
 const inputFields: InputFieldConfig<BasicInfoValues>[] = [
   {
     fieldType: FIELD_TYPES.INPUT,
-    name: "name",
+    name: "organizationName",
     label: "Organization Name",
     placeholder: "Acme Studio",
     type: "text",
@@ -42,7 +42,7 @@ const inputFields: InputFieldConfig<BasicInfoValues>[] = [
   },
   {
     fieldType: FIELD_TYPES.TEXTAREA,
-    name: "description",
+    name: "organizationDesc",
     label: "Description",
     placeholder: "What does your organization do?",
     optional: true,
