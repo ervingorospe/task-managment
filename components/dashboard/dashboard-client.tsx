@@ -11,6 +11,7 @@ import { StatusBreakdownChart } from "@/components/organization/ticket-reports/s
 import { TrendSeriesSelect } from "@/components/organization/ticket-reports/trend-series-select";
 import { TrendLineChart } from "@/components/organization/ticket-reports/trend-line-chart";
 import { RequestStatusBadge } from "@/components/organization/requests/request-status-badge";
+import { DashboardSkeleton } from "@/components/ui/skeletons";
 import { useAuth, usePermission } from "@/providers/auth-provider";
 import { useActiveOrganizationDetail } from "@/hooks/use-active-organization-detail";
 import { PERMISSIONS } from "@/lib/data/permissions";
@@ -164,7 +165,7 @@ export default function DashboardClient() {
     );
   }
 
-  if (!organization) return null;
+  if (!organization) return <DashboardSkeleton />;
 
   const slug = activeOrganization.settings.slug;
   const ticketsHref = `/dashboard/organizations/${slug}/tickets`;

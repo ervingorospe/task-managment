@@ -19,6 +19,7 @@ import { TrendLineChart } from "@/components/organization/ticket-reports/trend-l
 import { MonthComparisonChart } from "@/components/organization/ticket-reports/month-comparison-chart";
 import { AssigneeBreakdownList } from "./assignee-breakdown-list";
 import { OverdueTicketList } from "./overdue-ticket-list";
+import { ReportsSkeleton } from "@/components/ui/skeletons";
 import { useAuth, usePermission } from "@/providers/auth-provider";
 import { useActiveOrganizationDetail } from "@/hooks/use-active-organization-detail";
 import { PERMISSIONS } from "@/lib/data/permissions";
@@ -162,7 +163,7 @@ export default function ReportsClient() {
     );
   }
 
-  if (!organization) return null;
+  if (!organization) return <ReportsSkeleton />;
 
   return (
     <div className="space-y-8">
