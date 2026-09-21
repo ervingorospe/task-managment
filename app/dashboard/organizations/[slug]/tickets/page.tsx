@@ -14,7 +14,11 @@ export default async function TicketsPage({ params }: TicketsPageProps) {
   if (!organization) notFound();
 
   return (
-    <MemberGuard organizationId={organization.id}>
+    <MemberGuard
+      organizationId={organization.id}
+      organizationName={organization.organizationName}
+      isActive={organization.settings.isActive}
+    >
       <TicketsPageClient organization={organization} />
     </MemberGuard>
   );

@@ -22,6 +22,8 @@ const RoleFormModal = dynamic(
 interface RoleManagerProps {
   title: string;
   subtitle: string;
+  /** Renders below the title/subtitle — e.g. an inline success/error alert. */
+  banner?: React.ReactNode;
   roles: RoleDetail[];
   capacity: number;
   addRole: (values: RoleFormValues) => string | undefined;
@@ -33,6 +35,7 @@ interface RoleManagerProps {
 export default function RoleManager({
   title,
   subtitle,
+  banner,
   roles,
   capacity,
   addRole,
@@ -94,6 +97,8 @@ export default function RoleManager({
             </Can>
           }
         />
+
+        {banner}
 
         <RoleList
           roles={roles}

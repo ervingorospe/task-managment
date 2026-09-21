@@ -1,6 +1,19 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  // The client Router Cache (separate from the fetch Data Cache, which is
+  // already off — see lib/api/client.ts) otherwise reuses a page's RSC
+  // payload from whenever it was last visited, including on router.back()
+  // and plain Link navigation. Zeroing staleTimes means every navigation
+  // to a page re-renders it server-side against current data, instead of
+  // needing a router.refresh() call after every mutation that could affect
+  // a page the user might navigate back to.
+  experimental: {
+    staleTimes: {
+      dynamic: 0,
+      static: 0,
+    },
+  },
   images: {
     remotePatterns: [
       {

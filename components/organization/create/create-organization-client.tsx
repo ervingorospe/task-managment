@@ -8,6 +8,7 @@ import { StepperProvider, useStepper } from "@/providers/stepper.provider";
 import { useAuth } from "@/providers/auth-provider";
 import { useToast } from "@/providers/toast-provider";
 import { buildCreateOrganizationPayload } from "@/lib/helper/build-create-organization-payload";
+import { createOrganization } from "@/lib/api/organizations";
 
 const organizationSteps = [
   "Basic Info",
@@ -19,20 +20,31 @@ const organizationSteps = [
 
 function CreateOrganizationInner() {
   const { formData } = useStepper();
-  const { currentUser } = useAuth();
+  const { currentUser, refreshCurrentUser } = useAuth();
   const toast = useToast();
   const router = useRouter();
 
-  function handleCreateOrganization() {
+  async function handleCreateOrganization() {
     if (!currentUser) return;
 
     const payload = buildCreateOrganizationPayload(formData, currentUser.id);
 
-    // TODO: POST /organizations, body: payload
-    console.log("organization payload", payload);
+    let organization;
+    try {
+      organization = await createOrganization(payload);
+    } catch (error) {
+      toast(
+        error instanceof Error
+          ? error.message
+          : "Failed to create organization",
+        "error",
+      );
+      return;
+    }
 
-    toast(`Organization "${payload.organizationName}" created`);
-    router.push("/dashboard/my-organizations");
+    toast(`Organization "${organization.organizationName}" created`);
+    await refreshCurrentUser();
+    router.push(`/dashboard/my-organizations/${organization.settings.slug}`);
   }
 
   return (

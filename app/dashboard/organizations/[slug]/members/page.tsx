@@ -17,7 +17,11 @@ export default async function MembersPage({ params }: MembersPageProps) {
   if (!organization) notFound();
 
   return (
-    <MemberGuard organizationId={organization.id}>
+    <MemberGuard
+      organizationId={organization.id}
+      organizationName={organization.organizationName}
+      isActive={organization.settings.isActive}
+    >
       <Can
         action={PERMISSIONS.MEMBER_VIEW_MEMBERS}
         fallback={

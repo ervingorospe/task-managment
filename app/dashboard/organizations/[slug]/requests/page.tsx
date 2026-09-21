@@ -17,7 +17,11 @@ export default async function RequestsPage({ params }: RequestsPageProps) {
   if (!organization) notFound();
 
   return (
-    <MemberGuard organizationId={organization.id}>
+    <MemberGuard
+      organizationId={organization.id}
+      organizationName={organization.organizationName}
+      isActive={organization.settings.isActive}
+    >
       <Can
         anyOf={[PERMISSIONS.TICKET_VIEW_ALL, PERMISSIONS.TICKET_REQUEST]}
         fallback={

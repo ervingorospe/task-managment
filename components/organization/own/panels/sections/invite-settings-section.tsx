@@ -7,6 +7,10 @@ import { Button } from "@/components/ui/buttons/button";
 import Select from "@/components/ui/form/select";
 import { ChevronDown } from "lucide-react";
 import { useToast } from "@/providers/toast-provider";
+import { InlineAlert } from "@/components/ui/inline-alert";
+import { useInlineAlert } from "@/hooks/use-inline-alert";
+import { notifyApiError } from "@/lib/helper/api-error-toast";
+import { updateOrganizationSettings } from "@/lib/api/organizations";
 
 const expirationOptions = [
   { value: "1_hour", label: "1 hour" },
@@ -19,6 +23,7 @@ const expirationOptions = [
 ];
 
 interface InviteSettingsSectionProps {
+  orgId: number;
   initialExpiration?: string;
 }
 
@@ -27,29 +32,42 @@ interface InviteSettingsValues {
 }
 
 export default function InviteSettingsSection({
+  orgId,
   initialExpiration = "1_day",
 }: InviteSettingsSectionProps) {
   const toast = useToast();
+  const { alert, showAlert, dismissAlert } = useInlineAlert();
   const { control, handleSubmit } = useForm<InviteSettingsValues>({
     defaultValues: {
       expiration: initialExpiration,
     },
   });
 
-  function handleUpdate(values: InviteSettingsValues) {
-    // TODO: PATCH /organizations/:id
-    // { inviteExpiration: values.expiration }
-
-    console.log("PATCH invite settings", {
-      inviteExpiration: values.expiration,
-    });
-    toast("Invite settings updated");
+  async function handleUpdate(values: InviteSettingsValues) {
+    try {
+      await updateOrganizationSettings(orgId, {
+        inviteExpiration: values.expiration,
+      });
+    } catch (error) {
+      notifyApiError(toast, error, "Failed to update invite settings");
+      return;
+    }
+    showAlert("Invite settings updated");
   }
 
   return (
     <Card
       title="Invites"
       subtitle="Control how long sent invitations remain valid."
+      banner={
+        alert && (
+          <InlineAlert
+            message={alert.message}
+            variant={alert.variant}
+            onDismiss={dismissAlert}
+          />
+        )
+      }
     >
       <form
         onSubmit={handleSubmit(handleUpdate)}

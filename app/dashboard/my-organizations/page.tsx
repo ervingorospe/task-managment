@@ -1,18 +1,38 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ChevronRight, Plus } from "lucide-react";
 import { Button } from "@/components/ui/buttons/button";
 import List from "@/components/ui/list";
 import Avatar from "@/components/ui/avatar";
 import EmptyState from "@/components/ui/empty-state";
-import { getOwnedOrganizations } from "@/lib/data/organizations";
+import { fetchMyOwnOrganizations, type OwnedOrganization } from "@/lib/api/organizations";
 import { AccountTypeGuard } from "@/components/auth/account-type.guard";
 import { ACCOUNT_TYPE } from "@/lib/constants/accoun-type.constant";
+import { useAuth } from "@/providers/auth-provider";
+import { ListSkeleton } from "@/components/ui/skeletons";
 
-// Server Component — no "use client". Data is fetched here, on the server,
-// before the page ever reaches the browser.
-export default async function MyOrganizationsPage() {
-  const organizations = await getOwnedOrganizations();
-  const hasOrganizations = organizations.length > 0;
+// No server-side session yet, so this has to fetch client-side against
+// whoever useAuth() says is logged in — see auth-provider.tsx's own note
+// on why login doesn't set a cookie/token yet.
+export default function MyOrganizationsPage() {
+  const { currentUser } = useAuth();
+  const [organizations, setOrganizations] = useState<OwnedOrganization[] | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!currentUser) {
+      setOrganizations([]);
+      return;
+    }
+    fetchMyOwnOrganizations(currentUser.id).then((orgs) => {
+      if (!cancelled) setOrganizations(orgs);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [currentUser]);
 
   return (
     <AccountTypeGuard accountType={ACCOUNT_TYPE.OWNER}>
@@ -23,7 +43,7 @@ export default async function MyOrganizationsPage() {
             Organizations you own. Manage their team, roles, and projects.
           </p>
         </div>
-        {hasOrganizations && (
+        {organizations && organizations.length > 0 && (
           <Link href="/dashboard/my-organizations/create">
             <Button>
               <Plus size={15} className="mr-1.5" /> Create Organization
@@ -32,7 +52,11 @@ export default async function MyOrganizationsPage() {
         )}
       </div>
 
-      {!hasOrganizations ? (
+      {organizations === null ? (
+        <div className="mt-6">
+          <ListSkeleton rows={3} />
+        </div>
+      ) : organizations.length === 0 ? (
         <div className="mt-6">
           <EmptyState
             title="You don't own any organizations yet."
@@ -48,15 +72,14 @@ export default async function MyOrganizationsPage() {
           {organizations.map((org) => (
             <div key={org.id} className="flex items-center gap-4 px-4 py-4">
               <Avatar
-                firstName={org.name}
-                src={org.logo}
+                firstName={org.organizationName}
                 size="lg"
                 className="rounded-lg"
               />
 
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-semibold text-ink">
-                  {org.name}
+                  {org.organizationName}
                 </p>
                 <p className="mt-0.5 text-xs text-ink-muted">
                   {org.organizationDesc}

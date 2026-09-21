@@ -2,7 +2,9 @@
 
 import { useMemo, useState, type ComponentType } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
+  Ban,
   Check,
   CheckCircle2,
   ChevronRight,
@@ -26,16 +28,24 @@ import Avatar from "@/components/ui/avatar";
 import { SectionHeading } from "@/components/ticket/section-heading";
 import { TimelineStep } from "@/components/ui/timeline-step";
 import { Button } from "@/components/ui/buttons/button";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { InlineAlert } from "@/components/ui/inline-alert";
 import TicketFormModal from "@/components/ticket/ticket-form-modal";
 import { RejectRequestModal } from "./reject-request-modal";
 import { PERMISSIONS } from "@/lib/data/permissions";
-import { usePermission } from "@/providers/auth-provider";
+import { useAuth, usePermission } from "@/providers/auth-provider";
 import { useToast } from "@/providers/toast-provider";
 import { useActivityLog } from "@/providers/activity-log-provider";
 import { useLogActivity } from "@/hooks/use-log-activity";
-import { formatReferenceId } from "@/lib/helper/reference-id";
+import { useInlineAlert } from "@/hooks/use-inline-alert";
 import { renderDescription } from "@/lib/helper/render-description";
+import {
+  rejectTicketRequest,
+  approveTicketRequest,
+  cancelTicketRequest,
+} from "@/lib/api/ticket-requests";
 import { formatDate, formatRelative } from "@/lib/helper/format-date";
+import { notifyApiError } from "@/lib/helper/api-error-toast";
 import type { OrganizationDetail } from "@/lib/types/organization/organization-detail.type";
 import type {
   TicketRequest,
@@ -53,6 +63,7 @@ const ACTIVITY_ACTION_ICON: Record<string, ComponentType<LucideProps>> = {
   created: Send,
   approved: CheckCircle2,
   rejected: XCircle,
+  cancelled: Ban,
   commented: MessageSquare,
   edited: Pencil,
   removed: Trash2,
@@ -89,6 +100,13 @@ const STATUS_STYLE: Record<
     ring: "ring-danger/20",
     label: "Rejected",
   },
+  cancelled: {
+    icon: Ban,
+    text: "text-ink-faint",
+    bg: "bg-canvas",
+    ring: "ring-line",
+    label: "Cancelled",
+  },
 };
 
 function formatSize(bytes: number): string {
@@ -100,11 +118,18 @@ export default function RequestDetailClient({
   request: initialRequest,
   organization,
 }: RequestDetailClientProps) {
+  const router = useRouter();
   const toast = useToast();
+  const { alert, showAlert, dismissAlert } = useInlineAlert();
   const canCreateTicket = usePermission(PERMISSIONS.TICKET_CREATE);
+  const { activeMembership } = useAuth();
   const { entries } = useActivityLog();
   const logRequestActivity = useLogActivity("request");
   const logTicketActivity = useLogActivity("ticket");
+
+  // Mirrors requests-page-client.tsx: submitting/cancelling a request is a
+  // Client-only action, not a permission grant.
+  const isClientRole = activeMembership?.role.roleName === "Client";
 
   const [request, setRequest] = useState(initialRequest);
   const [tickets, setTickets] = useState<TicketDetail[]>(
@@ -112,6 +137,7 @@ export default function RequestDetailClient({
   );
   const [approveOpen, setApproveOpen] = useState(false);
   const [rejectOpen, setRejectOpen] = useState(false);
+  const [cancelOpen, setCancelOpen] = useState(false);
 
   const slug = organization.settings?.slug;
   const requestsHref = slug
@@ -157,7 +183,14 @@ export default function RequestDetailClient({
     return steps;
   }, [requestEntries, request.status]);
 
-  function handleReject(remarks: string) {
+  async function handleReject(remarks: string) {
+    try {
+      await rejectTicketRequest(request.id, remarks);
+    } catch (error) {
+      notifyApiError(toast, error, "Failed to reject request");
+      return;
+    }
+
     setRequest((prev) => ({
       ...prev,
       status: "rejected",
@@ -173,50 +206,56 @@ export default function RequestDetailClient({
       involvedUserIds: [request.client.user?.id],
       description: `rejected request "${request.title}": ${remarks}`,
     });
-    toast(`Request "${request.title}" rejected`, "error");
-    // TODO: PATCH /ticket-requests/:id { status: "rejected", remarks }
+    showAlert(`Request "${request.title}" rejected`, "error");
   }
 
-  function handleApprove(values: TicketFormValues) {
+  async function handleCancel() {
+    try {
+      await cancelTicketRequest(request.id);
+    } catch (error) {
+      notifyApiError(toast, error, "Failed to cancel request");
+      return;
+    }
+
+    setRequest((prev) => ({
+      ...prev,
+      status: "cancelled",
+      updatedAt: new Date().toISOString(),
+    }));
+    logRequestActivity({
+      orgId: organization.id,
+      action: "cancelled",
+      entityId: request.id,
+      entityLabel: request.title,
+      referenceId: request.referenceId,
+      involvedUserIds: [request.client.user?.id],
+      description: `cancelled request "${request.title}"`,
+    });
+    showAlert(`Request "${request.title}" cancelled`, "error");
+  }
+
+  async function handleApprove(values: TicketFormValues) {
     const targetTodoTag =
       organization.tags.find((t) => t.tagName === "To Do") ??
       organization.tags[0];
     if (!targetTodoTag) return;
 
-    const newAttachments = values.attachments.map((file, i) => ({
-      id: Date.now() + i,
-      name: file.name,
-      url: URL.createObjectURL(file),
-      size: file.size,
-    }));
+    let result: Awaited<ReturnType<typeof approveTicketRequest>>;
+    try {
+      result = await approveTicketRequest(request.id, {
+        tagId: targetTodoTag.id,
+        assigneeIds: values.assigneeIds,
+        dueDate: values.dueDate || undefined,
+      });
+    } catch (error) {
+      notifyApiError(toast, error, "Failed to approve request");
+      return;
+    }
 
-    const newTicket: TicketDetail = {
-      id: Date.now(),
-      referenceId: formatReferenceId("tckt", tickets.length + 1),
-      orgId: organization.id,
-      title: values.title,
-      description: values.description || undefined,
-      attachments: [...request.attachments, ...newAttachments],
-      tag: targetTodoTag,
-      client:
-        organization.members.find((m) => String(m.id) === values.clientId) ??
-        request.client,
-      assignees: organization.members.filter((m) =>
-        values.assigneeIds.includes(m.id),
-      ),
-      dueDate: values.dueDate || null,
-      starred: false,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
+    const { request: updatedRequest, ticket: newTicket } = result;
 
     setTickets((prev) => [newTicket, ...prev]);
-    setRequest((prev) => ({
-      ...prev,
-      status: "approved",
-      ticketId: newTicket.id,
-      updatedAt: new Date().toISOString(),
-    }));
+    setRequest(updatedRequest);
     logRequestActivity({
       orgId: organization.id,
       action: "approved",
@@ -238,15 +277,21 @@ export default function RequestDetailClient({
       ],
       description: `created ticket "${newTicket.title}" from a request`,
     });
-    toast(`Request approved — ticket "${newTicket.title}" created`);
     setApproveOpen(false);
-    // TODO: POST /organizations/:orgId/tickets (from request), then
-    // PATCH /ticket-requests/:id { status: "approved", ticket_id }
+    router.push(`/dashboard/tickets/${newTicket.id}`);
   }
 
   return (
     <div>
       <BackButton />
+
+      {alert && (
+        <InlineAlert
+          message={alert.message}
+          variant={alert.variant}
+          onDismiss={dismissAlert}
+        />
+      )}
 
       {/* Header — colored by status so the state reads at a glance */}
       <div
@@ -258,7 +303,9 @@ export default function RequestDetailClient({
               ? "bg-accent"
               : request.status === "rejected"
                 ? "bg-danger"
-                : "bg-warning"
+                : request.status === "cancelled"
+                  ? "bg-line"
+                  : "bg-warning"
           }`}
         />
 
@@ -304,6 +351,14 @@ export default function RequestDetailClient({
               </Button>
               <Button variant="danger" onClick={() => setRejectOpen(true)}>
                 <X size={14} className="mr-1.5" /> Reject
+              </Button>
+            </div>
+          )}
+
+          {isClientRole && request.status === "pending" && (
+            <div className="flex shrink-0 items-center gap-2">
+              <Button variant="secondary" onClick={() => setCancelOpen(true)}>
+                <Ban size={14} className="mr-1.5" /> Cancel request
               </Button>
             </div>
           )}
@@ -455,6 +510,21 @@ export default function RequestDetailClient({
         request={rejectOpen ? request : null}
         onClose={() => setRejectOpen(false)}
         onConfirm={handleReject}
+      />
+
+      <ConfirmDialog
+        open={cancelOpen}
+        onClose={() => setCancelOpen(false)}
+        onConfirm={handleCancel}
+        title="Cancel request"
+        description={
+          <>
+            Are you sure you want to cancel <strong>{request.title}</strong>?
+            This can&apos;t be undone.
+          </>
+        }
+        confirmLabel="Cancel request"
+        cancelLabel="Keep request"
       />
     </div>
   );

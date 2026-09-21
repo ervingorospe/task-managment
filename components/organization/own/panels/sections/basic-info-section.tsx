@@ -10,7 +10,10 @@ import Textarea from "@/components/ui/form/textarea";
 import { Button } from "@/components/ui/buttons/button";
 import Card from "@/components/ui/card";
 import PropertyRow from "@/components/ui/property-row";
+import { InlineAlert } from "@/components/ui/inline-alert";
+import { useInlineAlert } from "@/hooks/use-inline-alert";
 import { useToast } from "@/providers/toast-provider";
+import { notifyApiError } from "@/lib/helper/api-error-toast";
 
 import { OrganizationDetail } from "@/lib/types/organization/organization-detail.type";
 import {
@@ -21,6 +24,7 @@ import { FIELD_TYPES, InputFieldConfig } from "@/lib/types/form.type";
 import Link from "next/link";
 import { AccountTypeGuard } from "@/components/auth/account-type.guard";
 import { ACCOUNT_TYPE } from "@/lib/constants/accoun-type.constant";
+import { updateOrganizationBasicInfo } from "@/lib/api/organizations";
 interface BasicInformationProps {
   organization: OrganizationDetail;
 }
@@ -72,6 +76,7 @@ export default function BasicInformation({
   organization,
 }: BasicInformationProps) {
   const toast = useToast();
+  const { alert, showAlert, dismissAlert } = useInlineAlert();
   const [isEditing, setIsEditing] = useState(false);
 
   const [displayInfo, setDisplayInfo] = useState({
@@ -104,7 +109,7 @@ export default function BasicInformation({
     setIsEditing(false);
   }
 
-  function onSave(values: BasicInfoValues) {
+  async function onSave(values: BasicInfoValues) {
     const changedFields = Object.keys(dirtyFields) as Array<
       keyof BasicInfoValues
     >;
@@ -119,8 +124,12 @@ export default function BasicInformation({
       return acc;
     }, {});
 
-    // TODO: PATCH /organizations/:id
-    console.log("PATCH payload", patch);
+    try {
+      await updateOrganizationBasicInfo(organization.id, patch);
+    } catch (error) {
+      notifyApiError(toast, error, "Failed to update organization information");
+      return;
+    }
 
     setDisplayInfo((prev) => ({
       ...prev,
@@ -133,13 +142,22 @@ export default function BasicInformation({
     });
 
     setIsEditing(false);
-    toast("Organization information updated");
+    showAlert("Organization information updated");
   }
 
   return (
     <Card
       title="Basic Information"
       subtitle="General information about your organization."
+      banner={
+        alert && (
+          <InlineAlert
+            message={alert.message}
+            variant={alert.variant}
+            onDismiss={dismissAlert}
+          />
+        )
+      }
       headerActions={
         isEditing ? (
           <AccountTypeGuard accountType={ACCOUNT_TYPE.OWNER}>

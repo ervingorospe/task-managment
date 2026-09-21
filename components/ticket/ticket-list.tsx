@@ -15,6 +15,8 @@ import type { TagDetail } from "@/lib/types/organization/tag-detail.type";
 import type { MemberDetail } from "@/lib/types/organization/member-detail.type";
 import { InlineButton } from "@/components/ui/buttons";
 import { formatDueDate, getDueState } from "@/lib/helper/ticket-status";
+import { usePermission } from "@/providers/auth-provider";
+import { PERMISSIONS } from "@/lib/data/permissions";
 
 interface TicketListProps {
   tickets: TicketDetail[];
@@ -44,6 +46,9 @@ function TicketListComponent({
   emptySubtitle = "Create your first ticket to get started.",
   emptyAction,
 }: TicketListProps) {
+  const canAssign = usePermission(PERMISSIONS.TICKET_ASSIGN);
+  const canChangeStatus = usePermission(PERMISSIONS.TICKET_CHANGE_STATUS);
+
   if (tickets.length === 0) {
     return (
       <EmptyState title={emptyTitle} subtitle={emptySubtitle}>
@@ -124,52 +129,64 @@ function TicketListComponent({
               </td>
 
               {/* Assignees — clickable avatars with tooltip, or inline "Assign" when empty */}
-              <td className="max-w-[40px] px-4 py-3">
-                <MultiSelectDropdown
-                  value={ticket.assignees.map((member) => member.id)}
-                  onChange={(memberIds) => onAssign(ticket.id, memberIds)}
-                  options={assignableMembers.map((member) => ({
-                    value: member.id,
-                    label: `${member.user?.firstName ?? ""} ${
-                      member.user?.lastName ?? ""
-                    }`.trim(),
-                  }))}
-                  emptyMessage="No assignable members"
-                  trigger={
-                    ticket.assignees.length === 0 ? (
-                      <InlineButton icon={<UserPlus size={12} />}>
-                        Assign
-                      </InlineButton>
-                    ) : (
-                      <div className="flex -space-x-2">
-                        {ticket.assignees.map((member) => (
-                          <Tooltip
-                            key={member.id}
-                            label={`${member.user?.firstName ?? ""} ${
-                              member.user?.lastName ?? ""
-                            }`.trim()}
-                          >
-                            <Avatar
-                              firstName={member.user?.firstName ?? "?"}
-                              lastName={member.user?.lastName}
-                              size="sm"
-                              className="cursor-pointer ring-2 ring-surface transition-transform hover:z-10 hover:scale-110"
-                            />
-                          </Tooltip>
-                        ))}
-                      </div>
-                    )
-                  }
-                />
-              </td>
+              {canAssign && (
+                <td className="max-w-[40px] px-4 py-3">
+                  <MultiSelectDropdown
+                    value={ticket.assignees.map((member) => member.id)}
+                    onChange={(memberIds) => onAssign(ticket.id, memberIds)}
+                    options={assignableMembers.map((member) => ({
+                      value: member.id,
+                      label: `${member.user?.firstName ?? ""} ${
+                        member.user?.lastName ?? ""
+                      }`.trim(),
+                    }))}
+                    emptyMessage="No assignable members"
+                    trigger={
+                      ticket.assignees.length === 0 ? (
+                        <InlineButton icon={<UserPlus size={12} />}>
+                          Assign
+                        </InlineButton>
+                      ) : (
+                        <div className="flex -space-x-2">
+                          {ticket.assignees.map((member) => (
+                            <Tooltip
+                              key={member.id}
+                              label={`${member.user?.firstName ?? ""} ${
+                                member.user?.lastName ?? ""
+                              }`.trim()}
+                            >
+                              <Avatar
+                                firstName={member.user?.firstName ?? "?"}
+                                lastName={member.user?.lastName}
+                                size="sm"
+                                className="cursor-pointer ring-2 ring-surface transition-transform hover:z-10 hover:scale-110"
+                              />
+                            </Tooltip>
+                          ))}
+                        </div>
+                      )
+                    }
+                  />
+                </td>
+              )}
 
               {/* Change tag */}
               <td className="max-w-[40px] whitespace-nowrap px-4 py-3">
-                <TagPicker
-                  value={ticket.tag}
-                  options={availableTags}
-                  onChange={(tag) => onChangeTag(ticket.id, tag)}
-                />
+                {canChangeStatus ? (
+                  <TagPicker
+                    value={ticket.tag}
+                    options={availableTags}
+                    onChange={(tag) => onChangeTag(ticket.id, tag)}
+                  />
+                ) : (
+                  <span className="flex items-center gap-1.5 rounded-sm border border-line px-2 py-1 text-xs text-ink">
+                    <span
+                      className="h-2 w-2 rounded-full"
+                      style={{ backgroundColor: ticket.tag.color }}
+                    />
+                    {ticket.tag.tagName}
+                  </span>
+                )}
               </td>
             </tr>
           );

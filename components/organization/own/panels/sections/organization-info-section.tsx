@@ -10,10 +10,15 @@ import Avatar from "@/components/ui/avatar";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import Select from "@/components/ui/form/select";
 import { useToast } from "@/providers/toast-provider";
+import { notifyApiError } from "@/lib/helper/api-error-toast";
 
 import { getTimezoneList } from "@/lib/helper/timezones";
 import { lazyNamed } from "@/lib/helper/lazy-named";
 import { OrganizationDetail } from "@/lib/types/organization/organization-detail.type";
+import {
+  updateOrganizationSettings,
+  cancelOwnershipTransfer,
+} from "@/lib/api/organizations";
 
 const ChangeOwnerModal = lazyNamed(
   () => import("@/components/organization/own/change-owner-modal"),
@@ -83,7 +88,6 @@ export default function OrganizationInfoSection({
       return url;
     });
 
-    toast("Logo updated");
     // TODO: upload the file and PATCH /organizations/:id { logo }
   }
 
@@ -99,13 +103,17 @@ export default function OrganizationInfoSection({
     setIsEditingTimezone(false);
   }
 
-  function handleTimezoneSave(values: TimezoneFormValues) {
-    // TODO: PATCH /organizations/:id { timezone: values.timezone }
-
-    console.log("PATCH timezone", values.timezone);
+  async function handleTimezoneSave(values: TimezoneFormValues) {
+    try {
+      await updateOrganizationSettings(organization.id, {
+        timezone: values.timezone,
+      });
+    } catch (error) {
+      notifyApiError(toast, error, "Failed to update timezone");
+      return;
+    }
 
     setIsEditingTimezone(false);
-    toast("Timezone updated");
   }
 
   function handleOwnershipTransferSent(email: string) {
@@ -117,10 +125,16 @@ export default function OrganizationInfoSection({
     });
   }
 
-  function handleCancelTransfer() {
+  async function handleCancelTransfer() {
     if (!pendingTransfer) return;
 
-    // TODO: DELETE /organizations/:id/ownership-transfer
+    try {
+      await cancelOwnershipTransfer(organization.id);
+    } catch (error) {
+      notifyApiError(toast, error, "Failed to cancel ownership transfer");
+      setCancelTransferModalOpen(false);
+      return;
+    }
 
     setPendingTransfer(null);
     setCancelTransferModalOpen(false);
@@ -248,6 +262,7 @@ export default function OrganizationInfoSection({
       {ownerModalOpen && (
         <ChangeOwnerModal
           open={ownerModalOpen}
+          orgId={organization.id}
           onClose={() => setOwnerModalOpen(false)}
           onSent={handleOwnershipTransferSent}
         />

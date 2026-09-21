@@ -2,6 +2,9 @@ type CardProps = {
   title?: string;
   subtitle?: string;
   desc?: string;
+  /** Renders below the title/subtitle — e.g. an inline success/error alert
+   * — while staying inside the card's border. */
+  banner?: React.ReactNode;
   headerActions?: React.ReactNode;
   footerActions?: React.ReactNode;
   children: React.ReactNode;
@@ -11,6 +14,7 @@ export default function Card({
   title,
   subtitle,
   desc,
+  banner,
   headerActions,
   footerActions,
   children,
@@ -34,6 +38,8 @@ export default function Card({
 
           {headerActions ? <div>{headerActions}</div> : null}
         </div>
+
+        {banner}
 
         {children}
 

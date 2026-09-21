@@ -3,19 +3,23 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ChevronRight, Pencil, Tag as TagIcon, Trash2 } from "lucide-react";
+import { ChevronRight, Pencil, Star, Tag as TagIcon, Trash2 } from "lucide-react";
 
 import BackButton from "@/components/ui/buttons/button-back";
 import { Button } from "@/components/ui/buttons/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Can } from "@/components/auth/can";
 import { useToast } from "@/providers/toast-provider";
+import { notifyApiError } from "@/lib/helper/api-error-toast";
+import { setPendingAlert } from "@/lib/helper/pending-alert";
 import { useLogActivity } from "@/hooks/use-log-activity";
 import { PERMISSIONS } from "@/lib/data/permissions";
+import { updateTicket, deleteTicket } from "@/lib/api/tickets";
 import { DueChip } from "./due-chip";
 import { getDueState } from "@/lib/helper/ticket-status";
 import type { TagDetail } from "@/lib/types/organization/tag-detail.type";
 import type { TicketDetail } from "@/lib/types/ticket/ticket-detail.type";
+import type { MemberDetail } from "@/lib/types/organization/member-detail.type";
 import type { OrganizationDetail } from "@/lib/types/organization/organization-detail.type";
 import TicketOverviewCard from "./ticket-overview-card";
 import TicketDetailsCard from "./ticket-details-card";
@@ -46,13 +50,43 @@ export default function TicketDetailClient({
   const [dueDate, setDueDate] = useState(ticket.dueDate);
   const dueState = getDueState({ tag, dueDate });
 
+  // Also lifted — TicketCommentsSection (via TicketOverviewCard) needs the
+  // current assignee list too, for @mention suggestions and for who gets
+  // tagged "involved" on a comment's activity log entry. Without this it
+  // silently used to keep the page-load assignees forever.
+  const [assignees, setAssignees] = useState<MemberDetail[]>(
+    ticket.assignees,
+  );
+
+  const [starred, setStarred] = useState(ticket.starred);
+
+  function handleToggleStar() {
+    const nowStarred = !starred;
+    setStarred(nowStarred);
+
+    updateTicket(ticket.id, { starred: nowStarred }).catch((error) => {
+      setStarred(!nowStarred);
+      notifyApiError(
+        toast,
+        error,
+        `Failed to ${nowStarred ? "star" : "unstar"} ticket`,
+      );
+    });
+  }
+
   function commitTitle() {
     const next = titleDraft.trim();
     const changed = Boolean(next) && next !== title;
+    const previous = title;
     setTitle((prev) => next || prev);
     setTitleDraft(next || title);
     setIsEditingTitle(false);
     if (changed) {
+      updateTicket(ticket.id, { title: next }).catch((error) => {
+        setTitle(previous);
+        setTitleDraft(previous);
+        notifyApiError(toast, error, "Failed to update title");
+      });
       toast("Ticket title updated");
       logTicketActivity({
         orgId: organization.id,
@@ -62,12 +96,11 @@ export default function TicketDetailClient({
         referenceId: ticket.referenceId,
         involvedUserIds: [
           ticket.client?.user?.id,
-          ...ticket.assignees.map((a) => a.user?.id),
+          ...assignees.map((a) => a.user?.id),
         ],
         description: `renamed ticket "${title}" to "${next}"`,
       });
     }
-    // TODO: PATCH /tickets/:id { title }
   }
 
   function cancelTitleEdit() {
@@ -75,8 +108,14 @@ export default function TicketDetailClient({
     setIsEditingTitle(false);
   }
 
-  function handleDelete() {
-    // TODO: DELETE /tickets/:id
+  async function handleDelete() {
+    try {
+      await deleteTicket(ticket.id);
+    } catch (error) {
+      notifyApiError(toast, error, "Failed to delete ticket");
+      return;
+    }
+
     logTicketActivity({
       orgId: organization.id,
       action: "removed",
@@ -85,11 +124,11 @@ export default function TicketDetailClient({
       referenceId: ticket.referenceId,
       involvedUserIds: [
         ticket.client?.user?.id,
-        ...ticket.assignees.map((a) => a.user?.id),
+        ...assignees.map((a) => a.user?.id),
       ],
       description: `deleted ticket "${title}"`,
     });
-    toast(`Ticket "${title}" removed`, "error");
+    setPendingAlert(`Ticket ${title} was removed`, "error");
     router.push(
       slug ? `/dashboard/organizations/${slug}/tickets` : "/dashboard",
     );
@@ -179,12 +218,27 @@ export default function TicketDetailClient({
             </div>
           </div>
 
-          <Can action={PERMISSIONS.TICKET_REMOVE}>
-            <Button variant="danger" onClick={() => setConfirmOpen(true)}>
-              <Trash2 size={14} className="mr-1.5" />
-              Remove
-            </Button>
-          </Can>
+          <div className="flex shrink-0 items-center gap-2">
+            <button
+              type="button"
+              onClick={handleToggleStar}
+              aria-label={starred ? "Unstar ticket" : "Star ticket"}
+              aria-pressed={starred}
+              className="flex h-9 w-9 items-center justify-center rounded border border-line text-ink-faint transition-colors hover:text-ink"
+            >
+              <Star
+                size={16}
+                className={starred ? "fill-warning text-warning" : ""}
+              />
+            </button>
+
+            <Can action={PERMISSIONS.TICKET_REMOVE}>
+              <Button variant="danger" onClick={() => setConfirmOpen(true)}>
+                <Trash2 size={14} className="mr-1.5" />
+                Remove
+              </Button>
+            </Can>
+          </div>
         </div>
       </div>
 
@@ -196,7 +250,7 @@ export default function TicketDetailClient({
             attachments={ticket.attachments}
             comments={ticket.comments}
             client={ticket.client}
-            assignees={ticket.assignees}
+            assignees={assignees}
             organization={organization}
           />
         </div>
@@ -209,7 +263,8 @@ export default function TicketDetailClient({
             tag={tag}
             onChangeTag={setTag}
             client={ticket.client}
-            assignees={ticket.assignees}
+            assignees={assignees}
+            onAssigneesChange={setAssignees}
             dueDate={dueDate}
             onDueDateChange={setDueDate}
             organization={organization}

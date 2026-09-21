@@ -16,12 +16,15 @@ import {
 } from "./ticket-filter-dropdown";
 import { useAuth, usePermission } from "@/providers/auth-provider";
 import { useToast } from "@/providers/toast-provider";
+import { notifyApiError } from "@/lib/helper/api-error-toast";
 import { useLogActivity } from "@/hooks/use-log-activity";
+import { useInlineAlert } from "@/hooks/use-inline-alert";
+import { InlineAlert } from "@/components/ui/inline-alert";
 import { useTicketListQueryState } from "@/hooks/use-ticket-list-query-state";
 import { isTicketIncluded } from "@/lib/helper/ticket-access";
 import { getDueState } from "@/lib/helper/ticket-status";
 import { getStatusBreakdown } from "@/lib/helper/ticket-reports";
-import { formatReferenceId } from "@/lib/helper/reference-id";
+import { createTicket, updateTicket } from "@/lib/api/tickets";
 import type { OrganizationDetail } from "@/lib/types/organization/organization-detail.type";
 import type { TicketDetail } from "@/lib/types/ticket/ticket-detail.type";
 import type { TagDetail } from "@/lib/types/organization/tag-detail.type";
@@ -39,6 +42,7 @@ export default function TicketsPageClient({
 }: TicketsPageClientProps) {
   const { currentUser } = useAuth();
   const toast = useToast();
+  const { alert, showAlert, dismissAlert } = useInlineAlert();
   const logTicketActivity = useLogActivity("ticket");
   const canViewAllTickets = usePermission(PERMISSIONS.TICKET_VIEW_ALL);
   const { tags, members } = organization;
@@ -193,7 +197,7 @@ export default function TicketsPageClient({
   );
 
   const handleCreate = useCallback(
-    (values: TicketFormValues) => {
+    async (values: TicketFormValues) => {
       const targetOrg =
         allOrganizations.find(
           (o) => String(o.id) === values.organizationId,
@@ -202,30 +206,27 @@ export default function TicketsPageClient({
         targetOrg.tags.find((t) => t.tagName === "To Do") ?? targetOrg.tags[0];
       if (!targetTodoTag) return;
 
-      const newTicket: TicketDetail = {
-        id: Date.now(),
-        referenceId: formatReferenceId("tckt", targetOrg.tickets.length + 1),
-        orgId: targetOrg.id,
-        title: values.title,
-        description: values.description || undefined,
-        attachments: values.attachments.map((file, i) => ({
-          id: Date.now() + i,
-          name: file.name,
-          url: URL.createObjectURL(file),
-          size: file.size,
-        })),
-        tag: targetTodoTag,
-        client:
-          targetOrg.members.find((m) => String(m.id) === values.clientId) ??
-          null,
-        assignees: targetOrg.members.filter((m) =>
-          values.assigneeIds.includes(m.id),
-        ),
-        dueDate: values.dueDate || null,
-        starred: false,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
+      const client =
+        targetOrg.members.find((m) => String(m.id) === values.clientId) ??
+        null;
+      const assignees = targetOrg.members.filter((m) =>
+        values.assigneeIds.includes(m.id),
+      );
+
+      let newTicket: TicketDetail;
+      try {
+        newTicket = await createTicket(targetOrg.id, {
+          title: values.title,
+          description: values.description || undefined,
+          tagId: targetTodoTag.id,
+          clientId: client?.id,
+          assigneeIds: assignees.map((m) => m.id),
+          dueDate: values.dueDate || undefined,
+        });
+      } catch (error) {
+        notifyApiError(toast, error, "Failed to create ticket");
+        return;
+      }
 
       if (targetOrg.id === organization.id) {
         setTickets((prev) => [newTicket, ...prev]);
@@ -242,10 +243,9 @@ export default function TicketsPageClient({
         ],
         description: `created ticket "${newTicket.title}"`,
       });
-      toast(`Ticket "${newTicket.title}" created`);
-      // TODO: POST /organizations/:orgId/tickets in the background.
+      showAlert(`New ticket ${newTicket.title} was created`);
     },
-    [allOrganizations, organization, toast, logTicketActivity],
+    [allOrganizations, organization, toast, showAlert, logTicketActivity],
   );
 
   const handleChangeTag = useCallback(
@@ -254,6 +254,16 @@ export default function TicketsPageClient({
       setTickets((prev) =>
         prev.map((t) => (t.id === ticketId ? { ...t, tag } : t)),
       );
+
+      updateTicket(ticketId, { tagId: tag.id }).catch((error) => {
+        if (target) {
+          setTickets((prev) =>
+            prev.map((t) => (t.id === ticketId ? target : t)),
+          );
+        }
+        notifyApiError(toast, error, "Failed to update status");
+      });
+
       if (target) {
         logTicketActivity({
           orgId: organization.id,
@@ -268,8 +278,6 @@ export default function TicketsPageClient({
           description: `changed status of "${target.title}" to ${tag.tagName}`,
         });
       }
-      toast(`Status changed to "${tag.tagName}"`);
-      // TODO: PATCH /tickets/:id { tag_id: tag.id }
     },
     [toast, tickets, organization.id, logTicketActivity],
   );
@@ -287,6 +295,16 @@ export default function TicketsPageClient({
             : t,
         ),
       );
+
+      updateTicket(ticketId, { assigneeIds: memberIds }).catch((error) => {
+        if (target) {
+          setTickets((prev) =>
+            prev.map((t) => (t.id === ticketId ? target : t)),
+          );
+        }
+        notifyApiError(toast, error, "Failed to update assignees");
+      });
+
       if (target) {
         const newAssignees = members.filter((m) => memberIds.includes(m.id));
         logTicketActivity({
@@ -303,30 +321,44 @@ export default function TicketsPageClient({
           description: `updated assignees on "${target.title}"`,
         });
       }
-      toast("Assignees updated");
-      // TODO: PATCH /tickets/:id { assignee_ids: memberIds }
     },
     [members, toast, tickets, organization.id, logTicketActivity],
   );
 
   const handleToggleStar = useCallback(
     (ticketId: number) => {
-      let nowStarred = false;
+      const target = tickets.find((t) => t.id === ticketId);
+      if (!target) return;
+      const nowStarred = !target.starred;
+
       setTickets((prev) =>
-        prev.map((t) => {
-          if (t.id !== ticketId) return t;
-          nowStarred = !t.starred;
-          return { ...t, starred: nowStarred };
-        }),
+        prev.map((t) => (t.id === ticketId ? { ...t, starred: nowStarred } : t)),
       );
-      toast(nowStarred ? "Ticket starred" : "Ticket unstarred");
-      // TODO: PATCH /tickets/:id { starred: nowStarred }
+
+      updateTicket(ticketId, { starred: nowStarred }).catch((error) => {
+        setTickets((prev) =>
+          prev.map((t) => (t.id === ticketId ? target : t)),
+        );
+        notifyApiError(
+          toast,
+          error,
+          `Failed to ${nowStarred ? "star" : "unstar"} ticket`,
+        );
+      });
     },
-    [toast],
+    [tickets, toast],
   );
 
   return (
     <div>
+      {alert && (
+        <InlineAlert
+          message={alert.message}
+          variant={alert.variant}
+          onDismiss={dismissAlert}
+        />
+      )}
+
       <div className="flex items-start justify-between">
         <div>
           <h1 className="text-lg font-semibold text-ink">

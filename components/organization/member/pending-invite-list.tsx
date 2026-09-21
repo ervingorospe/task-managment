@@ -6,6 +6,8 @@ import EmptyState from "@/components/ui/empty-state";
 import { MemberInviteDetail } from "@/lib/types/organization/member-invite-detail.type";
 import { RoleDetail } from "@/lib/types/organization/role-detail.type";
 import { RotateCcw, Trash2 } from "lucide-react";
+import { getInviteExpiryState, formatInviteExpiry } from "@/lib/helper/invite-status";
+import { InviteExpiryChip } from "./invite-expiry-chip";
 
 interface PendingInviteListProps {
   invites: MemberInviteDetail[];
@@ -36,16 +38,39 @@ export default function PendingInviteList({
       {invites.map((invite) => {
         const role = roles.find((item) => item.id === invite.roleId);
         const cooldown = resendCooldowns[invite.id] ?? 0;
-        const canResend = cooldown === 0;
+        const expiryState = getInviteExpiryState(invite);
+        const expiryText = formatInviteExpiry(invite);
+        const isExpired = expiryState === "expired";
+        const canResend = cooldown === 0 && !isExpired;
 
         return (
           <List.ListItem
             key={invite.id}
             title={invite.email}
-            subtitle={role?.roleName ?? "No role assigned"}
+            subtitle={
+              <span className="flex items-center gap-1.5">
+                {role?.roleName ?? "No role assigned"}
+                {expiryText && (
+                  <>
+                    <span aria-hidden className="text-ink-faint">
+                      ·
+                    </span>
+                    {expiryState ? (
+                      <InviteExpiryChip state={expiryState} />
+                    ) : (
+                      <span>{expiryText}</span>
+                    )}
+                  </>
+                )}
+              </span>
+            }
             trailing={
               <div className="flex items-center gap-2">
-                {canResend ? (
+                {isExpired ? (
+                  <span className="text-xs text-ink-faint">
+                    Remove and re-invite instead
+                  </span>
+                ) : canResend ? (
                   <IconButton
                     icon={<RotateCcw size={15} />}
                     label="Resend invitation"
@@ -59,7 +84,7 @@ export default function PendingInviteList({
 
                 <IconButton
                   icon={<Trash2 size={15} />}
-                  label="Resend invitation"
+                  label="Remove invitation"
                   onClick={() => onRemove(invite)}
                 />
               </div>

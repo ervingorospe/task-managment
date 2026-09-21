@@ -10,8 +10,7 @@ import Input from "@/components/ui/form/input";
 import Textarea from "@/components/ui/form/textarea";
 import PropertyRow from "@/components/ui/property-row";
 
-import { rules } from "@/lib/data/default-rules";
-import { rulesCategories } from "@/lib/data/rules-category";
+import { useOrganizationDefaults } from "@/providers/organization-defaults.provider";
 
 import {
   roleFormSchema,
@@ -42,6 +41,8 @@ export function RoleFormModal({
   role,
 }: RoleFormModalProps) {
   const isEditMode = Boolean(role);
+  const { permissionOptions: rules, ruleCategories: rulesCategories } =
+    useOrganizationDefaults();
 
   const {
     control,

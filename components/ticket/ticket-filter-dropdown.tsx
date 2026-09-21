@@ -8,6 +8,8 @@ import CheckboxBase from "@/components/ui/form/checkbox-base";
 import PropertyRow from "@/components/ui/property-row";
 import { SearchInput } from "@/components/ui/search-input";
 import { useDropdown } from "@/providers/dropdown-context.provider";
+import { usePermission } from "@/providers/auth-provider";
+import { PERMISSIONS } from "@/lib/data/permissions";
 import type { MemberDetail } from "@/lib/types/organization/member-detail.type";
 import type { TagDetail } from "@/lib/types/organization/tag-detail.type";
 import IconButton from "../ui/buttons/button-icon";
@@ -110,6 +112,7 @@ function TicketFilterContent({
   onChange,
 }: TicketFilterContentProps) {
   const { close } = useDropdown();
+  const canFilterByMember = usePermission(PERMISSIONS.TICKET_ASSIGN);
 
   const filteredMembers = members.filter((member) => {
     const name = `${member.user?.firstName ?? ""} ${
@@ -185,42 +188,44 @@ function TicketFilterContent({
       </div>
 
       {/* Members + Tags */}
-      <div className="grid grid-cols-2 gap-4">
-        {/* Members */}
-        <PropertyRow label="Members">
-          <SearchInput
-            containerClassName="mb-1.5"
-            value={memberSearch}
-            onChange={(e) => setMemberSearch(e.target.value)}
-            placeholder="Search members"
-          />
+      <div className={canFilterByMember ? "grid grid-cols-2 gap-4" : ""}>
+        {/* Members — hidden for clients, who can't see assignees at all */}
+        {canFilterByMember && (
+          <PropertyRow label="Members">
+            <SearchInput
+              containerClassName="mb-1.5"
+              value={memberSearch}
+              onChange={(e) => setMemberSearch(e.target.value)}
+              placeholder="Search members"
+            />
 
-          <div className="max-h-40 space-y-1 overflow-y-auto">
-            {visibleMembers.length === 0 ? (
-              <p className="px-1 py-1 text-xs text-ink-faint">
-                No members found
+            <div className="max-h-40 space-y-1 overflow-y-auto">
+              {visibleMembers.length === 0 ? (
+                <p className="px-1 py-1 text-xs text-ink-faint">
+                  No members found
+                </p>
+              ) : (
+                visibleMembers.map((member) => (
+                  <CheckboxBase
+                    key={member.id}
+                    checked={draft.memberIds.includes(member.id)}
+                    onChange={() => toggleMember(member.id)}
+                    label={`${member.user?.firstName ?? ""} ${
+                      member.user?.lastName ?? ""
+                    }`.trim()}
+                    className="px-1 py-0.5"
+                  />
+                ))
+              )}
+            </div>
+
+            {hiddenMemberCount > 0 && (
+              <p className="mt-1 px-1 text-xs text-ink-faint">
+                +{hiddenMemberCount} more — refine your search
               </p>
-            ) : (
-              visibleMembers.map((member) => (
-                <CheckboxBase
-                  key={member.id}
-                  checked={draft.memberIds.includes(member.id)}
-                  onChange={() => toggleMember(member.id)}
-                  label={`${member.user?.firstName ?? ""} ${
-                    member.user?.lastName ?? ""
-                  }`.trim()}
-                  className="px-1 py-0.5"
-                />
-              ))
             )}
-          </div>
-
-          {hiddenMemberCount > 0 && (
-            <p className="mt-1 px-1 text-xs text-ink-faint">
-              +{hiddenMemberCount} more — refine your search
-            </p>
-          )}
-        </PropertyRow>
+          </PropertyRow>
+        )}
 
         {/* Tags */}
         <PropertyRow label="Tags">

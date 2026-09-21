@@ -32,11 +32,11 @@ export default function TicketOverviewCard({
       subtitle="Description, attachments, and the discussion around this ticket."
     >
       <div className="space-y-6">
-        <TicketDescriptionSection description={description} />
+        <TicketDescriptionSection ticketId={ticketId} description={description} />
 
         <div className="border-t border-line" />
 
-        <TicketAttachmentsSection attachments={attachments} />
+        <TicketAttachmentsSection ticketId={ticketId} attachments={attachments} />
 
         <div className="border-t border-line" />
 

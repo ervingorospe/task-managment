@@ -1,7 +1,11 @@
 import type { MemberDetail } from "../organization/member-detail.type";
 import type { TicketAttachment } from "./ticket-detail.type";
 
-export type TicketRequestStatus = "pending" | "approved" | "rejected";
+export type TicketRequestStatus =
+  | "pending"
+  | "approved"
+  | "rejected"
+  | "cancelled";
 
 export interface TicketRequest {
   id: number;

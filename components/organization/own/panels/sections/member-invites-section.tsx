@@ -6,13 +6,21 @@ import { Button } from "@/components/ui/buttons/button";
 import { RoleDetail } from "@/lib/types/organization/role-detail.type";
 import { MemberInviteDetail } from "@/lib/types/organization/member-invite-detail.type";
 import { useToast } from "@/providers/toast-provider";
+import { InlineAlert } from "@/components/ui/inline-alert";
+import { useInlineAlert } from "@/hooks/use-inline-alert";
+import { shouldToastApiError } from "@/lib/helper/api-error-toast";
 import { useLogActivity } from "@/hooks/use-log-activity";
+import { inviteMember } from "@/lib/api/members";
 
 interface InvitePeopleSectionProps {
   orgId: number;
   roles: RoleDetail[];
   capacity: number;
   currentTotalInvites: number;
+  /** Called with the backend-created invite objects (real ids, not the
+   * local temp ones) after a successful send, so the sibling
+   * MemberPendingInvites list can show them immediately. */
+  onSent: (invites: MemberInviteDetail[]) => void;
 }
 
 export default function MemberInvitesSection({
@@ -20,20 +28,25 @@ export default function MemberInvitesSection({
   roles,
   capacity,
   currentTotalInvites,
+  onSent,
 }: InvitePeopleSectionProps) {
-  // This is a compose-and-send box, not a persisted list — invites sent
-  // here move into MemberPendingInvites once "sent." For the mock phase,
-  // this local list just represents "invites queued in this session."
+  // This is a compose-and-queue box, not a persisted list — nothing here
+  // hits the backend until "Send Invite," at which point onSent() hands
+  // the created invites to the parent for MemberPendingInvites to render.
   const toast = useToast();
+  const { alert, showAlert, dismissAlert } = useInlineAlert();
   const logMemberActivity = useLogActivity("member");
   const atCapacity = currentTotalInvites >= capacity;
   const [invites, setInvites] = useState<MemberInviteDetail[]>([]);
+  const [isSending, setIsSending] = useState(false);
 
   function handleAdd(emails: string[]) {
+    const defaultRoleId =
+      roles.find((r) => r.roleName === "Member")?.id ?? roles[0]?.id ?? 0;
     const existing = new Set(invites.map((i) => i.email.toLowerCase()));
     const newInvites: MemberInviteDetail[] = emails
       .filter((email) => !existing.has(email.toLowerCase()))
-      .map((email) => ({ id: Date.now(), email, roleId: 3 }));
+      .map((email) => ({ id: Date.now(), email, roleId: defaultRoleId }));
 
     if (newInvites.length === 0) return;
     setInvites((prev) => [...prev, ...newInvites]);
@@ -46,17 +59,10 @@ export default function MemberInvitesSection({
         description: `invited ${invite.email} to join the organization`,
       });
     }
-    toast(
-      newInvites.length === 1
-        ? `Invite queued for ${newInvites[0].email}`
-        : `${newInvites.length} invites queued`,
-    );
-    // TODO: POST /organizations/:orgId/invites in the background.
   }
 
   function handleRemove(id: number) {
     setInvites((prev) => prev.filter((i) => i.id !== id));
-    toast("Invite removed", "error");
   }
 
   function handleChangeRole(inviteId: number, roleId: number) {
@@ -65,12 +71,79 @@ export default function MemberInvitesSection({
     );
   }
 
+  // Actually persists the queued invites — this only saves the invite row
+  // to the database (no email dispatch, no SES integration yet). Members
+  // still find out about it some other way for now.
+  async function handleSendInvites() {
+    if (invites.length === 0) return;
+    setIsSending(true);
+
+    const results = await Promise.allSettled(
+      invites.map((invite) =>
+        inviteMember(orgId, { email: invite.email, roleId: invite.roleId }),
+      ),
+    );
+
+    const sent: MemberInviteDetail[] = [];
+    const failedEmails: string[] = [];
+    // Only the ones that failed for a real system reason (not a 409 —
+    // e.g. "this email already has a pending invitation", which is the
+    // usual cause here) get named in the toast below.
+    const systemFaultEmails: string[] = [];
+    results.forEach((result, i) => {
+      if (result.status === "fulfilled") {
+        sent.push(result.value);
+      } else {
+        failedEmails.push(invites[i].email);
+        if (shouldToastApiError(result.reason)) {
+          systemFaultEmails.push(invites[i].email);
+        }
+      }
+    });
+
+    setInvites((prev) => prev.filter((i) => failedEmails.includes(i.email)));
+    setIsSending(false);
+
+    if (sent.length > 0) {
+      onSent(sent);
+      // Logged with the real backend id sent returned (not the local
+      // temp id) — that temp id is a Date.now() timestamp, which
+      // overflows the activity log's int entityId column.
+      for (const invite of sent) {
+        logMemberActivity({
+          orgId,
+          action: "invited",
+          entityId: invite.id,
+          entityLabel: invite.email,
+          description: `invited ${invite.email} to join the organization`,
+        });
+      }
+      showAlert(sent.length === 1 ? "1 invite sent" : `${sent.length} invites sent`);
+    }
+
+    if (systemFaultEmails.length > 0) {
+      toast(
+        `Failed to send ${systemFaultEmails.length === 1 ? "invite" : "invites"} for ${systemFaultEmails.join(", ")}`,
+        "error",
+      );
+    }
+  }
+
   return (
     <section className="rounded border border-line bg-surface p-6">
       <InviteManager
         title="Invite People"
         invites={invites}
         subtitle="Invite people to join your organization and assign them a role."
+        banner={
+          alert && (
+            <InlineAlert
+              message={alert.message}
+              variant={alert.variant}
+              onDismiss={dismissAlert}
+            />
+          )
+        }
         roles={roles}
         capacity={capacity}
         totalInvites={currentTotalInvites + invites.length}
@@ -82,12 +155,13 @@ export default function MemberInvitesSection({
       <div className="mt-8 flex items-center justify-between border-t border-line pt-5">
         <div className="flex w-full justify-end">
           <Button
-            disabled={atCapacity}
+            disabled={atCapacity || invites.length === 0 || isSending}
+            onClick={handleSendInvites}
             title={
               atCapacity ? `Invite limit reached (${capacity})` : undefined
             }
           >
-            Send Invite
+            {isSending ? "Sending..." : "Send Invite"}
           </Button>
         </div>
       </div>

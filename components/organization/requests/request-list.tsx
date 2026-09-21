@@ -2,7 +2,7 @@
 
 import { memo, type ReactNode } from "react";
 import Link from "next/link";
-import { Check, Paperclip, X } from "lucide-react";
+import { Ban, Check, Paperclip, X } from "lucide-react";
 import EmptyState from "@/components/ui/empty-state";
 import { Button } from "@/components/ui/buttons/button";
 import { ClampedText } from "@/components/ui/clamped-text";
@@ -13,8 +13,12 @@ import type { TicketRequest } from "@/lib/types/ticket/ticket-request.type";
 interface RequestListProps {
   requests: TicketRequest[];
   canManage: boolean;
+  /** Clients can cancel their own pending requests — separate from
+   * canManage, which is the staff approve/reject capability. */
+  canCancel: boolean;
   onApprove: (request: TicketRequest) => void;
   onReject: (request: TicketRequest) => void;
+  onCancel: (request: TicketRequest) => void;
   emptyTitle?: string;
   emptySubtitle?: string;
   emptyAction?: ReactNode;
@@ -31,8 +35,10 @@ function formatDate(iso: string) {
 function RequestListComponent({
   requests,
   canManage,
+  canCancel,
   onApprove,
   onReject,
+  onCancel,
   emptyTitle = "No requests yet",
   emptySubtitle = "Requests submitted by clients will show up here.",
   emptyAction,
@@ -121,6 +127,18 @@ function RequestListComponent({
                 onClick={() => onReject(request)}
               >
                 <X size={13} className="mr-1" /> Reject
+              </Button>
+            </div>
+          )}
+
+          {canCancel && request.status === "pending" && (
+            <div className="flex shrink-0 items-center gap-2">
+              <Button
+                variant="secondary"
+                className="px-2.5 py-1.5 text-xs"
+                onClick={() => onCancel(request)}
+              >
+                <Ban size={13} className="mr-1" /> Cancel
               </Button>
             </div>
           )}

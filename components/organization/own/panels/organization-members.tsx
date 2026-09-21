@@ -1,10 +1,12 @@
 "use client";
 
+import { useState } from "react";
 import Container from "@/components/layout/container";
 import MembersSection from "./sections/members-section";
 import MemberInvitesSection from "./sections/member-invites-section";
 import MemberPendingInvites from "./sections/member-pending-invites-section";
 import { OrganizationDetail } from "@/lib/types/organization/organization-detail.type";
+import { MemberInviteDetail } from "@/lib/types/organization/member-invite-detail.type";
 import { Can } from "@/components/auth/can";
 import { PERMISSIONS } from "@/lib/data/permissions";
 
@@ -20,6 +22,17 @@ export default function OrganizationMembers({
   organization,
   showInvites = true,
 }: OrganizationMembersProps) {
+  // Owned here rather than in either child, so a newly sent invite (or one
+  // just removed) is reflected the instant the API call resolves —
+  // MemberInvitesSection appends what the backend just created,
+  // MemberPendingInvites removes what it deletes. Relying on a page
+  // refetch to hand fresh props back down instead (e.g. router.refresh())
+  // isn't reliable here: it races the GET's own short-lived fetch cache
+  // and can leave this list stale well after the write has landed.
+  const [pendingInvites, setPendingInvites] = useState<MemberInviteDetail[]>(
+    organization.pendingInvites ?? [],
+  );
+
   return (
     <Container>
       {showInvites && (
@@ -29,14 +42,18 @@ export default function OrganizationMembers({
               orgId={organization.id}
               roles={organization.roles}
               capacity={organization.capacity.members}
-              currentTotalInvites={organization.pendingInvites?.length ?? 0}
+              currentTotalInvites={pendingInvites.length}
+              onSent={(sent) =>
+                setPendingInvites((prev) => [...prev, ...sent])
+              }
             />
           </Can>
 
           <MemberPendingInvites
             orgId={organization.id}
-            invites={organization.pendingInvites}
+            invites={pendingInvites}
             roles={organization.roles}
+            onInvitesChange={setPendingInvites}
           />
         </>
       )}

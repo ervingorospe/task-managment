@@ -20,7 +20,11 @@ export default async function TicketPage({ params }: TicketPageProps) {
   const { ticket, organization } = result;
 
   return (
-    <MemberGuard organizationId={organization.id}>
+    <MemberGuard
+      organizationId={organization.id}
+      organizationName={organization.organizationName}
+      isActive={organization.settings.isActive}
+    >
       <TicketAccessGuard ticket={ticket}>
         <TicketDetailClient ticket={ticket} organization={organization} />
       </TicketAccessGuard>

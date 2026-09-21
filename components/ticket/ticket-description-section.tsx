@@ -8,15 +8,19 @@ import { Button } from "@/components/ui/buttons/button";
 import { MarkdownEditor } from "@/components/ui/form";
 import { Can } from "@/components/auth/can";
 import { useToast } from "@/providers/toast-provider";
+import { notifyApiError } from "@/lib/helper/api-error-toast";
 import { PERMISSIONS } from "@/lib/data/permissions";
 import { renderDescription } from "@/lib/helper/render-description";
+import { updateTicket } from "@/lib/api/tickets";
 import { SectionHeading } from "./section-heading";
 
 interface TicketDescriptionSectionProps {
+  ticketId: number;
   description?: string;
 }
 
 export default function TicketDescriptionSection({
+  ticketId,
   description: initialDescription,
 }: TicketDescriptionSectionProps) {
   const toast = useToast();
@@ -33,10 +37,16 @@ export default function TicketDescriptionSection({
   }
 
   function save(values: { description: string }) {
+    const previous = description;
     setDescription(values.description);
     setIsEditing(false);
-    toast("Description updated");
-    // TODO: PATCH /tickets/:id { description: values.description }
+
+    updateTicket(ticketId, { description: values.description }).catch(
+      (error) => {
+        setDescription(previous);
+        notifyApiError(toast, error, "Failed to update description");
+      },
+    );
   }
 
   const hasDescription = Boolean(description.trim());

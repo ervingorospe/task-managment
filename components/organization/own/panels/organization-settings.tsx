@@ -21,15 +21,19 @@ export default function OrganizationSettings({
       <div className="space-y-6">
         <OrganizationInfoSection organization={organization} />
         <InviteSettingsSection
+          orgId={organization.id}
           initialExpiration={organization.settings.inviteExpiration}
         />
         <NotificationSettingsSection
+          orgId={organization.id}
           initialValue={organization.settings.sendEmailNotif}
         />
         <RulesSection />
         <Capacities />
         <DeactivateOrganizationSection
+          orgId={organization.id}
           organizationName={organization.organizationName}
+          initialIsActive={organization.settings.isActive}
         />
       </div>
     </Container>

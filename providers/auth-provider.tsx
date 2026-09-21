@@ -4,9 +4,14 @@ import { createContext, useContext, useState, type ReactNode } from "react";
 
 import type { CurrentUser } from "@/lib/types/user/current-user.type";
 import type { UserMembership } from "@/lib/types/user/user-membership.type";
-import { mockAccounts } from "@/lib/data/mock-accounts";
 import type { Rule } from "@/lib/types/rule/rule.type";
 import type { Permission } from "@/lib/data/permissions";
+import { fetchUserByEmail } from "@/lib/api/users";
+
+// No auth backend yet, by design (see ticketing-backend's README) — so
+// there's no real password to check. Every user in the backend's users
+// table can log in with this one shared password until real auth exists.
+const DEFAULT_PASSWORD = "123";
 
 interface LoginResult {
   success: boolean;
@@ -27,12 +32,30 @@ interface AuthContextValue {
    */
   activeOrganization: UserMembership["organization"] | null;
 
-  login: (email: string, password: string) => LoginResult;
+  login: (email: string, password: string) => Promise<LoginResult>;
   logout: () => void;
   switchOrganization: (organizationId: number) => void;
   updateProfile: (
     patch: Partial<Pick<CurrentUser, "firstName" | "lastName" | "email" | "avatar">>,
   ) => void;
+  /**
+   * Drops an organization from the in-memory membership list — for after
+   * it's deleted (or the user otherwise loses access) elsewhere in the
+   * app. `currentUser` is only fetched at login, so without this the
+   * sidenav/topbar org switcher (both read straight from
+   * `currentUser.memberships`) would keep showing it until the next
+   * login.
+   */
+  removeMembership: (organizationId: number) => void;
+  /**
+   * Re-fetches the current user from the backend and replaces
+   * `currentUser` wholesale — for after an action elsewhere (e.g.
+   * creating a new organization) changes the membership list in a way
+   * that can't be patched in locally, since the response to that action
+   * doesn't carry a full membership row (id, role, etc.) to construct one
+   * from. Same lookup `login()` uses. No-ops if no one's logged in.
+   */
+  refreshCurrentUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -41,25 +64,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
   const [activeOrgId, setActiveOrgId] = useState<number | null>(null);
 
-  function login(email: string, password: string): LoginResult {
-    const account = mockAccounts.find(
-      (a) => a.email.toLowerCase() === email.trim().toLowerCase(),
-    );
+  async function login(email: string, password: string): Promise<LoginResult> {
+    if (password !== DEFAULT_PASSWORD) {
+      return { success: false, error: "Invalid email or password." };
+    }
 
-    if (!account || account.password !== password) {
+    let user;
+    try {
+      user = await fetchUserByEmail(email.trim());
+    } catch (error) {
+      console.error("Login lookup failed", error);
       return {
         success: false,
-        error: "Invalid email or password.",
+        error: "Couldn't reach the backend. Is it running?",
       };
     }
 
-    setCurrentUser(account.user);
+    if (!user) {
+      return { success: false, error: "Invalid email or password." };
+    }
 
-    setActiveOrgId(account.user.memberships[0]?.organization.id ?? null);
-
-    return {
-      success: true,
-    };
+    setCurrentUser(user);
+    setActiveOrgId(user.memberships[0]?.organization.id ?? null);
+    return { success: true };
   }
 
   function logout() {
@@ -86,6 +113,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
+  function removeMembership(organizationId: number) {
+    setCurrentUser((prev) =>
+      prev
+        ? {
+            ...prev,
+            memberships: prev.memberships.filter(
+              (membership) => membership.organization.id !== organizationId,
+            ),
+          }
+        : prev,
+    );
+    // activeMembership/activeOrganization below already fall back to the
+    // first remaining membership once this one is gone from the list, so
+    // activeOrgId doesn't need to be reset explicitly here.
+  }
+
+  async function refreshCurrentUser() {
+    if (!currentUser) return;
+    const user = await fetchUserByEmail(currentUser.email);
+    if (user) setCurrentUser(user);
+  }
+
   const activeMembership =
     currentUser?.memberships.find(
       (membership) => membership.organization.id === activeOrgId,
@@ -106,6 +155,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         logout,
         switchOrganization,
         updateProfile,
+        removeMembership,
+        refreshCurrentUser,
       }}
     >
       {children}

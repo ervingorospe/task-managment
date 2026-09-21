@@ -9,7 +9,10 @@ import TicketReports from "@/components/organization/ticket-reports/ticket-repor
 import { Can } from "@/components/auth/can";
 import { PERMISSIONS } from "@/lib/data/permissions";
 import EmptyState from "@/components/ui/empty-state";
-import LeaveOrganizationSection from "./organization-leave";
+import { OrganizationDisabledState } from "@/components/organization/organization-disabled-state";
+import LeaveOrganizationSection, {
+  LeaveOrganizationButton,
+} from "./organization-leave";
 import { AccountTypeGuard } from "@/components/auth/account-type.guard";
 import { ACCOUNT_TYPE } from "@/lib/constants/accoun-type.constant";
 
@@ -41,6 +44,25 @@ export default function OrganizationMemberTabs({
   organization: OrganizationDetail;
 }) {
   const [activeTab, setActiveTab] = useState<Tab>("info");
+
+  // A member still needs a way out of a disabled org, so this page (unlike
+  // the other /organizations/[slug]/** pages) isn't blocked wholesale by
+  // MemberGuard — it handles the disabled state itself, keeping the leave
+  // action available instead of hiding it along with everything else.
+  if (!organization.settings.isActive) {
+    return (
+      <OrganizationDisabledState
+        organizationName={organization.organizationName}
+        action={
+          <AccountTypeGuard accountType={ACCOUNT_TYPE.MEMBER}>
+            <LeaveOrganizationButton
+              organizationName={organization.organizationName}
+            />
+          </AccountTypeGuard>
+        }
+      />
+    );
+  }
 
   return (
     <div>

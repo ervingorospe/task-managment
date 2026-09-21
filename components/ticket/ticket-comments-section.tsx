@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/buttons/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { useAuth } from "@/providers/auth-provider";
 import { useToast } from "@/providers/toast-provider";
+import { notifyApiError } from "@/lib/helper/api-error-toast";
 import { useLogActivity } from "@/hooks/use-log-activity";
 import { formatDateTime } from "@/lib/helper/format-date";
 import { getMemberName } from "@/lib/helper/member-name";
@@ -21,6 +22,11 @@ import {
 import type { TicketComment } from "@/lib/types/ticket/ticket-comment.type";
 import type { MemberDetail } from "@/lib/types/organization/member-detail.type";
 import type { OrganizationDetail } from "@/lib/types/organization/organization-detail.type";
+import {
+  addTicketComment,
+  updateTicketComment,
+  removeTicketComment,
+} from "@/lib/api/tickets";
 import { SectionHeading } from "./section-heading";
 
 interface TicketCommentsSectionProps {
@@ -165,28 +171,24 @@ export default function TicketCommentsSection({
     setMentionState(null);
   }
 
-  function handlePostComment() {
+  async function handlePostComment() {
     const text = commentDraft.trim();
     if (!text || !currentUser) return;
 
-    const comment: TicketComment = {
-      id: Date.now(),
-      ticketId,
-      userId: currentUser.id,
-      comment: text,
-      author: {
-        id: currentUser.id,
-        firstName: currentUser.firstName,
-        lastName: currentUser.lastName,
-        avatar: currentUser.avatar,
-      },
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-
-    setComments((prev) => [...prev, comment]);
     setCommentDraft("");
     setMentionState(null);
+
+    try {
+      const comment = await addTicketComment(ticketId, {
+        userId: currentUser.id,
+        comment: text,
+      });
+      setComments((prev) => [...prev, comment]);
+    } catch (error) {
+      notifyApiError(toast, error, "Failed to add comment");
+      return;
+    }
+
     logTicketActivity({
       orgId: organization.id,
       action: "commented",
@@ -196,8 +198,6 @@ export default function TicketCommentsSection({
       involvedUserIds: activityInvolvedUserIds,
       description: `commented on "${ticketTitle}"`,
     });
-    toast("Comment added");
-    // TODO: POST /tickets/:id/comments { comment: text }
   }
 
   function startEditComment(comment: TicketComment) {
@@ -212,9 +212,20 @@ export default function TicketCommentsSection({
     setMentionState(null);
   }
 
-  function saveEditComment(commentId: number) {
+  async function saveEditComment(commentId: number) {
     const text = editCommentDraft.trim();
     if (!text) return;
+
+    setEditingCommentId(null);
+    setEditCommentDraft("");
+    setMentionState(null);
+
+    try {
+      await updateTicketComment(commentId, text);
+    } catch (error) {
+      notifyApiError(toast, error, "Failed to update comment");
+      return;
+    }
 
     setComments((prev) =>
       prev.map((c) =>
@@ -223,9 +234,6 @@ export default function TicketCommentsSection({
           : c,
       ),
     );
-    setEditingCommentId(null);
-    setEditCommentDraft("");
-    setMentionState(null);
     logTicketActivity({
       orgId: organization.id,
       action: "comment_edited",
@@ -235,15 +243,21 @@ export default function TicketCommentsSection({
       involvedUserIds: activityInvolvedUserIds,
       description: `edited a comment on "${ticketTitle}"`,
     });
-    toast("Comment updated");
-    // TODO: PATCH /tickets/:id/comments/:commentId { comment: text }
   }
 
-  function handleDeleteComment() {
+  async function handleDeleteComment() {
     if (!commentToDelete) return;
-
-    setComments((prev) => prev.filter((c) => c.id !== commentToDelete.id));
+    const target = commentToDelete;
     setCommentToDelete(null);
+
+    try {
+      await removeTicketComment(target.id);
+    } catch (error) {
+      notifyApiError(toast, error, "Failed to remove comment");
+      return;
+    }
+
+    setComments((prev) => prev.filter((c) => c.id !== target.id));
     logTicketActivity({
       orgId: organization.id,
       action: "comment_removed",
@@ -253,8 +267,6 @@ export default function TicketCommentsSection({
       involvedUserIds: activityInvolvedUserIds,
       description: `removed a comment on "${ticketTitle}"`,
     });
-    toast("Comment removed", "error");
-    // TODO: DELETE /tickets/:id/comments/:commentId
   }
 
   return (

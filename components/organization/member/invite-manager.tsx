@@ -13,6 +13,8 @@ import { PERMISSIONS } from "@/lib/data/permissions";
 interface InviteManagerProps {
   title: string;
   subtitle: string;
+  /** Renders below the title/subtitle — e.g. an inline success/error alert. */
+  banner?: React.ReactNode;
   invites: MemberInviteDetail[];
   roles: RoleDetail[];
   capacity: number;
@@ -25,6 +27,7 @@ interface InviteManagerProps {
 export default function InviteManager({
   title,
   subtitle,
+  banner,
   invites,
   roles,
   capacity,
@@ -56,6 +59,8 @@ export default function InviteManager({
           capacity={capacity}
           unitLabel="invite"
         />
+
+        {banner}
 
         <EmailChipInput
           onAdd={onAdd}

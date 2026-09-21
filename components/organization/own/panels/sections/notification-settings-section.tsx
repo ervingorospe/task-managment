@@ -6,8 +6,13 @@ import Card from "@/components/ui/card";
 import { Button } from "@/components/ui/buttons/button";
 import Checkbox from "@/components/ui/form/checkbox";
 import { useToast } from "@/providers/toast-provider";
+import { InlineAlert } from "@/components/ui/inline-alert";
+import { useInlineAlert } from "@/hooks/use-inline-alert";
+import { notifyApiError } from "@/lib/helper/api-error-toast";
+import { updateOrganizationSettings } from "@/lib/api/organizations";
 
 interface NotificationSettingsSectionProps {
+  orgId: number;
   initialValue?: boolean;
 }
 
@@ -16,27 +21,42 @@ interface NotificationSettingsValues {
 }
 
 export default function NotificationSettingsSection({
+  orgId,
   initialValue = true,
 }: NotificationSettingsSectionProps) {
   const toast = useToast();
+  const { alert, showAlert, dismissAlert } = useInlineAlert();
   const { control, handleSubmit } = useForm<NotificationSettingsValues>({
     defaultValues: {
       receiveEmails: initialValue,
     },
   });
 
-  function handleUpdate(values: NotificationSettingsValues) {
-    // TODO: PATCH /organizations/:id
-    // { receiveEmailNotifications: values.receiveEmails }
-
-    console.log("PATCH notification settings", values);
-    toast("Notification settings updated");
+  async function handleUpdate(values: NotificationSettingsValues) {
+    try {
+      await updateOrganizationSettings(orgId, {
+        sendEmailNotif: values.receiveEmails,
+      });
+    } catch (error) {
+      notifyApiError(toast, error, "Failed to update notification settings");
+      return;
+    }
+    showAlert("Notification settings updated");
   }
 
   return (
     <Card
       title="Notifications"
       subtitle="Choose how this organization is notified."
+      banner={
+        alert && (
+          <InlineAlert
+            message={alert.message}
+            variant={alert.variant}
+            onDismiss={dismissAlert}
+          />
+        )
+      }
     >
       <form
         onSubmit={handleSubmit(handleUpdate)}

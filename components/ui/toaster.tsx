@@ -30,7 +30,7 @@ export function Toaster() {
   if (toasts.length === 0) return null;
 
   return (
-    <div className="pointer-events-none fixed bottom-4 right-4 z-50 flex w-80 flex-col gap-2">
+    <div className="pointer-events-none fixed inset-x-0 top-4 z-50 flex flex-col items-center gap-2">
       {toasts.map((toast) => {
         const { icon: Icon, className, iconClassName } =
           variantConfig[toast.variant];
@@ -39,7 +39,7 @@ export function Toaster() {
           <div
             key={toast.id}
             role="status"
-            className={`pointer-events-auto flex items-start gap-2 rounded border px-3.5 py-3 text-sm shadow-md ${className}`}
+            className={`pointer-events-auto flex w-80 items-start gap-2 rounded border px-3.5 py-3 text-sm shadow-md ${className}`}
           >
             <Icon size={16} className={`mt-0.5 shrink-0 ${iconClassName}`} />
             <span className="flex-1">{toast.message}</span>

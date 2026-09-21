@@ -9,7 +9,12 @@ import { resolveRules } from "@/lib/helper/resolve-rules";
 import { Can } from "@/components/auth/can";
 import { PERMISSIONS } from "@/lib/data/permissions";
 import { useToast } from "@/providers/toast-provider";
+import { InlineAlert } from "@/components/ui/inline-alert";
+import { useInlineAlert } from "@/hooks/use-inline-alert";
 import { useLogActivity } from "@/hooks/use-log-activity";
+import { useOrganizationDefaults } from "@/providers/organization-defaults.provider";
+import { createRole, updateRoleInfo, updateRoleRules, deleteRole } from "@/lib/api/roles";
+import { notifyApiError } from "@/lib/helper/api-error-toast";
 
 const ConfirmDialog = lazyNamed(
   () => import("@/components/ui/confirm-dialog"),
@@ -32,7 +37,9 @@ export default function RolesSection({
   orgId,
 }: RolesSectionProps) {
   const toast = useToast();
+  const { alert, showAlert, dismissAlert } = useInlineAlert();
   const logRoleActivity = useLogActivity("role");
+  const { permissionOptions } = useOrganizationDefaults();
   const [roles, setRoles] = useState<RoleDetail[]>(initialRoles);
   const [deletingRole, setDeletingRole] = useState<RoleDetail | null>(null);
 
@@ -45,11 +52,12 @@ export default function RolesSection({
       return `A role named "${values.roleName}" already exists`;
     }
 
+    const tempId = Date.now();
     const newRole: RoleDetail = {
-      id: Date.now(),
+      id: tempId,
       roleName: values.roleName,
       roleDesc: values.roleDesc ?? "",
-      rules: resolveRules(values.rules),
+      rules: resolveRules(values.rules, permissionOptions),
       isDefault: false,
       orgId: Number(orgId),
       isDeleted: false,
@@ -57,15 +65,28 @@ export default function RolesSection({
     };
 
     setRoles((prev) => [...prev, newRole]);
-    logRoleActivity({
-      orgId: Number(orgId),
-      action: "created",
-      entityId: newRole.id,
-      entityLabel: newRole.roleName,
-      description: `created role "${newRole.roleName}"`,
-    });
-    toast(`Role "${newRole.roleName}" added`);
-    // TODO: POST /organizations/:orgId/roles in the background.
+
+    createRole(Number(orgId), {
+      roleName: values.roleName,
+      roleDesc: values.roleDesc,
+      ruleIds: values.rules,
+    })
+      .then((created) => {
+        setRoles((prev) => prev.map((r) => (r.id === tempId ? created : r)));
+        logRoleActivity({
+          orgId: Number(orgId),
+          action: "created",
+          entityId: created.id,
+          entityLabel: created.roleName,
+          description: `created role "${newRole.roleName}"`,
+        });
+        showAlert(`Role "${newRole.roleName}" added`);
+      })
+      .catch((error) => {
+        setRoles((prev) => prev.filter((r) => r.id !== tempId));
+        notifyApiError(toast, error, `Failed to create role "${values.roleName}"`);
+      });
+
     return undefined;
   }
 
@@ -80,6 +101,8 @@ export default function RolesSection({
       return `A role named "${values.roleName}" already exists`;
     }
 
+    const previous = roles.find((r) => r.id === id);
+
     setRoles((prev) =>
       prev.map((r) =>
         r.id === id
@@ -87,36 +110,57 @@ export default function RolesSection({
               ...r,
               roleName: values.roleName,
               roleDesc: values.roleDesc ?? "",
-              rules: resolveRules(values.rules),
+              rules: resolveRules(values.rules, permissionOptions),
             }
           : r,
       ),
     );
-    logRoleActivity({
-      orgId: Number(orgId),
-      action: "updated",
-      entityId: id,
-      entityLabel: values.roleName,
-      description: `updated role "${values.roleName}"`,
-    });
-    toast(`Role "${values.roleName}" updated`);
-    // TODO: PATCH /organizations/:orgId/roles/:id in the background.
+
+    Promise.all([
+      updateRoleInfo(id, { roleName: values.roleName, roleDesc: values.roleDesc }),
+      updateRoleRules(id, values.rules),
+    ])
+      .then(() => {
+        logRoleActivity({
+          orgId: Number(orgId),
+          action: "updated",
+          entityId: id,
+          entityLabel: values.roleName,
+          description: `updated role "${values.roleName}"`,
+        });
+        showAlert(`Role "${values.roleName}" updated`);
+      })
+      .catch((error) => {
+        if (previous) {
+          setRoles((prev) => prev.map((r) => (r.id === id ? previous : r)));
+        }
+        notifyApiError(toast, error, `Failed to update role "${values.roleName}"`);
+      });
+
     return undefined;
   }
 
   function handleConfirmDelete() {
     if (!deletingRole) return;
-    setRoles((prev) => prev.filter((r) => r.id !== deletingRole.id));
+    const removed = deletingRole;
+    setRoles((prev) => prev.filter((r) => r.id !== removed.id));
     setDeletingRole(null);
-    logRoleActivity({
-      orgId: Number(orgId),
-      action: "removed",
-      entityId: deletingRole.id,
-      entityLabel: deletingRole.roleName,
-      description: `deleted role "${deletingRole.roleName}"`,
-    });
-    toast(`Role "${deletingRole.roleName}" deleted`, "error");
-    // TODO: DELETE /organizations/:orgId/roles/:id
+
+    deleteRole(removed.id)
+      .then(() => {
+        logRoleActivity({
+          orgId: Number(orgId),
+          action: "removed",
+          entityId: removed.id,
+          entityLabel: removed.roleName,
+          description: `deleted role "${removed.roleName}"`,
+        });
+        showAlert(`Role "${removed.roleName}" deleted`, "error");
+      })
+      .catch((error) => {
+        setRoles((prev) => [...prev, removed]);
+        notifyApiError(toast, error, `Failed to delete role "${removed.roleName}"`);
+      });
   }
 
   return (
@@ -124,6 +168,15 @@ export default function RolesSection({
       <RoleManager
         title="Roles"
         subtitle="Manage the roles and permissions available in this organization."
+        banner={
+          alert && (
+            <InlineAlert
+              message={alert.message}
+              variant={alert.variant}
+              onDismiss={dismissAlert}
+            />
+          )
+        }
         roles={roles}
         capacity={capacity}
         addRole={addRole}

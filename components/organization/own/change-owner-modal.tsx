@@ -6,19 +6,23 @@ import { AlertTriangle } from "lucide-react";
 import { Modal } from "@/components/ui/modal";
 import { Button } from "@/components/ui/buttons/button";
 import { useToast } from "@/providers/toast-provider";
+import { notifyApiError } from "@/lib/helper/api-error-toast";
 import {
   changeOwnerSchema,
   type ChangeOwnerValues,
 } from "@/lib/schemas/organization.schema";
+import { requestOwnershipTransfer } from "@/lib/api/organizations";
 
 interface ChangeOwnerModalProps {
   open: boolean;
+  orgId: number;
   onClose: () => void;
   onSent: (email: string) => void;
 }
 
 export function ChangeOwnerModal({
   open,
+  orgId,
   onClose,
   onSent,
 }: ChangeOwnerModalProps) {
@@ -38,11 +42,14 @@ export function ChangeOwnerModal({
     onClose();
   }
 
-  function submit(values: ChangeOwnerValues) {
-    // TODO: POST /organizations/:id/ownership-transfer { email: values.email }
-    console.log("Send ownership transfer invite to", values.email);
+  async function submit(values: ChangeOwnerValues) {
+    try {
+      await requestOwnershipTransfer(orgId, values.email);
+    } catch (error) {
+      notifyApiError(toast, error, "Failed to send ownership transfer invite");
+      return;
+    }
     onSent(values.email);
-    toast(`Ownership transfer invite sent to ${values.email}`);
     reset();
     onClose();
   }

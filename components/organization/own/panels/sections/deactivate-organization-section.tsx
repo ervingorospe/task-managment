@@ -1,9 +1,19 @@
 "use client";
 
 import { useState } from "react";
-import { DangerZoneCard, DangerZoneRow } from "@/components/ui/danger-zone-card";
+import { useRouter } from "next/navigation";
+import {
+  DangerZoneCard,
+  DangerZoneRow,
+} from "@/components/ui/danger-zone-card";
 import { lazyNamed } from "@/lib/helper/lazy-named";
 import { useToast } from "@/providers/toast-provider";
+import { notifyApiError } from "@/lib/helper/api-error-toast";
+import { useAuth } from "@/providers/auth-provider";
+import {
+  updateOrganizationActiveState,
+  deleteOrganization,
+} from "@/lib/api/organizations";
 
 const ConfirmDialog = lazyNamed(
   () => import("@/components/ui/confirm-dialog"),
@@ -11,6 +21,7 @@ const ConfirmDialog = lazyNamed(
 );
 
 interface DeactivateOrganizationSectionProps {
+  orgId: number;
   organizationName: string;
   initialIsActive?: boolean;
 }
@@ -18,25 +29,53 @@ interface DeactivateOrganizationSectionProps {
 type PendingAction = "deactivate" | "activate" | "delete" | null;
 
 export default function DeactivateOrganizationSection({
+  orgId,
   organizationName,
   initialIsActive = true,
 }: DeactivateOrganizationSectionProps) {
   const toast = useToast();
+  const router = useRouter();
+  const { removeMembership, refreshCurrentUser } = useAuth();
   const [isActive, setIsActive] = useState(initialIsActive);
   const [pendingAction, setPendingAction] = useState<PendingAction>(null);
 
-  function handleConfirm() {
+  async function handleConfirm() {
     if (pendingAction === "deactivate") {
+      try {
+        await updateOrganizationActiveState(orgId, false);
+      } catch (error) {
+        notifyApiError(toast, error, "Failed to deactivate organization");
+        setPendingAction(null);
+        return;
+      }
       setIsActive(false);
-      toast(`"${organizationName}" deactivated`, "error");
-      // TODO: PATCH /organizations/:id { isActive: false }
+      // DashboardLayout gates /dashboard, /reports, /activity, etc. on
+      // activeOrganization.settings.isActive from the global auth context
+      // — without this, that context still holds the pre-deactivation
+      // value, so those pages keep rendering as if the org were active
+      // even though it's now disabled server-side.
+      await refreshCurrentUser();
     } else if (pendingAction === "activate") {
+      try {
+        await updateOrganizationActiveState(orgId, true);
+      } catch (error) {
+        notifyApiError(toast, error, "Failed to activate organization");
+        setPendingAction(null);
+        return;
+      }
       setIsActive(true);
       toast(`"${organizationName}" activated`);
-      // TODO: PATCH /organizations/:id { isActive: true }
+      await refreshCurrentUser();
     } else if (pendingAction === "delete") {
-      toast(`"${organizationName}" deleted`, "error");
-      // TODO: DELETE /organizations/:id — soft delete server-side.
+      try {
+        await deleteOrganization(orgId);
+      } catch (error) {
+        notifyApiError(toast, error, "Failed to delete organization");
+        setPendingAction(null);
+        return;
+      }
+      removeMembership(orgId);
+      router.push("/dashboard/my-organizations");
     }
     setPendingAction(null);
   }

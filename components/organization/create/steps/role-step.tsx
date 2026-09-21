@@ -9,7 +9,8 @@ import { RoleDetail } from "@/lib/types/organization/role-detail.type";
 import { resolveRules } from "@/lib/helper/resolve-rules";
 
 export default function RolesStep() {
-  const { roles: defaultRoles, capacity } = useOrganizationDefaults();
+  const { roles: defaultRoles, capacity, permissionOptions } =
+    useOrganizationDefaults();
   const { watch, setValue } = useStepForm(rolesSchema, {
     roles: defaultRoles,
   });
@@ -32,7 +33,7 @@ export default function RolesStep() {
         id: Date.now(),
         roleName: roleName,
         roleDesc: values.roleDesc?.trim() ?? "",
-        rules: resolveRules(values.rules),
+        rules: resolveRules(values.rules, permissionOptions),
         isDefault: false,
         isLocked: false,
         isDeleted: false,
@@ -46,7 +47,7 @@ export default function RolesStep() {
 
       return undefined;
     },
-    [roles, setValue],
+    [roles, setValue, permissionOptions],
   );
 
   const updateRole = useCallback(
@@ -71,7 +72,7 @@ export default function RolesStep() {
                 ...role,
                 roleName: values.roleName,
                 roleDesc: values.roleDesc ?? "",
-                rules: resolveRules(values.rules),
+                rules: resolveRules(values.rules, permissionOptions),
               }
             : role,
         ),
@@ -80,7 +81,7 @@ export default function RolesStep() {
 
       return undefined;
     },
-    [roles, setValue],
+    [roles, setValue, permissionOptions],
   );
 
   // No confirmation here, on purpose — nothing exists yet during setup to

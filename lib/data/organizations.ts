@@ -1,42 +1,13 @@
-import { RoleDetail } from "../types/organization/role-detail.type";
-import { RuleCategory } from "../types/rule/rule-category.type";
-import { TagDetail } from "../types/organization/tag-detail.type";
-import { mockDefaultRoles } from "./default-roles";
-import { rules } from "./default-rules";
-import { mockDefaultTags } from "./default-tags";
-import { rulesCategories } from "./rules-category";
-import { OrgCapacity } from "../types/organization/organization-capacity.type";
-import { DEFAULT_ORG_CAPACITY } from "./default-capacity";
+// Thin pass-through to the real backend — no mock data. The org-creation
+// wizard and the "my organizations" pages read everything here.
 
-export interface OwnedOrganization {
-  id: string;
-  name: string;
-  logo?: string;
-  slug: string;
-  organizationDesc?: "A small studio building tools for independent creators.";
-}
-
-const mockOrganizations: OwnedOrganization[] = [
-  {
-    id: "acme-studio",
-    name: "Acme Studio",
-    slug: "acme-studio",
-    organizationDesc: "A small studio building tools for independent creators.",
-  },
-  {
-    id: "acme-studio2",
-    name: "Acme Studio2",
-    slug: "acme-studio2",
-    organizationDesc: "A small studio building tools for independent creators.",
-  },
-];
-
-export async function getOwnedOrganizations(): Promise<OwnedOrganization[]> {
-  // TODO: replace with a real fetch to the Organization service, e.g.:
-  // const res = await fetch(`${process.env.API_URL}/organizations/owned`, { headers: authHeaders() });
-  // return res.json();
-  return mockOrganizations;
-}
+import { api } from "@/lib/api/client";
+import { adaptRole, adaptTag } from "@/lib/api/adapters";
+import type { RawRole, RawRuleCategory, RawTag } from "@/lib/api/raw-types";
+import type { RoleDetail } from "../types/organization/role-detail.type";
+import type { RuleCategory } from "../types/rule/rule-category.type";
+import type { TagDetail } from "../types/organization/tag-detail.type";
+import type { OrgCapacity } from "../types/organization/organization-capacity.type";
 
 export interface PermissionOption {
   id: number;
@@ -46,28 +17,33 @@ export interface PermissionOption {
   categoryId: number;
 }
 
-// functions get be use transfer to lib/api/
+async function fetchDefaultCategories(): Promise<RawRuleCategory[]> {
+  return api.get<RawRuleCategory[]>("/organizations/defaults/permissions");
+}
+
 export async function getDefaultRoles(): Promise<RoleDetail[]> {
-  // TODO: GET /organizations/defaults/roles
-  return mockDefaultRoles;
+  const roles = await api.get<RawRole[]>("/organizations/defaults/roles");
+  return roles.map(adaptRole);
 }
 
 export async function getPermissionOptions(): Promise<PermissionOption[]> {
-  // TODO: GET /organizations/defaults/permissions
-  return rules;
+  const categories = await fetchDefaultCategories();
+  return categories.flatMap((category) => category.rules);
 }
 
 export async function getDefaultTags(): Promise<TagDetail[]> {
-  // TODO: GET /organizations/defaults/tags
-  return mockDefaultTags;
+  const tags = await api.get<RawTag[]>("/organizations/defaults/tags");
+  return tags.map(adaptTag);
 }
 
 export async function getRuleCategories(): Promise<RuleCategory[]> {
-  // TODO: GET /organizations/defaults/tags
-  return rulesCategories;
+  const categories = await fetchDefaultCategories();
+  return categories.map(({ id, name }) => ({ id, name }));
 }
 
 export async function getOrgCapacity(): Promise<OrgCapacity> {
-  // TODO: GET /organizations/defaults/tags
-  return DEFAULT_ORG_CAPACITY;
+  // The backend assigns capacity defaults itself when an organization is
+  // created (see OrganizationCapacity in prisma/schema.prisma) — the
+  // wizard just needs something to display before that happens.
+  return { members: 20, tags: 20, roles: 10, tickets: 1000, projects: 10 };
 }

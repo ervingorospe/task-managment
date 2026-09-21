@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type Dispatch, type SetStateAction } from "react";
 import PendingInviteList from "@/components/organization/member/pending-invite-list";
 import Card from "@/components/ui/card";
 import { Pagination } from "@/components/ui/pagination";
@@ -10,7 +10,11 @@ import { RoleDetail } from "@/lib/types/organization/role-detail.type";
 import { PERMISSIONS } from "@/lib/data/permissions";
 import { Can } from "@/components/auth/can";
 import { useToast } from "@/providers/toast-provider";
+import { InlineAlert } from "@/components/ui/inline-alert";
+import { useInlineAlert } from "@/hooks/use-inline-alert";
+import { notifyApiError } from "@/lib/helper/api-error-toast";
 import { useLogActivity } from "@/hooks/use-log-activity";
+import { resendInvite, removeInvite } from "@/lib/api/members";
 
 const ConfirmDialog = lazyNamed(
   () => import("@/components/ui/confirm-dialog"),
@@ -21,20 +25,24 @@ const RESEND_COOLDOWN_SECONDS = 300;
 
 interface InvitePeopleSectionProps {
   orgId: string | number;
-  invites: MemberInviteDetail[] | undefined;
+  invites: MemberInviteDetail[];
   roles: RoleDetail[];
+  /** The parent (OrganizationMembers) owns this list — shared with the
+   * sibling MemberInvitesSection, which appends to it on a successful
+   * send — so removal here mutates it directly rather than keeping a
+   * separate local copy that could drift out of sync. */
+  onInvitesChange: Dispatch<SetStateAction<MemberInviteDetail[]>>;
 }
 
 export default function MemberPendingInvites({
   orgId,
   invites,
   roles,
+  onInvitesChange,
 }: InvitePeopleSectionProps) {
   const toast = useToast();
+  const { alert, showAlert, dismissAlert } = useInlineAlert();
   const logMemberActivity = useLogActivity("member");
-  const [pendingInvites, setPendingInvites] = useState<MemberInviteDetail[]>(
-    invites ?? [],
-  );
   const [resendCooldowns, setResendCooldowns] = useState<
     Record<string, number>
   >({});
@@ -43,15 +51,11 @@ export default function MemberPendingInvites({
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(15);
 
-  const totalPages = Math.max(Math.ceil(pendingInvites.length / pageSize), 1);
+  const totalPages = Math.max(Math.ceil(invites.length / pageSize), 1);
   const currentPage = Math.min(page, totalPages);
   const paginatedInvites = useMemo(
-    () =>
-      pendingInvites.slice(
-        (currentPage - 1) * pageSize,
-        currentPage * pageSize,
-      ),
-    [pendingInvites, currentPage, pageSize],
+    () => invites.slice((currentPage - 1) * pageSize, currentPage * pageSize),
+    [invites, currentPage, pageSize],
   );
 
   function handlePageSizeChange(size: number) {
@@ -80,10 +84,14 @@ export default function MemberPendingInvites({
   }, []);
 
   function handleRemoveInvite(id: number) {
-    const invite = pendingInvites.find((i) => i.id === id);
-    setPendingInvites((prev) => prev.filter((invite) => invite.id !== id));
-    // TODO: await DELETE /organizations/:orgId/invites/:id
-    console.log("Remove invite:", id);
+    const invite = invites.find((i) => i.id === id);
+    onInvitesChange((prev) => prev.filter((i) => i.id !== id));
+
+    removeInvite(id).catch((error) => {
+      if (invite) onInvitesChange((prev) => [...prev, invite]);
+      notifyApiError(toast, error, "Failed to remove invitation");
+    });
+
     if (invite) {
       logMemberActivity({
         orgId: Number(orgId),
@@ -93,7 +101,7 @@ export default function MemberPendingInvites({
         description: `removed the invitation sent to ${invite.email}`,
       });
     }
-    toast("Invitation removed", "error");
+    showAlert("Invitation removed", "error");
   }
 
   function handleConfirmRemove() {
@@ -106,15 +114,19 @@ export default function MemberPendingInvites({
     const cooldown = resendCooldowns[id];
     if (cooldown) return;
 
-    // TODO: await POST /organizations/:orgId/invites/:id/resend
-    console.log("Resend invite:", id);
+    try {
+      await resendInvite(id);
+    } catch (error) {
+      notifyApiError(toast, error, "Failed to resend invitation — try again in a moment");
+      return;
+    }
 
     setResendCooldowns((current) => ({
       ...current,
       [id]: RESEND_COOLDOWN_SECONDS,
     }));
 
-    const invite = pendingInvites.find((i) => i.id === id);
+    const invite = invites.find((i) => i.id === id);
     if (invite) {
       logMemberActivity({
         orgId: Number(orgId),
@@ -124,7 +136,7 @@ export default function MemberPendingInvites({
         description: `resent the invitation to ${invite.email}`,
       });
     }
-    toast("Invitation resent");
+    showAlert("Invitation resent");
   }
 
   return (
@@ -132,7 +144,16 @@ export default function MemberPendingInvites({
       <Card
         title="Pending Invitations"
         subtitle="Invitations that have not been accepted yet."
-        desc={`${pendingInvites.length} invited`}
+        desc={`${invites.length} invited`}
+        banner={
+          alert && (
+            <InlineAlert
+              message={alert.message}
+              variant={alert.variant}
+              onDismiss={dismissAlert}
+            />
+          )
+        }
       >
         <PendingInviteList
           invites={paginatedInvites}
@@ -142,11 +163,11 @@ export default function MemberPendingInvites({
           onResend={handleResendInvite}
         />
 
-        {pendingInvites.length > 0 && (
+        {invites.length > 0 && (
           <Pagination
             page={currentPage}
             totalPages={totalPages}
-            totalItems={pendingInvites.length}
+            totalItems={invites.length}
             pageSize={pageSize}
             onPageChange={setPage}
             onPageSizeChange={handlePageSizeChange}

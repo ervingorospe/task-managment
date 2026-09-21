@@ -1,3 +1,6 @@
+"use client";
+
+import { useState } from "react";
 import Image from "next/image";
 import clsx from "clsx";
 
@@ -16,7 +19,7 @@ const sizeMap: Record<
 interface AvatarProps {
   firstName: string;
   lastName?: string;
-  src?: string;
+  src?: string | null;
   size?: AvatarSize;
   className?: string;
 }
@@ -29,18 +32,24 @@ export default function Avatar({
   className,
 }: AvatarProps) {
   const { box, text, pixels } = sizeMap[size];
+  // Falls back to initials if there's no src, or if the image URL 404s /
+  // fails to load (e.g. a broken pravatar.cc link) — `src` alone being
+  // present doesn't guarantee it actually loads.
+  const [imageFailed, setImageFailed] = useState(false);
 
-  const initials = `${firstName[0] ?? ""}${lastName[0] ?? ""}`.toUpperCase();
+  const initials =
+    `${firstName[0] ?? ""}${lastName[0] ?? firstName[1] ?? ""}`.toUpperCase();
 
   const name = `${firstName} ${lastName}`.trim();
 
-  if (src) {
+  if (src && !imageFailed) {
     return (
       <Image
         src={src}
         alt={name}
         width={pixels}
         height={pixels}
+        onError={() => setImageFailed(true)}
         className={clsx(box, "rounded-full object-cover", className)}
       />
     );

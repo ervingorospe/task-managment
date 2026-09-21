@@ -16,8 +16,16 @@ import { getMemberName, getMemberEmail } from "@/lib/helper/member-name";
 import { PERMISSIONS } from "@/lib/data/permissions";
 import { Can } from "@/components/auth/can";
 import { useToast } from "@/providers/toast-provider";
+import { InlineAlert } from "@/components/ui/inline-alert";
+import { useInlineAlert } from "@/hooks/use-inline-alert";
 import { useMemberListQueryState } from "@/hooks/use-member-list-query-state";
 import { useLogActivity } from "@/hooks/use-log-activity";
+import {
+  updateMemberRole,
+  updateMemberActiveState,
+  removeMember,
+} from "@/lib/api/members";
+import { notifyApiError } from "@/lib/helper/api-error-toast";
 
 const ConfirmDialog = lazyNamed(
   () => import("@/components/ui/confirm-dialog"),
@@ -42,6 +50,7 @@ export default function MembersSection({
   roles,
 }: InvitePeopleSectionProps) {
   const toast = useToast();
+  const { alert, showAlert, dismissAlert } = useInlineAlert();
   const logMemberActivity = useLogActivity("member");
   const [members, setMembers] = useState<MemberDetail[]>(initialMembers);
   const [pendingAction, setPendingAction] = useState<PendingAction | null>(
@@ -117,57 +126,93 @@ export default function MembersSection({
           m.id === member.id ? { ...m, isActive: !m.isActive } : m,
         ),
       );
-      logMemberActivity({
-        orgId: Number(orgId),
-        action: willActivate ? "activated" : "deactivated",
-        entityId: member.id,
-        entityLabel: getMemberName(member),
-        involvedUserIds: [member.user?.id],
-        description: `${willActivate ? "activated" : "deactivated"} ${getMemberName(member)}`,
-      });
-      toast(
-        `${getMemberName(member)} ${member.isActive ? "deactivated" : "activated"}`,
-        member.isActive ? "error" : "success",
-      );
-      // TODO: PATCH /organizations/:orgId/members/:id { isActive }
+
+      updateMemberActiveState(member.id, willActivate)
+        .then(() => {
+          logMemberActivity({
+            orgId: Number(orgId),
+            action: willActivate ? "activated" : "deactivated",
+            entityId: member.id,
+            entityLabel: getMemberName(member),
+            involvedUserIds: [member.user?.id],
+            description: `${willActivate ? "activated" : "deactivated"} ${getMemberName(member)}`,
+          });
+          toast(
+            `${getMemberName(member)} ${willActivate ? "activated" : "deactivated"}`,
+            willActivate ? "success" : "error",
+          );
+        })
+        .catch((error) => {
+          setMembers((prev) =>
+            prev.map((m) => (m.id === member.id ? member : m)),
+          );
+          notifyApiError(
+            toast,
+            error,
+            `Failed to ${willActivate ? "activate" : "deactivate"} ${getMemberName(member)}`,
+          );
+        });
     } else {
       setMembers((prev) => prev.filter((m) => m.id !== member.id));
-      logMemberActivity({
-        orgId: Number(orgId),
-        action: "removed",
-        entityId: member.id,
-        entityLabel: getMemberName(member),
-        involvedUserIds: [member.user?.id],
-        description: `removed ${getMemberName(member)} from the organization`,
-      });
-      toast(`${getMemberName(member)} removed`, "error");
-      // TODO: DELETE /organizations/:orgId/members/:id
+
+      removeMember(member.id)
+        .then(() => {
+          logMemberActivity({
+            orgId: Number(orgId),
+            action: "removed",
+            entityId: member.id,
+            entityLabel: getMemberName(member),
+            involvedUserIds: [member.user?.id],
+            description: `removed ${getMemberName(member)} from the organization`,
+          });
+          showAlert(`${getMemberName(member)} removed`, "error");
+        })
+        .catch((error) => {
+          setMembers((prev) => [...prev, member]);
+          notifyApiError(toast, error, `Failed to remove ${getMemberName(member)}`);
+        });
     }
 
     setPendingAction(null);
-  }, [pendingAction, toast, orgId, logMemberActivity]);
+  }, [pendingAction, toast, showAlert, orgId, logMemberActivity]);
 
   const handleConfirmRoleChange = useCallback(
     (roleId: number) => {
       if (!activeRoleMember) return;
       const roleName =
         roles.find((r) => r.id === roleId)?.roleName ?? "a new role";
+      const previousRoleId = activeRoleMember.roleId;
       setMembers((prev) =>
         prev.map((m) =>
           m.id === activeRoleMember.id ? { ...m, roleId: roleId } : m,
         ),
       );
-      logMemberActivity({
-        orgId: Number(orgId),
-        action: "role_changed",
-        entityId: activeRoleMember.id,
-        entityLabel: getMemberName(activeRoleMember),
-        involvedUserIds: [activeRoleMember.user?.id],
-        description: `changed ${getMemberName(activeRoleMember)}'s role to ${roleName}`,
-      });
-      toast(`${getMemberName(activeRoleMember)}'s role updated`);
+
+      updateMemberRole(activeRoleMember.id, roleId)
+        .then(() => {
+          logMemberActivity({
+            orgId: Number(orgId),
+            action: "role_changed",
+            entityId: activeRoleMember.id,
+            entityLabel: getMemberName(activeRoleMember),
+            involvedUserIds: [activeRoleMember.user?.id],
+            description: `changed ${getMemberName(activeRoleMember)}'s role to ${roleName}`,
+          });
+        })
+        .catch((error) => {
+          setMembers((prev) =>
+            prev.map((m) =>
+              m.id === activeRoleMember.id ? { ...m, roleId: previousRoleId } : m,
+            ),
+          );
+          notifyApiError(
+            toast,
+            error,
+            `Failed to update ${getMemberName(activeRoleMember)}'s role`,
+          );
+        });
+
       setActiveRoleMember(null);
-      // TODO: PATCH /organizations/:orgId/members/:id { roleId: roleId }
     },
     [activeRoleMember, toast, orgId, roles, logMemberActivity],
   );
@@ -221,6 +266,15 @@ export default function MembersSection({
         title="Current Members"
         subtitle="People who currently belong to this organization."
         desc={`${members.length} members`}
+        banner={
+          alert && (
+            <InlineAlert
+              message={alert.message}
+              variant={alert.variant}
+              onDismiss={dismissAlert}
+            />
+          )
+        }
       >
         <MemberListToolbar
           search={searchInput}

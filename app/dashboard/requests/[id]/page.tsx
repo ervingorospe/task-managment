@@ -20,7 +20,11 @@ export default async function RequestPage({ params }: RequestPageProps) {
   const { request, organization } = result;
 
   return (
-    <MemberGuard organizationId={organization.id}>
+    <MemberGuard
+      organizationId={organization.id}
+      organizationName={organization.organizationName}
+      isActive={organization.settings.isActive}
+    >
       <RequestAccessGuard request={request}>
         <RequestDetailClient request={request} organization={organization} />
       </RequestAccessGuard>

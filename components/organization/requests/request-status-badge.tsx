@@ -4,12 +4,14 @@ const styles: Record<TicketRequestStatus, string> = {
   pending: "bg-warning-subtle text-warning",
   approved: "bg-accent-subtle text-accent-text",
   rejected: "bg-danger-subtle text-danger",
+  cancelled: "bg-canvas text-ink-faint",
 };
 
 const labels: Record<TicketRequestStatus, string> = {
   pending: "Pending",
   approved: "Approved",
   rejected: "Rejected",
+  cancelled: "Cancelled",
 };
 
 export function RequestStatusBadge({

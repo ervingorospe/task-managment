@@ -12,6 +12,8 @@ import { Can } from "@/components/auth/can";
 interface TagManagerProps {
   title?: string;
   subtitle?: string;
+  /** Renders below the title/subtitle — e.g. an inline success/error alert. */
+  banner?: React.ReactNode;
   tags: TagDetail[];
   capacity: number;
   addTag: (name: string) => string | undefined;
@@ -23,6 +25,7 @@ interface TagManagerProps {
 export default function TagManager({
   title = "Tags",
   subtitle = "Create and manage tags.",
+  banner,
   tags,
   capacity,
   addTag,
@@ -67,6 +70,8 @@ export default function TagManager({
           capacity={capacity}
           unitLabel="tags"
         />
+
+        {banner}
 
         <Can action={PERMISSIONS.TAG_ADD}>
           <div className="flex gap-2">

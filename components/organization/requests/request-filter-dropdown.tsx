@@ -26,6 +26,7 @@ const STATUS_OPTIONS: { value: TicketRequestStatus; label: string }[] = [
   { value: "pending", label: "Pending" },
   { value: "approved", label: "Approved" },
   { value: "rejected", label: "Rejected" },
+  { value: "cancelled", label: "Cancelled" },
 ];
 
 function countActive(filter: RequestFilterState): number {

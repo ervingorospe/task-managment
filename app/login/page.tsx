@@ -24,8 +24,8 @@ export default function LoginPage() {
     defaultValues: { email: "", password: "" },
   });
 
-  function onSubmit(values: LoginValues) {
-    const result = login(values.email, values.password);
+  async function onSubmit(values: LoginValues) {
+    const result = await login(values.email, values.password);
     if (!result.success) {
       setFormError(result.error ?? "Login failed.");
       return;
@@ -93,9 +93,9 @@ export default function LoginPage() {
         </p>
 
         <p className="mt-4 text-center text-xs text-ink-faint">
-          Test accounts (password: 123): jane@acmestudio.com (Superadmin) ·
-          marco@acmestudio.com (Admin) · priya@acmestudio.com (Member) ·
-          alex@clientco.com (Client)
+          Any email in the backend&apos;s users table works — password:{" "}
+          <span className="font-mono">123</span>. Try{" "}
+          <span className="font-mono">jane@acmestudio.com</span>.
         </p>
       </div>
     </div>

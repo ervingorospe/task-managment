@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { CheckCircle2, Clock, Inbox, Plus, XCircle } from "lucide-react";
 import { PERMISSIONS } from "@/lib/data/permissions";
 import { Button } from "@/components/ui/buttons/button";
@@ -10,6 +11,9 @@ import TicketFormModal from "@/components/ticket/ticket-form-modal";
 import { RequestFormModal } from "./request-form-modal";
 import { RequestList } from "./request-list";
 import { RejectRequestModal } from "./reject-request-modal";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { InlineAlert } from "@/components/ui/inline-alert";
+import { useInlineAlert } from "@/hooks/use-inline-alert";
 import {
   RequestFilterDropdown,
   emptyRequestFilter,
@@ -17,9 +21,15 @@ import {
 } from "./request-filter-dropdown";
 import { useAuth, usePermission } from "@/providers/auth-provider";
 import { useToast } from "@/providers/toast-provider";
+import { notifyApiError } from "@/lib/helper/api-error-toast";
 import { useLogActivity } from "@/hooks/use-log-activity";
-import { formatReferenceId } from "@/lib/helper/reference-id";
 import { useRequestListQueryState } from "@/hooks/use-request-list-query-state";
+import {
+  createTicketRequest,
+  rejectTicketRequest,
+  approveTicketRequest,
+  cancelTicketRequest,
+} from "@/lib/api/ticket-requests";
 import type { OrganizationDetail } from "@/lib/types/organization/organization-detail.type";
 import type { TicketRequest } from "@/lib/types/ticket/ticket-request.type";
 import type { TicketDetail } from "@/lib/types/ticket/ticket-detail.type";
@@ -33,8 +43,10 @@ interface RequestsPageClientProps {
 export default function RequestsPageClient({
   organization,
 }: RequestsPageClientProps) {
+  const router = useRouter();
   const { currentUser, activeMembership } = useAuth();
   const toast = useToast();
+  const { alert, showAlert, dismissAlert } = useInlineAlert();
   const logRequestActivity = useLogActivity("request");
   const logTicketActivity = useLogActivity("ticket");
   const canCreateTicket = usePermission(PERMISSIONS.TICKET_CREATE);
@@ -68,6 +80,9 @@ export default function RequestsPageClient({
     null,
   );
   const [rejectTarget, setRejectTarget] = useState<TicketRequest | null>(
+    null,
+  );
+  const [cancelTarget, setCancelTarget] = useState<TicketRequest | null>(
     null,
   );
 
@@ -196,27 +211,20 @@ export default function RequestsPageClient({
   );
 
   const handleCreateRequest = useCallback(
-    (values: TicketRequestFormValues) => {
+    async (values: TicketRequestFormValues) => {
       if (!currentMember) return;
 
-      const newRequest: TicketRequest = {
-        id: Date.now(),
-        referenceId: formatReferenceId("req", requests.length + 1),
-        orgId: organization.id,
-        title: values.title,
-        description: values.description || undefined,
-        attachments: values.attachments.map((file, i) => ({
-          id: Date.now() + i,
-          name: file.name,
-          url: URL.createObjectURL(file),
-          size: file.size,
-        })),
-        ticketId: null,
-        client: currentMember,
-        status: "pending",
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
+      let newRequest: TicketRequest;
+      try {
+        newRequest = await createTicketRequest(organization.id, {
+          clientId: currentMember.id,
+          title: values.title,
+          description: values.description || undefined,
+        });
+      } catch (error) {
+        notifyApiError(toast, error, "Failed to submit request");
+        return;
+      }
 
       setRequests((prev) => [newRequest, ...prev]);
       logRequestActivity({
@@ -228,19 +236,26 @@ export default function RequestsPageClient({
         involvedUserIds: [newRequest.client.user?.id],
         description: `submitted request "${newRequest.title}"`,
       });
-      toast(`Request "${newRequest.title}" submitted`);
-      // TODO: POST /organizations/:orgId/ticket-requests
+      showAlert(`Request "${newRequest.title}" submitted`);
     },
-    [currentMember, requests.length, organization.id, toast, logRequestActivity],
+    [currentMember, organization.id, toast, showAlert, logRequestActivity],
   );
 
   const handleReject = useCallback(
-    (remarks: string) => {
+    async (remarks: string) => {
       if (!rejectTarget) return;
+      const target = rejectTarget;
+
+      try {
+        await rejectTicketRequest(target.id, remarks);
+      } catch (error) {
+        notifyApiError(toast, error, "Failed to reject request");
+        return;
+      }
 
       setRequests((prev) =>
         prev.map((r) =>
-          r.id === rejectTarget.id
+          r.id === target.id
             ? {
                 ...r,
                 status: "rejected",
@@ -253,78 +268,83 @@ export default function RequestsPageClient({
       logRequestActivity({
         orgId: organization.id,
         action: "rejected",
-        entityId: rejectTarget.id,
-        entityLabel: rejectTarget.title,
-        referenceId: rejectTarget.referenceId,
-        involvedUserIds: [rejectTarget.client.user?.id],
-        description: `rejected request "${rejectTarget.title}": ${remarks}`,
+        entityId: target.id,
+        entityLabel: target.title,
+        referenceId: target.referenceId,
+        involvedUserIds: [target.client.user?.id],
+        description: `rejected request "${target.title}": ${remarks}`,
       });
-      toast(`Request "${rejectTarget.title}" rejected`, "error");
-      // TODO: PATCH /ticket-requests/:id { status: "rejected", remarks }
+      showAlert(`Request "${target.title}" rejected`, "error");
     },
-    [rejectTarget, toast, organization.id, logRequestActivity],
+    [rejectTarget, toast, showAlert, organization.id, logRequestActivity],
+  );
+
+  const handleCancel = useCallback(
+    async (target: TicketRequest) => {
+      try {
+        await cancelTicketRequest(target.id);
+      } catch (error) {
+        notifyApiError(toast, error, "Failed to cancel request");
+        return;
+      }
+
+      setRequests((prev) =>
+        prev.map((r) =>
+          r.id === target.id
+            ? { ...r, status: "cancelled", updatedAt: new Date().toISOString() }
+            : r,
+        ),
+      );
+      logRequestActivity({
+        orgId: organization.id,
+        action: "cancelled",
+        entityId: target.id,
+        entityLabel: target.title,
+        referenceId: target.referenceId,
+        involvedUserIds: [target.client.user?.id],
+        description: `cancelled request "${target.title}"`,
+      });
+      showAlert(`Request "${target.title}" cancelled`, "error");
+    },
+    [toast, organization.id, showAlert, logRequestActivity],
   );
 
   const handleApproveSubmit = useCallback(
-    (values: TicketFormValues) => {
+    async (values: TicketFormValues) => {
       if (!approveTarget) return;
+      const target = approveTarget;
 
       const targetTodoTag =
         organization.tags.find((t) => t.tagName === "To Do") ??
         organization.tags[0];
       if (!targetTodoTag) return;
 
-      const newAttachments = values.attachments.map((file, i) => ({
-        id: Date.now() + i,
-        name: file.name,
-        url: URL.createObjectURL(file),
-        size: file.size,
-      }));
+      let result: { request: TicketRequest; ticket: TicketDetail };
+      try {
+        result = await approveTicketRequest(target.id, {
+          tagId: targetTodoTag.id,
+          assigneeIds: values.assigneeIds,
+          dueDate: values.dueDate || undefined,
+        });
+      } catch (error) {
+        notifyApiError(toast, error, "Failed to approve request");
+        return;
+      }
 
-      const newTicket: TicketDetail = {
-        id: Date.now(),
-        referenceId: formatReferenceId("tckt", tickets.length + 1),
-        orgId: organization.id,
-        title: values.title,
-        description: values.description || undefined,
-        // Carries over whatever the client attached to the request, plus
-        // anything staff additionally attached while approving.
-        attachments: [...approveTarget.attachments, ...newAttachments],
-        tag: targetTodoTag,
-        client:
-          organization.members.find(
-            (m) => String(m.id) === values.clientId,
-          ) ?? approveTarget.client,
-        assignees: organization.members.filter((m) =>
-          values.assigneeIds.includes(m.id),
-        ),
-        dueDate: values.dueDate || null,
-        starred: false,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
+      const { request: updatedRequest, ticket: newTicket } = result;
 
       setTickets((prev) => [newTicket, ...prev]);
       setRequests((prev) =>
-        prev.map((r) =>
-          r.id === approveTarget.id
-            ? {
-                ...r,
-                status: "approved",
-                ticketId: newTicket.id,
-                updatedAt: new Date().toISOString(),
-              }
-            : r,
-        ),
+        prev.map((r) => (r.id === target.id ? updatedRequest : r)),
       );
       logRequestActivity({
         orgId: organization.id,
         action: "approved",
-        entityId: approveTarget.id,
-        entityLabel: approveTarget.title,
-        referenceId: approveTarget.referenceId,
-        involvedUserIds: [approveTarget.client.user?.id],
-        description: `approved request "${approveTarget.title}"`,
+        entityId: target.id,
+        entityLabel: target.title,
+        referenceId: target.referenceId,
+        involvedUserIds: [target.client.user?.id],
+        description: `approved request "${target.title}"`,
       });
       logTicketActivity({
         orgId: organization.id,
@@ -338,16 +358,14 @@ export default function RequestsPageClient({
         ],
         description: `created ticket "${newTicket.title}" from a request`,
       });
-      toast(`Request approved — ticket "${newTicket.title}" created`);
       setApproveTarget(null);
-      // TODO: POST /organizations/:orgId/tickets (from request), then
-      // PATCH /ticket-requests/:id { status: "approved", ticket_id }
+      router.push(`/dashboard/tickets/${newTicket.id}`);
     },
     [
       approveTarget,
       organization,
-      tickets.length,
       toast,
+      router,
       logRequestActivity,
       logTicketActivity,
     ],
@@ -355,6 +373,14 @@ export default function RequestsPageClient({
 
   return (
     <div>
+      {alert && (
+        <InlineAlert
+          message={alert.message}
+          variant={alert.variant}
+          onDismiss={dismissAlert}
+        />
+      )}
+
       <div className="flex items-start justify-between">
         <div>
           <h1 className="text-lg font-semibold text-ink">Requests</h1>
@@ -397,8 +423,10 @@ export default function RequestsPageClient({
             <RequestList
               requests={paginated}
               canManage={canCreateTicket}
+              canCancel={isClientRole}
               onApprove={setApproveTarget}
               onReject={setRejectTarget}
+              onCancel={setCancelTarget}
               emptyTitle={
                 noResultsFromQuery
                   ? "No matching requests"
@@ -456,6 +484,22 @@ export default function RequestsPageClient({
         request={rejectTarget}
         onClose={() => setRejectTarget(null)}
         onConfirm={handleReject}
+      />
+
+      <ConfirmDialog
+        open={cancelTarget !== null}
+        onClose={() => setCancelTarget(null)}
+        onConfirm={() => cancelTarget && handleCancel(cancelTarget)}
+        title="Cancel request"
+        description={
+          <>
+            Are you sure you want to cancel{" "}
+            <strong>{cancelTarget?.title}</strong>? This can&apos;t be
+            undone.
+          </>
+        }
+        confirmLabel="Cancel request"
+        cancelLabel="Keep request"
       />
     </div>
   );
