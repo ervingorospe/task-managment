@@ -71,6 +71,7 @@ export function Topbar() {
             <Avatar
               firstName={currentUser.firstName}
               lastName={currentUser.lastName}
+              src={currentUser.avatar}
             />
           }
         >

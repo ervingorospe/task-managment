@@ -13,12 +13,15 @@ import Avatar from "@/components/ui/avatar";
 import AvatarUpload from "./avatar-upload";
 import { useAuth } from "@/providers/auth-provider";
 import { useToast } from "@/providers/toast-provider";
+import { notifyApiError } from "@/lib/helper/api-error-toast";
+import { updateUser, uploadUserAvatar } from "@/lib/api/users";
 import { profileSchema, type ProfileValues } from "@/lib/schemas/user.schema";
 
 export default function ProfileInfoSection() {
   const { currentUser, updateProfile } = useAuth();
   const toast = useToast();
   const [isEditing, setIsEditing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   const {
     control,
@@ -51,7 +54,7 @@ export default function ProfileInfoSection() {
     setIsEditing(false);
   }
 
-  function onSave(values: ProfileValues) {
+  async function onSave(values: ProfileValues) {
     const changedFields = Object.keys(dirtyFields) as Array<
       keyof ProfileValues
     >;
@@ -61,15 +64,31 @@ export default function ProfileInfoSection() {
       return;
     }
 
+    setIsSaving(true);
+    let avatarUrl = currentUser!.avatar;
+    try {
+      if (values.avatar) {
+        avatarUrl = await uploadUserAvatar(currentUser!.id, values.avatar);
+      }
+      await updateUser(currentUser!.id, {
+        firstName: values.firstName,
+        lastName: values.lastName,
+        email: values.email,
+      });
+    } catch (error) {
+      notifyApiError(toast, error, "Failed to update profile");
+      setIsSaving(false);
+      return;
+    }
+
     updateProfile({
       firstName: values.firstName,
       lastName: values.lastName,
       email: values.email,
-      avatar: values.avatar
-        ? URL.createObjectURL(values.avatar)
-        : currentUser!.avatar,
+      avatar: avatarUrl,
     });
 
+    setIsSaving(false);
     setIsEditing(false);
     toast("Profile updated");
   }
@@ -81,13 +100,22 @@ export default function ProfileInfoSection() {
       headerActions={
         isEditing ? (
           <div className="flex items-center gap-2">
-            <Button type="button" variant="secondary" onClick={cancelEditing}>
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={cancelEditing}
+              disabled={isSaving}
+            >
               <X size={14} className="mr-1.5" />
               Cancel
             </Button>
-            <Button type="button" onClick={handleSubmit(onSave)}>
+            <Button
+              type="button"
+              onClick={handleSubmit(onSave)}
+              disabled={isSaving}
+            >
               <Check size={14} className="mr-1.5" />
-              Save
+              {isSaving ? "Saving…" : "Save"}
             </Button>
           </div>
         ) : (

@@ -20,6 +20,13 @@ const nextConfig = {
         protocol: "https",
         hostname: "i.pravatar.cc",
       },
+      // Ticket attachments and org logos (see ticketing-backend's
+      // S3Service) — wildcarded so it works for any bucket/region, not
+      // just whichever one this env happens to be configured with.
+      {
+        protocol: "https",
+        hostname: "*.s3.*.amazonaws.com",
+      },
     ],
   },
 };

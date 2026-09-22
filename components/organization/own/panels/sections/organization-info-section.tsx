@@ -17,6 +17,7 @@ import { lazyNamed } from "@/lib/helper/lazy-named";
 import { OrganizationDetail } from "@/lib/types/organization/organization-detail.type";
 import {
   updateOrganizationSettings,
+  uploadOrganizationLogo,
   cancelOwnershipTransfer,
 } from "@/lib/api/organizations";
 
@@ -40,6 +41,7 @@ export default function OrganizationInfoSection({
   const timezones = useMemo(getTimezoneList, []);
 
   const [logo, setLogo] = useState(organization.settings.logo);
+  const [isUploadingLogo, setIsUploadingLogo] = useState(false);
   const [isEditingTimezone, setIsEditingTimezone] = useState(false);
   const [ownerModalOpen, setOwnerModalOpen] = useState(false);
   const [cancelTransferModalOpen, setCancelTransferModalOpen] = useState(false);
@@ -73,22 +75,29 @@ export default function OrganizationInfoSection({
     };
   }, [logo]);
 
-  function handleLogoChange(e: ChangeEvent<HTMLInputElement>) {
+  async function handleLogoChange(e: ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
-
+    e.target.value = "";
     if (!file) return;
 
-    const url = URL.createObjectURL(file);
+    // Instant local preview while the real upload happens in the
+    // background — the effect above revokes this blob URL as soon as
+    // `logo` changes away from it (either to the real S3 url on success,
+    // or back to the previous logo on failure).
+    const previousLogo = logo;
+    setLogo(URL.createObjectURL(file));
 
-    setLogo((previous) => {
-      if (previous?.startsWith("blob:")) {
-        URL.revokeObjectURL(previous);
-      }
-
-      return url;
-    });
-
-    // TODO: upload the file and PATCH /organizations/:id { logo }
+    setIsUploadingLogo(true);
+    try {
+      const url = await uploadOrganizationLogo(organization.id, file);
+      await updateOrganizationSettings(organization.id, { logo: url });
+      setLogo(url);
+    } catch (error) {
+      setLogo(previousLogo);
+      notifyApiError(toast, error, "Failed to update logo");
+    } finally {
+      setIsUploadingLogo(false);
+    }
   }
 
   function handleTimezoneEdit() {
@@ -162,12 +171,19 @@ export default function OrganizationInfoSection({
           <div>
             <p className="text-sm font-medium text-ink">Logo</p>
 
-            <label className="mt-1 inline-block cursor-pointer rounded border border-line bg-surface px-3 py-1.5 text-xs font-medium text-ink hover:bg-canvas">
-              Change Logo
+            <label
+              className={`mt-1 inline-block rounded border border-line bg-surface px-3 py-1.5 text-xs font-medium text-ink ${
+                isUploadingLogo
+                  ? "cursor-not-allowed opacity-50"
+                  : "cursor-pointer hover:bg-canvas"
+              }`}
+            >
+              {isUploadingLogo ? "Uploading…" : "Change Logo"}
               <input
                 type="file"
                 accept="image/*"
                 onChange={handleLogoChange}
+                disabled={isUploadingLogo}
                 className="hidden"
               />
             </label>

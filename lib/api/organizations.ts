@@ -105,6 +105,19 @@ export async function updateOrganizationBasicInfo(
   await api.patch(`/organizations/${orgId}/basic-info`, patch);
 }
 
+export async function uploadOrganizationLogo(
+  orgId: number,
+  file: File,
+): Promise<string> {
+  const formData = new FormData();
+  formData.append("file", file);
+  const result = await api.postForm<{ url: string }>(
+    `/organizations/${orgId}/logo`,
+    formData,
+  );
+  return result.url;
+}
+
 export async function updateOrganizationSettings(
   orgId: number,
   patch: {
