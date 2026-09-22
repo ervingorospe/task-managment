@@ -5,7 +5,7 @@ import type { RawMemberInvite } from "./raw-types";
 
 export async function inviteMember(
   orgId: number,
-  payload: { email: string; roleId: number },
+  payload: { email: string; roleId: number; inviterName?: string },
 ): Promise<MemberInviteDetail> {
   const invite = await api.post<RawMemberInvite>(
     `/members/invite?orgId=${orgId}`,

@@ -10,6 +10,7 @@ import { InlineAlert } from "@/components/ui/inline-alert";
 import { useInlineAlert } from "@/hooks/use-inline-alert";
 import { shouldToastApiError } from "@/lib/helper/api-error-toast";
 import { useLogActivity } from "@/hooks/use-log-activity";
+import { useAuth } from "@/providers/auth-provider";
 import { inviteMember } from "@/lib/api/members";
 
 interface InvitePeopleSectionProps {
@@ -34,6 +35,7 @@ export default function MemberInvitesSection({
   // hits the backend until "Send Invite," at which point onSent() hands
   // the created invites to the parent for MemberPendingInvites to render.
   const toast = useToast();
+  const { currentUser } = useAuth();
   const { alert, showAlert, dismissAlert } = useInlineAlert();
   const logMemberActivity = useLogActivity("member");
   const atCapacity = currentTotalInvites >= capacity;
@@ -78,18 +80,27 @@ export default function MemberInvitesSection({
     if (invites.length === 0) return;
     setIsSending(true);
 
+    const inviterName = currentUser
+      ? `${currentUser.firstName} ${currentUser.lastName}`
+      : undefined;
     const results = await Promise.allSettled(
       invites.map((invite) =>
-        inviteMember(orgId, { email: invite.email, roleId: invite.roleId }),
+        inviteMember(orgId, {
+          email: invite.email,
+          roleId: invite.roleId,
+          inviterName,
+        }),
       ),
     );
 
     const sent: MemberInviteDetail[] = [];
     const failedEmails: string[] = [];
-    // Only the ones that failed for a real system reason (not a 409 —
-    // e.g. "this email already has a pending invitation", which is the
-    // usual cause here) get named in the toast below.
+    // Real system faults (5xx, network failure, etc.) toast — those are
+    // unexpected. A 409 means the request was fine but the email already
+    // has a pending invite; that's an expected, local-to-this-form
+    // outcome, so it gets the inline alert below instead.
     const systemFaultEmails: string[] = [];
+    const conflictEmails: string[] = [];
     results.forEach((result, i) => {
       if (result.status === "fulfilled") {
         sent.push(result.value);
@@ -97,6 +108,8 @@ export default function MemberInvitesSection({
         failedEmails.push(invites[i].email);
         if (shouldToastApiError(result.reason)) {
           systemFaultEmails.push(invites[i].email);
+        } else {
+          conflictEmails.push(invites[i].email);
         }
       }
     });
@@ -118,7 +131,24 @@ export default function MemberInvitesSection({
           description: `invited ${invite.email} to join the organization`,
         });
       }
-      showAlert(sent.length === 1 ? "1 invite sent" : `${sent.length} invites sent`);
+    }
+
+    // One alert, combining whatever actually happened — errors take the
+    // variant when there's a conflict, even alongside a partial success,
+    // since that's the part that needs the user's attention.
+    const alertParts: string[] = [];
+    if (sent.length > 0) {
+      alertParts.push(sent.length === 1 ? "1 invite sent" : `${sent.length} invites sent`);
+    }
+    if (conflictEmails.length > 0) {
+      alertParts.push(
+        conflictEmails.length === 1
+          ? `${conflictEmails[0]} already has a pending invitation.`
+          : `These emails already have a pending invitation: ${conflictEmails.join(", ")}.`,
+      );
+    }
+    if (alertParts.length > 0) {
+      showAlert(alertParts.join(" "), conflictEmails.length > 0 ? "error" : "success");
     }
 
     if (systemFaultEmails.length > 0) {
