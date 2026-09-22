@@ -36,7 +36,13 @@ export default function TicketOverviewCard({
 
         <div className="border-t border-line" />
 
-        <TicketAttachmentsSection ticketId={ticketId} attachments={attachments} />
+        <TicketAttachmentsSection
+          ticketId={ticketId}
+          attachments={attachments}
+          client={client}
+          assignees={assignees}
+          organization={organization}
+        />
 
         <div className="border-t border-line" />
 

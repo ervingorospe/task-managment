@@ -137,15 +137,26 @@ function Dropdown({
         ref={wrapperRef}
         className={`inline-block ${isWidthFull && "w-full"}`}
       >
-        <button
-          type="button"
+        {/* A plain div, not a <button> — the trigger is often itself a
+            <Button> (filter dropdowns), and nesting <button> inside
+            <button> is invalid HTML that breaks hydration. role="button"
+            plus the Enter/Space handler below keeps it keyboard-operable. */}
+        <div
+          role="button"
+          tabIndex={0}
           onClick={() => setOpen((v) => !v)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              setOpen((v) => !v);
+            }
+          }}
           aria-haspopup="menu"
           aria-expanded={open}
-          className="block w-full appearance-none rounded-full border-0 bg-transparent p-0 leading-none focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-text focus-visible:ring-offset-2"
+          className="block w-full rounded-full leading-none focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-text focus-visible:ring-offset-2"
         >
           {trigger}
-        </button>
+        </div>
       </div>
 
       {mounted &&

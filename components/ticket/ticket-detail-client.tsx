@@ -270,7 +270,7 @@ export default function TicketDetailClient({
             organization={organization}
           />
 
-          <TicketActivityCard ticketId={ticket.id} tag={tag} />
+          <TicketActivityCard ticketId={ticket.id} createdAt={ticket.createdAt} />
         </div>
       </div>
 

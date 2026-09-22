@@ -100,8 +100,10 @@ export default function RequestsPageClient({
   const searched = useMemo(() => {
     if (!search) return visibleRequests;
     const query = search.toLowerCase();
-    return visibleRequests.filter((r) =>
-      r.title.toLowerCase().includes(query),
+    return visibleRequests.filter(
+      (r) =>
+        r.title.toLowerCase().includes(query) ||
+        r.referenceId.toLowerCase().includes(query),
     );
   }, [visibleRequests, search]);
 
@@ -408,7 +410,7 @@ export default function RequestsPageClient({
         <DataTable
           search={searchInput}
           onSearchChange={setSearchInput}
-          searchPlaceholder="Search requests by title (3+ characters)"
+          searchPlaceholder="Search by title or reference ID (3+ characters)"
           filterAction={
             <RequestFilterDropdown value={filter} onChange={handleFilterChange} />
           }

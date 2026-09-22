@@ -20,9 +20,9 @@ import { MonthComparisonChart } from "@/components/organization/ticket-reports/m
 import { AssigneeBreakdownList } from "./assignee-breakdown-list";
 import { OverdueTicketList } from "./overdue-ticket-list";
 import { ReportsSkeleton } from "@/components/ui/skeletons";
-import { useAuth, usePermission } from "@/providers/auth-provider";
+import { useAuth } from "@/providers/auth-provider";
 import { useActiveOrganizationDetail } from "@/hooks/use-active-organization-detail";
-import { PERMISSIONS } from "@/lib/data/permissions";
+import { useOrgReportData } from "@/hooks/use-org-report-data";
 import {
   getAssigneeBreakdown,
   getStatusBreakdown,
@@ -30,41 +30,21 @@ import {
   type TrendSelection,
 } from "@/lib/helper/ticket-reports";
 import { getDueState, isDueThisWeek } from "@/lib/helper/ticket-status";
-import { isTicketIncluded } from "@/lib/helper/ticket-access";
 
 export default function ReportsClient() {
-  const { currentUser, activeOrganization } = useAuth();
-  const canViewAll = usePermission(PERMISSIONS.TICKET_VIEW_ALL);
+  const { activeOrganization } = useAuth();
   const organization = useActiveOrganizationDetail();
+  const {
+    tickets: visibleTickets,
+    requests: visibleRequests,
+    loading: reportDataLoading,
+  } = useOrgReportData();
 
   const [trendSelection, setTrendSelection] = useState<TrendSelection>({
     created: true,
     dueDate: false,
     tagIds: [],
   });
-
-  const currentMember = useMemo(
-    () => organization?.members.find((m) => m.user?.id === currentUser?.id),
-    [organization, currentUser?.id],
-  );
-
-  const visibleTickets = useMemo(() => {
-    if (!organization) return [];
-    return canViewAll
-      ? organization.tickets
-      : organization.tickets.filter((t) =>
-          isTicketIncluded(t, currentUser?.id),
-        );
-  }, [organization, canViewAll, currentUser?.id]);
-
-  const visibleRequests = useMemo(() => {
-    if (!organization) return [];
-    return canViewAll
-      ? organization.ticketRequests
-      : organization.ticketRequests.filter(
-          (r) => r.client.id === currentMember?.id,
-        );
-  }, [organization, canViewAll, currentMember?.id]);
 
   const overdueTickets = useMemo(
     () => visibleTickets.filter((t) => getDueState(t) === "overdue"),
@@ -163,7 +143,7 @@ export default function ReportsClient() {
     );
   }
 
-  if (!organization) return <ReportsSkeleton />;
+  if (!organization || reportDataLoading) return <ReportsSkeleton />;
 
   return (
     <div className="space-y-8">

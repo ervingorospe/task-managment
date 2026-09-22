@@ -1,11 +1,8 @@
 import { z } from "zod";
+import { localToday } from "@/lib/helper/ticket-status";
 
 const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
 const MAX_FILES = 5;
-
-function today(): string {
-  return new Date().toISOString().slice(0, 10);
-}
 
 export const ticketFormSchema = z.object({
   organizationId: z.string().min(1, "Select an organization"),
@@ -26,7 +23,7 @@ export const ticketFormSchema = z.object({
     .string()
     .optional()
     .or(z.literal(""))
-    .refine((date) => !date || date >= today(), {
+    .refine((date) => !date || date >= localToday(), {
       message: "Due date can't be in the past",
     }),
 

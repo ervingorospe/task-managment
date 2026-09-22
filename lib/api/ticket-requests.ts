@@ -60,3 +60,19 @@ export async function approveTicketRequest(
     ticket: adaptTicket(result.ticket),
   };
 }
+
+/** Every non-deleted request for the org, unpaginated — the ticket-request
+ * counterpart to fetchAllTickets(), used by Dashboard/Reports. */
+export async function fetchAllTicketRequests(
+  orgId: number,
+  involvesUserId?: number,
+): Promise<TicketRequest[]> {
+  const params = new URLSearchParams();
+  params.set("orgId", String(orgId));
+  if (involvesUserId) params.set("involvesUserId", String(involvesUserId));
+
+  const raw = await api.get<RawTicketRequest[]>(
+    `/ticket-requests/all?${params.toString()}`,
+  );
+  return raw.map(adaptTicketRequest);
+}

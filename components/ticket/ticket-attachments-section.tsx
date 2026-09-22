@@ -1,28 +1,49 @@
 "use client";
 
 import { useRef, useState, type ChangeEvent } from "react";
-import { Paperclip, Plus } from "lucide-react";
+import { Paperclip, Plus, X } from "lucide-react";
 
 import { useToast } from "@/providers/toast-provider";
 import { notifyApiError } from "@/lib/helper/api-error-toast";
+import { useLogActivity } from "@/hooks/use-log-activity";
 import { formatFileSize } from "@/lib/helper/ticket-status";
-import { uploadTicketAttachment } from "@/lib/api/tickets";
+import { uploadTicketAttachment, removeTicketAttachment } from "@/lib/api/tickets";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import type { TicketAttachment } from "@/lib/types/ticket/ticket-detail.type";
+import type { MemberDetail } from "@/lib/types/organization/member-detail.type";
+import type { OrganizationDetail } from "@/lib/types/organization/organization-detail.type";
 import { SectionHeading } from "./section-heading";
 
 interface TicketAttachmentsSectionProps {
   ticketId: number;
   attachments: TicketAttachment[];
+  client: MemberDetail | null;
+  assignees: MemberDetail[];
+  organization: OrganizationDetail;
 }
 
 export default function TicketAttachmentsSection({
   ticketId,
   attachments: initialAttachments,
+  client,
+  assignees,
+  organization,
 }: TicketAttachmentsSectionProps) {
   const toast = useToast();
+  const logTicketActivity = useLogActivity("ticket");
+  const ticketForActivity = organization.tickets.find((t) => t.id === ticketId);
+  const ticketTitle = ticketForActivity?.title ?? "this ticket";
+  const activityInvolvedUserIds = [
+    client?.user?.id,
+    ...assignees.map((a) => a.user?.id),
+  ];
+
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [attachments, setAttachments] = useState(initialAttachments);
   const [isUploading, setIsUploading] = useState(false);
+  const [attachmentToRemove, setAttachmentToRemove] =
+    useState<TicketAttachment | null>(null);
+  const [isRemoving, setIsRemoving] = useState(false);
 
   async function handleFileSelected(e: ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -33,10 +54,44 @@ export default function TicketAttachmentsSection({
     try {
       const attachment = await uploadTicketAttachment(ticketId, file);
       setAttachments((prev) => [...prev, attachment]);
+      logTicketActivity({
+        orgId: organization.id,
+        action: "attachment_added",
+        entityId: ticketId,
+        entityLabel: ticketTitle,
+        referenceId: ticketForActivity?.referenceId,
+        involvedUserIds: activityInvolvedUserIds,
+        description: `attached "${attachment.name}" to "${ticketTitle}"`,
+      });
     } catch (error) {
       notifyApiError(toast, error, "Failed to upload attachment");
     } finally {
       setIsUploading(false);
+    }
+  }
+
+  async function handleRemoveAttachment() {
+    if (!attachmentToRemove) return;
+    const target = attachmentToRemove;
+    setAttachmentToRemove(null);
+
+    setIsRemoving(true);
+    try {
+      await removeTicketAttachment(ticketId, target.id);
+      setAttachments((prev) => prev.filter((a) => a.id !== target.id));
+      logTicketActivity({
+        orgId: organization.id,
+        action: "attachment_removed",
+        entityId: ticketId,
+        entityLabel: ticketTitle,
+        referenceId: ticketForActivity?.referenceId,
+        involvedUserIds: activityInvolvedUserIds,
+        description: `removed "${target.name}" from "${ticketTitle}"`,
+      });
+    } catch (error) {
+      notifyApiError(toast, error, "Failed to remove attachment");
+    } finally {
+      setIsRemoving(false);
     }
   }
 
@@ -85,10 +140,32 @@ export default function TicketAttachmentsSection({
               <span className="shrink-0 text-xs text-ink-faint">
                 {formatFileSize(file.size)}
               </span>
+              <button
+                type="button"
+                onClick={() => setAttachmentToRemove(file)}
+                disabled={isRemoving}
+                className="shrink-0 text-ink-faint hover:text-danger disabled:opacity-50"
+                aria-label={`Remove ${file.name}`}
+              >
+                <X size={14} />
+              </button>
             </li>
           ))}
         </ul>
       )}
+
+      <ConfirmDialog
+        open={attachmentToRemove !== null}
+        onClose={() => setAttachmentToRemove(null)}
+        onConfirm={handleRemoveAttachment}
+        title="Remove attachment"
+        description={
+          attachmentToRemove
+            ? `Are you sure you want to remove "${attachmentToRemove.name}"? This can't be undone.`
+            : ""
+        }
+        confirmLabel="Remove"
+      />
     </section>
   );
 }

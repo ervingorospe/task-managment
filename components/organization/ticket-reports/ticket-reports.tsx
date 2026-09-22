@@ -18,6 +18,7 @@ import { TrendLineChart } from "./trend-line-chart";
 import { DateRangeControl } from "./date-range-control";
 import { TrendSeriesSelect } from "./trend-series-select";
 import { MonthComparisonChart } from "./month-comparison-chart";
+import { useOrgReportData } from "@/hooks/use-org-report-data";
 import type { OrganizationDetail } from "@/lib/types/organization/organization-detail.type";
 
 interface TicketReportsProps {
@@ -25,7 +26,9 @@ interface TicketReportsProps {
 }
 
 export default function TicketReports({ organization }: TicketReportsProps) {
-  const tickets = useMemo(() => organization.tickets ?? [], [organization]);
+  // This tab is already gated behind ticket.view.all (see
+  // OrganizationMemberTabs), so no per-user scoping is needed here.
+  const { tickets } = useOrgReportData();
 
   const [dateRange, setDateRange] = useState<DateRange>({
     from: null,

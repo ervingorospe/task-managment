@@ -18,6 +18,7 @@ import {
 } from "@/lib/schemas/ticket.schema";
 import type { OrganizationDetail } from "@/lib/types/organization/organization-detail.type";
 import type { TicketAttachment } from "@/lib/types/ticket/ticket-detail.type";
+import { localToday } from "@/lib/helper/ticket-status";
 import { ChevronDown, Paperclip } from "lucide-react";
 
 interface TicketFormModalProps {
@@ -252,7 +253,7 @@ export default function TicketFormModal({
             type="date"
             label="Due date"
             optional
-            min={new Date().toISOString().slice(0, 10)}
+            min={localToday()}
           />
         </div>
       </form>

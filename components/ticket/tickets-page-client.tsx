@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AlertTriangle, Plus, Tag as TagIcon, Ticket as TicketIcon } from "lucide-react";
 import { Can } from "@/components/auth/can";
 import { PERMISSIONS } from "@/lib/data/permissions";
@@ -21,10 +21,13 @@ import { useLogActivity } from "@/hooks/use-log-activity";
 import { useInlineAlert } from "@/hooks/use-inline-alert";
 import { InlineAlert } from "@/components/ui/inline-alert";
 import { useTicketListQueryState } from "@/hooks/use-ticket-list-query-state";
-import { isTicketIncluded } from "@/lib/helper/ticket-access";
-import { getDueState } from "@/lib/helper/ticket-status";
-import { getStatusBreakdown } from "@/lib/helper/ticket-reports";
-import { createTicket, updateTicket } from "@/lib/api/tickets";
+import {
+  createTicket,
+  updateTicket,
+  fetchTicketsPage,
+  fetchTicketCountNumbers,
+  type TicketCountNumbers,
+} from "@/lib/api/tickets";
 import type { OrganizationDetail } from "@/lib/types/organization/organization-detail.type";
 import type { TicketDetail } from "@/lib/types/ticket/ticket-detail.type";
 import type { TagDetail } from "@/lib/types/organization/tag-detail.type";
@@ -51,8 +54,11 @@ export default function TicketsPageClient({
     [members],
   );
 
-  const [tickets, setTickets] = useState<TicketDetail[]>(
-    organization.tickets ?? [],
+  const [tickets, setTickets] = useState<TicketDetail[]>([]);
+  const [total, setTotal] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
+  const [countNumbers, setCountNumbers] = useState<TicketCountNumbers | null>(
+    null,
   );
   const [modalOpen, setModalOpen] = useState(false);
 
@@ -73,65 +79,89 @@ export default function TicketsPageClient({
   >([organization]);
 
   // ticket.view.all sees everything; ticket.view.included (or nothing) only
-  // sees tickets the current user requested or is assigned to.
-  const viewableTickets = useMemo(() => {
-    const base = canViewAllTickets
-      ? tickets
-      : tickets.filter((t) => isTicketIncluded(t, currentUser?.id));
-    return starredOnly ? base.filter((t) => t.starred) : base;
-  }, [tickets, canViewAllTickets, currentUser?.id, starredOnly]);
+  // sees tickets the current user requested or is assigned to. When that's
+  // the case but the user id isn't known yet, fall back to an id no member
+  // can have rather than an unscoped fetch, so the list stays empty instead
+  // of briefly leaking every ticket.
+  const involvesUserId = canViewAllTickets
+    ? undefined
+    : (currentUser?.id ?? -1);
 
-  // Search, then filter, then paginate — each step operates on the
-  // previous step's result, same ordering used for MembersSection earlier.
-  const searched = useMemo(() => {
-    if (!search) return viewableTickets;
-    const query = search.toLowerCase();
-    return viewableTickets.filter((t) =>
-      t.title.toLowerCase().includes(query),
+  const requestIdRef = useRef(0);
+
+  const loadTickets = useCallback(async () => {
+    const requestId = ++requestIdRef.current;
+    setIsLoading(true);
+
+    const filterBy: (number | "overdue" | "starred")[] = [
+      ...filter.tagIds,
+    ];
+    if (filter.overdueOnly) filterBy.push("overdue");
+    if (starredOnly) filterBy.push("starred");
+
+    try {
+      const result = await fetchTicketsPage(organization.id, {
+        page,
+        limit: pageSize,
+        search: search || undefined,
+        filterBy: filterBy.length > 0 ? filterBy : undefined,
+        memberIds:
+          filter.memberIds.length > 0 ? filter.memberIds : undefined,
+        dueDateFrom: filter.dateFrom ?? undefined,
+        dueDateTo: filter.dateTo ?? undefined,
+        involvesUserId,
+      });
+      if (requestId !== requestIdRef.current) return;
+      setTickets(result.items);
+      setTotal(result.total);
+    } catch (error) {
+      if (requestId !== requestIdRef.current) return;
+      notifyApiError(toast, error, "Failed to load tickets");
+    } finally {
+      if (requestId === requestIdRef.current) setIsLoading(false);
+    }
+  }, [
+    organization.id,
+    page,
+    pageSize,
+    search,
+    filter,
+    starredOnly,
+    involvesUserId,
+    toast,
+  ]);
+
+  const loadCounts = useCallback(async () => {
+    try {
+      const result = await fetchTicketCountNumbers(organization.id, {
+        filterBy: starredOnly ? ["starred"] : undefined,
+        involvesUserId,
+      });
+      setCountNumbers(result);
+    } catch (error) {
+      notifyApiError(toast, error, "Failed to load ticket stats");
+    }
+  }, [organization.id, starredOnly, involvesUserId, toast]);
+
+  useEffect(() => {
+    loadTickets();
+  }, [loadTickets]);
+
+  useEffect(() => {
+    loadCounts();
+  }, [loadCounts]);
+
+  const statTiles: MiniStat[] = useMemo(() => {
+    const totalTickets = countNumbers?.totalTickets ?? 0;
+    const overdueCount = countNumbers?.overdues ?? 0;
+    const statusRows = [...(countNumbers?.countPerTag ?? [])].sort(
+      (a, b) => b.count - a.count,
     );
-  }, [viewableTickets, search]);
 
-  const filtered = useMemo(() => {
-    return searched.filter((ticket) => {
-      if (filter.tagIds.length > 0 && !filter.tagIds.includes(ticket.tag.id))
-        return false;
-
-      if (filter.memberIds.length > 0) {
-        const hasMatch = ticket.assignees.some((m) =>
-          filter.memberIds.includes(m.id),
-        );
-        if (!hasMatch) return false;
-      }
-
-      if (
-        filter.dateFrom &&
-        (!ticket.dueDate || ticket.dueDate < filter.dateFrom)
-      )
-        return false;
-      if (filter.dateTo && (!ticket.dueDate || ticket.dueDate > filter.dateTo))
-        return false;
-
-      if (filter.overdueOnly && getDueState(ticket) !== "overdue")
-        return false;
-
-      return true;
-    });
-  }, [searched, filter]);
-
-  const overdueCount = useMemo(
-    () => viewableTickets.filter((t) => getDueState(t) === "overdue").length,
-    [viewableTickets],
-  );
-  const statusRows = useMemo(
-    () => getStatusBreakdown(viewableTickets),
-    [viewableTickets],
-  );
-
-  const statTiles: MiniStat[] = useMemo(
-    () => [
+    return [
       {
         label: "Total",
-        value: viewableTickets.length,
+        value: totalTickets,
         icon: TicketIcon,
         tint: "bg-accent-subtle",
         iconColor: "text-accent-text",
@@ -153,17 +183,10 @@ export default function TicketsPageClient({
         icon: TagIcon,
         accentColor: row.color,
       })),
-    ],
-    [viewableTickets.length, overdueCount, statusRows],
-  );
+    ];
+  }, [countNumbers]);
 
-  const totalPages = Math.max(Math.ceil(filtered.length / pageSize), 1);
-  const currentPage = Math.min(page, totalPages);
-  const paginated = useMemo(
-    () =>
-      filtered.slice((currentPage - 1) * pageSize, currentPage * pageSize),
-    [filtered, currentPage, pageSize],
-  );
+  const totalPages = Math.max(Math.ceil(total / pageSize), 1);
 
   // Distinguishes "nothing exists yet" from "your search/filters matched
   // nothing" so the empty state points at the right fix.
@@ -175,7 +198,10 @@ export default function TicketsPageClient({
     Boolean(filter.dateTo) ||
     filter.overdueOnly;
   const noResultsFromQuery =
-    viewableTickets.length > 0 && filtered.length === 0 && hasActiveQuery;
+    !isLoading &&
+    (countNumbers?.totalTickets ?? 0) > 0 &&
+    total === 0 &&
+    hasActiveQuery;
 
   const handleClearFilters = useCallback(() => {
     setFilter(emptyTicketFilter);
@@ -229,7 +255,8 @@ export default function TicketsPageClient({
       }
 
       if (targetOrg.id === organization.id) {
-        setTickets((prev) => [newTicket, ...prev]);
+        loadTickets();
+        loadCounts();
       }
       logTicketActivity({
         orgId: targetOrg.id,
@@ -245,7 +272,15 @@ export default function TicketsPageClient({
       });
       showAlert(`New ticket ${newTicket.title} was created`);
     },
-    [allOrganizations, organization, toast, showAlert, logTicketActivity],
+    [
+      allOrganizations,
+      organization,
+      toast,
+      showAlert,
+      logTicketActivity,
+      loadTickets,
+      loadCounts,
+    ],
   );
 
   const handleChangeTag = useCallback(
@@ -255,14 +290,16 @@ export default function TicketsPageClient({
         prev.map((t) => (t.id === ticketId ? { ...t, tag } : t)),
       );
 
-      updateTicket(ticketId, { tagId: tag.id }).catch((error) => {
-        if (target) {
-          setTickets((prev) =>
-            prev.map((t) => (t.id === ticketId ? target : t)),
-          );
-        }
-        notifyApiError(toast, error, "Failed to update status");
-      });
+      updateTicket(ticketId, { tagId: tag.id })
+        .then(() => loadCounts())
+        .catch((error) => {
+          if (target) {
+            setTickets((prev) =>
+              prev.map((t) => (t.id === ticketId ? target : t)),
+            );
+          }
+          notifyApiError(toast, error, "Failed to update status");
+        });
 
       if (target) {
         logTicketActivity({
@@ -279,7 +316,7 @@ export default function TicketsPageClient({
         });
       }
     },
-    [toast, tickets, organization.id, logTicketActivity],
+    [toast, tickets, organization.id, logTicketActivity, loadCounts],
   );
 
   const handleAssign = useCallback(
@@ -335,18 +372,31 @@ export default function TicketsPageClient({
         prev.map((t) => (t.id === ticketId ? { ...t, starred: nowStarred } : t)),
       );
 
-      updateTicket(ticketId, { starred: nowStarred }).catch((error) => {
-        setTickets((prev) =>
-          prev.map((t) => (t.id === ticketId ? target : t)),
-        );
-        notifyApiError(
-          toast,
-          error,
-          `Failed to ${nowStarred ? "star" : "unstar"} ticket`,
-        );
-      });
+      updateTicket(ticketId, { starred: nowStarred })
+        .then(() => {
+          // On the Starred page, a ticket leaving the star selection must
+          // actually leave the list (and be backfilled by the next one)
+          // rather than just flip its icon in place — that needs a real
+          // refetch, since the current page is a server-side slice, not
+          // the full set. The stat tiles are also scoped to "starred", so
+          // they need refreshing too.
+          if (starredOnly) {
+            loadTickets();
+            loadCounts();
+          }
+        })
+        .catch((error) => {
+          setTickets((prev) =>
+            prev.map((t) => (t.id === ticketId ? target : t)),
+          );
+          notifyApiError(
+            toast,
+            error,
+            `Failed to ${nowStarred ? "star" : "unstar"} ticket`,
+          );
+        });
     },
-    [tickets, toast],
+    [tickets, toast, starredOnly, loadTickets, loadCounts],
   );
 
   return (
@@ -389,7 +439,7 @@ export default function TicketsPageClient({
         <DataTable
           search={searchInput}
           onSearchChange={setSearchInput}
-          searchPlaceholder="Search tickets by name (3+ characters)"
+          searchPlaceholder="Search by title or reference ID (3+ characters)"
           filterAction={
             <TicketFilterDropdown
               value={filter}
@@ -398,15 +448,15 @@ export default function TicketsPageClient({
               tags={tags}
             />
           }
-          page={currentPage}
+          page={page}
           totalPages={totalPages}
-          totalItems={filtered.length}
+          totalItems={total}
           pageSize={pageSize}
           onPageChange={setPage}
           onPageSizeChange={handlePageSizeChange}
         >
           <TicketList
-            tickets={paginated}
+            tickets={tickets}
             availableTags={tags}
             assignableMembers={assignableMembers}
             onChangeTag={handleChangeTag}

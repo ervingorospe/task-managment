@@ -2,7 +2,91 @@ import { api, ApiError } from "./client";
 import { adaptTicket, adaptComment, adaptAttachment } from "./adapters";
 import type { TicketDetail, TicketAttachment } from "@/lib/types/ticket/ticket-detail.type";
 import type { TicketComment } from "@/lib/types/ticket/ticket-comment.type";
-import type { RawTicket, RawTicketComment, RawTicketAttachment } from "./raw-types";
+import type { RawTicket, RawTicketComment, RawTicketAttachment, RawPage } from "./raw-types";
+
+export interface TicketsPageQuery {
+  page: number;
+  limit: number;
+  search?: string;
+  /** Tag ids plus the literals "overdue" and "starred". */
+  filterBy?: (number | "overdue" | "starred")[];
+  memberIds?: number[];
+  dueDateFrom?: string;
+  dueDateTo?: string;
+  /** Restricts to tickets where this user is the client or an assignee. */
+  involvesUserId?: number;
+}
+
+function buildTicketsQuery(orgId: number, query: TicketsPageQuery): string {
+  const params = new URLSearchParams();
+  params.set("orgId", String(orgId));
+  params.set("page", String(query.page));
+  params.set("limit", String(query.limit));
+  if (query.search) params.set("search", query.search);
+  if (query.dueDateFrom) params.set("dueDateFrom", query.dueDateFrom);
+  if (query.dueDateTo) params.set("dueDateTo", query.dueDateTo);
+  if (query.involvesUserId) params.set("involvesUserId", String(query.involvesUserId));
+  for (const value of query.filterBy ?? []) params.append("filterBy", String(value));
+  for (const id of query.memberIds ?? []) params.append("memberIds", String(id));
+  return params.toString();
+}
+
+export interface TicketsPage {
+  items: TicketDetail[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
+export async function fetchTicketsPage(
+  orgId: number,
+  query: TicketsPageQuery,
+): Promise<TicketsPage> {
+  const raw = await api.get<RawPage<RawTicket>>(
+    `/tickets?${buildTicketsQuery(orgId, query)}`,
+  );
+  return { ...raw, items: raw.items.map(adaptTicket) };
+}
+
+export interface TicketCountNumbers {
+  totalTickets: number;
+  overdues: number;
+  onTime: number;
+  countPerTag: { tagId: number; tagName: string; color: string; count: number }[];
+}
+
+/**
+ * Every non-deleted ticket for the org, unpaginated — for Dashboard/Reports,
+ * which compute flexible client-side aggregations (trend charts, month/year
+ * comparison, assignee breakdown) that need row-level data, not just counts.
+ */
+export async function fetchAllTickets(
+  orgId: number,
+  involvesUserId?: number,
+): Promise<TicketDetail[]> {
+  const params = new URLSearchParams();
+  params.set("orgId", String(orgId));
+  if (involvesUserId) params.set("involvesUserId", String(involvesUserId));
+
+  const raw = await api.get<RawTicket[]>(`/tickets/all?${params.toString()}`);
+  return raw.map(adaptTicket);
+}
+
+export async function fetchTicketCountNumbers(
+  orgId: number,
+  options?: {
+    filterBy?: (number | "overdue" | "starred")[];
+    involvesUserId?: number;
+  },
+): Promise<TicketCountNumbers> {
+  const params = new URLSearchParams();
+  params.set("orgId", String(orgId));
+  if (options?.involvesUserId) {
+    params.set("involvesUserId", String(options.involvesUserId));
+  }
+  for (const value of options?.filterBy ?? []) params.append("filterBy", String(value));
+  return api.get<TicketCountNumbers>(`/tickets/count-numbers?${params.toString()}`);
+}
 
 export async function fetchTicketById(id: number): Promise<TicketDetail | null> {
   try {
@@ -63,6 +147,13 @@ export async function uploadTicketAttachment(
     formData,
   );
   return adaptAttachment(attachment);
+}
+
+export async function removeTicketAttachment(
+  ticketId: number,
+  attachmentId: number,
+): Promise<void> {
+  await api.delete(`/tickets/${ticketId}/attachments/${attachmentId}`);
 }
 
 export async function addTicketComment(

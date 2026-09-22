@@ -12,50 +12,30 @@ import { TrendSeriesSelect } from "@/components/organization/ticket-reports/tren
 import { TrendLineChart } from "@/components/organization/ticket-reports/trend-line-chart";
 import { RequestStatusBadge } from "@/components/organization/requests/request-status-badge";
 import { DashboardSkeleton } from "@/components/ui/skeletons";
-import { useAuth, usePermission } from "@/providers/auth-provider";
+import { useAuth } from "@/providers/auth-provider";
 import { useActiveOrganizationDetail } from "@/hooks/use-active-organization-detail";
-import { PERMISSIONS } from "@/lib/data/permissions";
+import { useOrgReportData } from "@/hooks/use-org-report-data";
 import {
   getStatusBreakdown,
   getTrendSeries,
   type TrendSelection,
 } from "@/lib/helper/ticket-reports";
 import { getDueState, isDueThisWeek } from "@/lib/helper/ticket-status";
-import { isTicketIncluded } from "@/lib/helper/ticket-access";
 
 export default function DashboardClient() {
-  const { currentUser, activeOrganization } = useAuth();
-  const canViewAll = usePermission(PERMISSIONS.TICKET_VIEW_ALL);
+  const { activeOrganization } = useAuth();
   const organization = useActiveOrganizationDetail();
+  const {
+    tickets: visibleTickets,
+    requests: visibleRequests,
+    loading: reportDataLoading,
+  } = useOrgReportData();
 
   const [trendSelection, setTrendSelection] = useState<TrendSelection>({
     created: true,
     dueDate: false,
     tagIds: [],
   });
-
-  const currentMember = useMemo(
-    () => organization?.members.find((m) => m.user?.id === currentUser?.id),
-    [organization, currentUser?.id],
-  );
-
-  const visibleTickets = useMemo(() => {
-    if (!organization) return [];
-    return canViewAll
-      ? organization.tickets
-      : organization.tickets.filter((t) =>
-          isTicketIncluded(t, currentUser?.id),
-        );
-  }, [organization, canViewAll, currentUser?.id]);
-
-  const visibleRequests = useMemo(() => {
-    if (!organization) return [];
-    return canViewAll
-      ? organization.ticketRequests
-      : organization.ticketRequests.filter(
-          (r) => r.client.id === currentMember?.id,
-        );
-  }, [organization, canViewAll, currentMember?.id]);
 
   const overdueCount = useMemo(
     () => visibleTickets.filter((t) => getDueState(t) === "overdue").length,
@@ -165,7 +145,7 @@ export default function DashboardClient() {
     );
   }
 
-  if (!organization) return <DashboardSkeleton />;
+  if (!organization || reportDataLoading) return <DashboardSkeleton />;
 
   const slug = activeOrganization.settings.slug;
   const ticketsHref = `/dashboard/organizations/${slug}/tickets`;

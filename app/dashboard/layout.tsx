@@ -33,16 +33,17 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { isAuthenticated, activeOrganization } = useAuth();
+  const { isAuthenticated, isInitializing, activeOrganization } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
 
-  // MOCK: since there's no real session yet, this just checks
-  // in-memory state. A hard refresh loses it — that's expected
-  // for now, and will be replaced by a real session check.
+  // A reload restores the session from the marker cookie (see
+  // auth-provider.tsx) before this fires — isInitializing gates the
+  // redirect so a real session doesn't get bounced to /login while that
+  // restore is still in flight.
   useEffect(() => {
-    if (!isAuthenticated) router.replace("/login");
-  }, [isAuthenticated, router]);
+    if (!isInitializing && !isAuthenticated) router.replace("/login");
+  }, [isInitializing, isAuthenticated, router]);
 
   // Force every dashboard page to refetch on navigation instead of
   // reusing Next's client Router Cache. This matters most for
@@ -60,7 +61,7 @@ export default function DashboardLayout({
     router.refresh();
   }, [pathname, router]);
 
-  if (!isAuthenticated) return null;
+  if (isInitializing || !isAuthenticated) return null;
 
   const isExempt = EXEMPT_PREFIXES.some((prefix) =>
     pathname.startsWith(prefix),
