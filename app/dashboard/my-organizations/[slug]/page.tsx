@@ -1,32 +1,25 @@
-import { notFound } from "next/navigation";
-import { getOrganizationBySlug } from "@/lib/data/organization-detail";
-import {
-  getPermissionOptions,
-  getRuleCategories,
-} from "@/lib/data/organizations";
+"use client";
+
+import { useParams, notFound } from "next/navigation";
+import { useOrganizationBySlug } from "@/hooks/use-organization-by-slug";
+import { useOrgReferenceData } from "@/hooks/use-org-reference-data";
 import { OrganizationDefaultsProvider } from "@/providers/organization-defaults.provider";
-import OrganizationTabs from "@/components/organization/own/organization-tabs"; // adjust to your actual component name
+import OrganizationTabs from "@/components/organization/own/organization-tabs";
 import BackButton from "@/components/ui/buttons/button-back";
 import { OwnerGuard } from "@/components/auth/owner-guard";
+import { OrganizationInfoSkeleton } from "@/components/ui/skeletons";
 
-interface OrganizationPageProps {
-  params: Promise<{ slug: string }>;
-}
+export default function OrganizationPage() {
+  const { slug } = useParams<{ slug: string }>();
+  const { organization, loading: orgLoading } = useOrganizationBySlug(slug);
+  const { permissionOptions, ruleCategories, loading: refsLoading } =
+    useOrgReferenceData();
 
-export default async function OrganizationPage({
-  params,
-}: OrganizationPageProps) {
-  const { slug } = await params;
-
-  const [organization, permissionOptions, ruleCategories] = await Promise.all([
-    getOrganizationBySlug(slug),
-    getPermissionOptions(),
-    getRuleCategories(),
-  ]);
-
-  if (!organization) {
-    notFound();
+  if (orgLoading || refsLoading) {
+    return <OrganizationInfoSkeleton />;
   }
+
+  if (!organization) notFound();
 
   return (
     <OwnerGuard ownerId={organization.ownerId}>

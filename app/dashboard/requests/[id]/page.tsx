@@ -1,23 +1,22 @@
-import { notFound } from "next/navigation";
-import { getTicketRequestById } from "@/lib/data/organization-detail";
+"use client";
+
+import { useParams, notFound } from "next/navigation";
+import { useTicketRequestById } from "@/hooks/use-ticket-request-by-id";
 import MemberGuard from "@/components/auth/member-guard";
 import RequestAccessGuard from "@/components/auth/request-access-guard";
 import RequestDetailClient from "@/components/organization/requests/request-detail-client";
+import Loading from "./loading";
 
-interface RequestPageProps {
-  params: Promise<{ id: string }>;
-}
-
-export default async function RequestPage({ params }: RequestPageProps) {
-  const { id } = await params;
+export default function RequestPage() {
+  const { id } = useParams<{ id: string }>();
   const requestId = Number(id);
 
+  const { request, organization, loading, notFound: requestNotFound } =
+    useTicketRequestById(requestId);
+
   if (!Number.isFinite(requestId)) notFound();
-
-  const result = await getTicketRequestById(requestId);
-  if (!result) notFound();
-
-  const { request, organization } = result;
+  if (loading) return <Loading />;
+  if (requestNotFound || !request || !organization) notFound();
 
   return (
     <MemberGuard

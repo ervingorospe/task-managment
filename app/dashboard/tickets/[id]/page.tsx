@@ -1,25 +1,24 @@
-import { notFound } from "next/navigation";
-import { getTicketById } from "@/lib/data/organization-detail";
+"use client";
+
+import { useParams, notFound } from "next/navigation";
+import { useTicketById } from "@/hooks/use-ticket-by-id";
 import MemberGuard from "@/components/auth/member-guard";
 import TicketAccessGuard from "@/components/auth/ticket-access-guard";
 import PersonalTicketAccessGuard from "@/components/auth/personal-ticket-access-guard";
 import TicketDetailClient from "@/components/ticket/ticket-detail-client";
 import PersonalTicketDetailClient from "@/components/ticket/personal-ticket-detail-client";
+import Loading from "./loading";
 
-interface TicketPageProps {
-  params: Promise<{ id: string }>;
-}
-
-export default async function TicketPage({ params }: TicketPageProps) {
-  const { id } = await params;
+export default function TicketPage() {
+  const { id } = useParams<{ id: string }>();
   const ticketId = Number(id);
 
+  const { ticket, organization, loading, notFound: ticketNotFound } =
+    useTicketById(ticketId);
+
   if (!Number.isFinite(ticketId)) notFound();
-
-  const result = await getTicketById(ticketId);
-  if (!result) notFound();
-
-  const { ticket, organization } = result;
+  if (loading) return <Loading />;
+  if (ticketNotFound || !ticket) notFound();
 
   if (!organization) {
     return (
