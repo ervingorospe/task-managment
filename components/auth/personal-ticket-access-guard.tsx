@@ -13,7 +13,12 @@ export default function PersonalTicketAccessGuard({
   ownerId: number | null | undefined;
   children: ReactNode;
 }) {
-  const { currentUser } = useAuth();
+  const { currentUser, isInitializing } = useAuth();
+
+  // currentUser is briefly null while the session is still being restored
+  // — that would otherwise read as "not the owner" and permanently 404 a
+  // legitimate owner. Wait for the real answer first.
+  if (isInitializing) return null;
   if (!currentUser || currentUser.id !== ownerId) notFound();
   return <>{children}</>;
 }

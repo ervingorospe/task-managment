@@ -23,7 +23,9 @@ import { InlineAlert } from "@/components/ui/inline-alert";
 import { useTicketListQueryState } from "@/hooks/use-ticket-list-query-state";
 import {
   createTicket,
-  updateTicket,
+  updateTicketTag,
+  updateTicketAssignees,
+  updateTicketStar,
   fetchTicketsPage,
   fetchTicketCountNumbers,
   type TicketCountNumbers,
@@ -290,7 +292,7 @@ export default function TicketsPageClient({
         prev.map((t) => (t.id === ticketId ? { ...t, tag } : t)),
       );
 
-      updateTicket(ticketId, { tagId: tag.id })
+      updateTicketTag(ticketId, tag.id)
         .then(() => loadCounts())
         .catch((error) => {
           if (target) {
@@ -333,7 +335,7 @@ export default function TicketsPageClient({
         ),
       );
 
-      updateTicket(ticketId, { assigneeIds: memberIds }).catch((error) => {
+      updateTicketAssignees(ticketId, memberIds).catch((error) => {
         if (target) {
           setTickets((prev) =>
             prev.map((t) => (t.id === ticketId ? target : t)),
@@ -372,7 +374,7 @@ export default function TicketsPageClient({
         prev.map((t) => (t.id === ticketId ? { ...t, starred: nowStarred } : t)),
       );
 
-      updateTicket(ticketId, { starred: nowStarred })
+      updateTicketStar(ticketId, nowStarred)
         .then(() => {
           // On the Starred page, a ticket leaving the star selection must
           // actually leave the list (and be backfilled by the next one)

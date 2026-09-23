@@ -11,7 +11,6 @@ import type { CreateOrganizationPayload } from "@/lib/types/organization/create-
  */
 export function buildCreateOrganizationPayload(
   formData: Record<string, unknown>,
-  ownerId: number,
 ): CreateOrganizationPayload {
   const roles = (formData.roles as RoleDetail[] | undefined) ?? [];
   const invites = (formData.invites as MemberInviteDetail[] | undefined) ?? [];
@@ -24,7 +23,6 @@ export function buildCreateOrganizationPayload(
     organizationDesc: formData.organizationDesc as string | undefined,
     logo: formData.logo as string | undefined,
     timezone: (formData.timezone as string | undefined) ?? "",
-    ownerId,
     roles: roles.map((role) => ({
       id: role.id,
       isDefault: role.isDefault,

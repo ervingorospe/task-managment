@@ -21,7 +21,8 @@ import { InlineAlert } from "@/components/ui/inline-alert";
 import { useTicketListQueryState } from "@/hooks/use-ticket-list-query-state";
 import {
   createPersonalTicket,
-  updateTicket,
+  updateTicketTag,
+  updateTicketStar,
   fetchPersonalTicketsPage,
   fetchPersonalTicketCountNumbers,
   type TicketCountNumbers,
@@ -238,7 +239,7 @@ export default function PersonalTicketsPageClient({
         prev.map((t) => (t.id === ticketId ? { ...t, tag } : t)),
       );
 
-      updateTicket(ticketId, { tagId: tag.id })
+      updateTicketTag(ticketId, tag.id)
         .then(() => loadCounts())
         .catch((error) => {
           if (target) {
@@ -272,7 +273,7 @@ export default function PersonalTicketsPageClient({
         prev.map((t) => (t.id === ticketId ? { ...t, starred: nowStarred } : t)),
       );
 
-      updateTicket(ticketId, { starred: nowStarred })
+      updateTicketStar(ticketId, nowStarred)
         .then(() => {
           if (starredOnly) {
             loadTickets();

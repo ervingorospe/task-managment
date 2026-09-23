@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Mail, Lock } from "lucide-react";
@@ -9,11 +9,37 @@ import { useAuth } from "@/providers/auth-provider";
 import { Button } from "@/components/ui/buttons/button";
 import Input from "@/components/ui/form/input";
 import { loginSchema, LoginValues } from "@/lib/schemas/login.schema";
+import { API_BASE_URL } from "@/lib/api/client";
 
 export default function LoginPage() {
+  // useSearchParams() opts this page out of static rendering unless it's
+  // inside a Suspense boundary (Next.js requirement) — the fallback is
+  // never actually visible since there's no async work above it, just a
+  // synchronous read of the query string.
+  return (
+    <Suspense fallback={null}>
+      <LoginPageContent />
+    </Suspense>
+  );
+}
+
+function LoginPageContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { login } = useAuth();
   const [formError, setFormError] = useState<string | null>(null);
+
+  // Set by the backend when a redirect-based flow (Google OAuth, the email
+  // verification link) fails after already leaving this page — those
+  // handlers can't render a form error directly, so they bounce back here
+  // with ?error= instead of dumping their raw JSON error in the browser.
+  useEffect(() => {
+    const error = searchParams.get("error");
+    if (error) {
+      setFormError(error);
+      router.replace("/login");
+    }
+  }, [searchParams, router]);
 
   const {
     control,
@@ -27,10 +53,18 @@ export default function LoginPage() {
   async function onSubmit(values: LoginValues) {
     const result = await login(values.email, values.password);
     if (!result.success) {
+      if (result.needsVerification) {
+        router.push(`/verify-pending?email=${encodeURIComponent(values.email)}`);
+        return;
+      }
       setFormError(result.error ?? "Login failed.");
       return;
     }
     router.push("/dashboard");
+  }
+
+  function handleGoogleLogin() {
+    window.location.href = `${API_BASE_URL}/auth/google`;
   }
 
   return (
@@ -80,7 +114,12 @@ export default function LoginPage() {
             <div className="absolute inset-x-0 top-1/2 -z-10 h-px bg-line" />
           </div>
 
-          <Button type="button" variant="secondary" className="w-full">
+          <Button
+            type="button"
+            variant="secondary"
+            className="w-full"
+            onClick={handleGoogleLogin}
+          >
             Continue with Google
           </Button>
         </form>
@@ -90,12 +129,6 @@ export default function LoginPage() {
           <a href="/signup" className="text-accent-text hover:underline">
             Sign up
           </a>
-        </p>
-
-        <p className="mt-4 text-center text-xs text-ink-faint">
-          Any email in the backend&apos;s users table works — password:{" "}
-          <span className="font-mono">123</span>. Try{" "}
-          <span className="font-mono">jane@acmestudio.com</span>.
         </p>
       </div>
     </div>

@@ -12,7 +12,7 @@ import { useToast } from "@/providers/toast-provider";
 import { notifyApiError } from "@/lib/helper/api-error-toast";
 import { setPendingAlert } from "@/lib/helper/pending-alert";
 import { useLogActivity } from "@/hooks/use-log-activity";
-import { updateTicket, deleteTicket } from "@/lib/api/tickets";
+import { updateTicket, updateTicketStar, deleteTicket } from "@/lib/api/tickets";
 import { getDefaultTags } from "@/lib/data/organizations";
 import { DueChip } from "./due-chip";
 import { getDueState } from "@/lib/helper/ticket-status";
@@ -60,7 +60,7 @@ export default function PersonalTicketDetailClient({
     const nowStarred = !starred;
     setStarred(nowStarred);
 
-    updateTicket(ticket.id, { starred: nowStarred }).catch((error) => {
+    updateTicketStar(ticket.id, nowStarred).catch((error) => {
       setStarred(!nowStarred);
       notifyApiError(
         toast,

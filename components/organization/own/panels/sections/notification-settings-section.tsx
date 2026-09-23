@@ -9,7 +9,7 @@ import { useToast } from "@/providers/toast-provider";
 import { InlineAlert } from "@/components/ui/inline-alert";
 import { useInlineAlert } from "@/hooks/use-inline-alert";
 import { notifyApiError } from "@/lib/helper/api-error-toast";
-import { updateOrganizationSettings } from "@/lib/api/organizations";
+import { updateOrganizationNotifications } from "@/lib/api/organizations";
 
 interface NotificationSettingsSectionProps {
   orgId: number;
@@ -34,9 +34,7 @@ export default function NotificationSettingsSection({
 
   async function handleUpdate(values: NotificationSettingsValues) {
     try {
-      await updateOrganizationSettings(orgId, {
-        sendEmailNotif: values.receiveEmails,
-      });
+      await updateOrganizationNotifications(orgId, values.receiveEmails);
     } catch (error) {
       notifyApiError(toast, error, "Failed to update notification settings");
       return;

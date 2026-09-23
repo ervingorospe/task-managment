@@ -40,8 +40,9 @@ export function adaptUser(u: RawUser): User {
     lastName: u.lastName,
     email: u.email,
     avatar: u.avatar ?? null,
-    accountType: u.accountType.toLowerCase() === "owner" ? "owner" : "member",
     isActive: u.isActive,
+    isVerified: u.isVerified,
+    hasOnboarded: u.hasOnboarded,
   };
 }
 

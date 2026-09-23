@@ -19,7 +19,12 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/providers/auth-provider";
 import { Can } from "@/components/auth/can";
-import { PERMISSIONS, type Permission } from "@/lib/data/permissions";
+import {
+  PERMISSIONS,
+  REQUEST_ALL_PERMISSIONS,
+  REQUEST_OWN_PERMISSIONS,
+  type Permission,
+} from "@/lib/data/permissions";
 import Tooltip from "@/components/ui/tooltip";
 
 type StaticNavItem = {
@@ -35,15 +40,6 @@ type StaticNavItem = {
 // Organization management is always last.
 const primaryNavItems: StaticNavItem[] = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutGrid, permission: null },
-];
-
-const insightNavItems: StaticNavItem[] = [
-  {
-    href: "/dashboard/reports",
-    label: "Reports",
-    icon: FileBarChart,
-    permission: PERMISSIONS.REPORT_VIEW,
-  },
 ];
 
 export function Sidebar() {
@@ -206,9 +202,9 @@ export function Sidebar() {
             permission bypass (which would otherwise show them). */}
         {!isPersonalMode && (
           <>
-            {/* Requests — visible to staff (ticket.view.all) and clients (ticket.request) alike */}
+            {/* Requests — visible to staff (all tier) and clients (own tier) alike */}
             <Can
-              anyOf={[PERMISSIONS.TICKET_VIEW_ALL, PERMISSIONS.TICKET_REQUEST]}
+              anyOf={[...REQUEST_ALL_PERMISSIONS, ...REQUEST_OWN_PERMISSIONS]}
             >
               {withTooltip(
                 "Requests",
@@ -235,8 +231,21 @@ export function Sidebar() {
           </>
         )}
 
-        {/* Reports */}
-        {insightNavItems.map(renderStaticNavItem)}
+        {/* Reports — visible to staff (view.all) and anyone with view.own alike */}
+        <Can
+          anyOf={[PERMISSIONS.REPORT_VIEW_ALL, PERMISSIONS.REPORT_VIEW_OWN]}
+        >
+          {withTooltip(
+            "Reports",
+            <Link
+              href="/dashboard/reports"
+              className={navLinkClass(pathname.startsWith("/dashboard/reports"))}
+            >
+              <FileBarChart size={16} strokeWidth={2} />
+              {!collapsed && "Reports"}
+            </Link>,
+          )}
+        </Can>
 
         {/* Activity Log — visible to anyone who can see all activity or just their own */}
         <Can

@@ -12,8 +12,6 @@ import {
   Building2,
   UserRound,
 } from "lucide-react";
-import { AccountTypeGuard } from "@/components/auth/account-type.guard";
-import { ACCOUNT_TYPE } from "@/lib/constants/accoun-type.constant";
 import { replaceUrlSlug } from "@/lib/helper/replace-url-slug";
 import { TopbarClock } from "@/components/topbar-clock";
 
@@ -71,15 +69,11 @@ export function Topbar() {
           </span>
         }
       >
-        <AccountTypeGuard accountType={ACCOUNT_TYPE.OWNER}>
-          <Dropdown.DropdownItem onClick={handlePersonalSwitch}>
-            <UserRound size={14} />
-            Personal
-          </Dropdown.DropdownItem>
-          {currentUser.memberships.length > 0 && (
-            <Dropdown.DropdownSeparator />
-          )}
-        </AccountTypeGuard>
+        <Dropdown.DropdownItem onClick={handlePersonalSwitch}>
+          <UserRound size={14} />
+          Personal
+        </Dropdown.DropdownItem>
+        {currentUser.memberships.length > 0 && <Dropdown.DropdownSeparator />}
 
         {currentUser.memberships.map((membership) => (
           <Dropdown.DropdownItem
@@ -127,12 +121,10 @@ export function Topbar() {
             Settings
           </Dropdown.DropdownItem>
 
-          <AccountTypeGuard accountType={ACCOUNT_TYPE.OWNER}>
-            <Dropdown.DropdownItem href="/dashboard/my-organizations">
-              <Building2 size={15} />
-              Organization
-            </Dropdown.DropdownItem>
-          </AccountTypeGuard>
+          <Dropdown.DropdownItem href="/dashboard/my-organizations">
+            <Building2 size={15} />
+            Organization
+          </Dropdown.DropdownItem>
 
           <Dropdown.DropdownSeparator />
 

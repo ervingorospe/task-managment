@@ -4,6 +4,7 @@ export interface User {
   lastName: string;
   email: string;
   avatar: string | null;
-  accountType: "owner" | "member";
   isActive: boolean;
+  isVerified: boolean;
+  hasOnboarded: boolean;
 }

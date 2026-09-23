@@ -7,7 +7,7 @@ import { notifyApiError } from "@/lib/helper/api-error-toast";
 import { useLogActivity } from "@/hooks/use-log-activity";
 import { formatDueDate, getDueState } from "@/lib/helper/ticket-status";
 import { getTodayInTimeZone } from "@/lib/helper/format-date";
-import { updateTicket } from "@/lib/api/tickets";
+import { updateTicket, updateTicketTag } from "@/lib/api/tickets";
 import type { TagDetail } from "@/lib/types/organization/tag-detail.type";
 import { TagPicker } from "./tag-picker";
 import { DueChip } from "./due-chip";
@@ -48,7 +48,7 @@ export default function PersonalTicketDetailsCard({
     const previousTag = tag;
     onChangeTag(nextTag);
 
-    updateTicket(ticketId, { tagId: nextTag.id }).catch((error) => {
+    updateTicketTag(ticketId, nextTag.id).catch((error) => {
       onChangeTag(previousTag);
       notifyApiError(toast, error, "Failed to update status");
     });

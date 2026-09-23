@@ -187,10 +187,7 @@ export default function TicketCommentsSection({
     setMentionState(null);
 
     try {
-      const comment = await addTicketComment(ticketId, {
-        userId: currentUser.id,
-        comment: text,
-      });
+      const comment = await addTicketComment(ticketId, text);
       setComments((prev) => [...prev, comment]);
     } catch (error) {
       notifyApiError(toast, error, "Failed to add comment");

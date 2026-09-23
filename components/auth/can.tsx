@@ -16,8 +16,6 @@ interface CanProps {
   fallback?: ReactNode;
 }
 
-const SUPERADMIN_ROLE_ID = 1;
-
 export function Can({
   action,
   anyOf,
@@ -28,7 +26,6 @@ export function Can({
   const { activeMembership, isPersonalMode } = useAuth();
 
   const rules = activeMembership?.role.rules ?? [];
-  const isSuperAdmin = activeMembership?.role.id === SUPERADMIN_ROLE_ID;
 
   const passesAction = action ? hasPermission(rules, action) : true;
 
@@ -40,25 +37,26 @@ export function Can({
     ? allOf.every((permission) => hasPermission(rules, permission))
     : true;
 
-  // No team to restrict against in Personal mode — same bypass as
-  // usePermission() and the same reasoning as the Superadmin bypass above.
-  const allowed =
-    isPersonalMode ||
-    isSuperAdmin ||
-    (passesAction && passesAny && passesAll);
+  // No team to restrict against in Personal mode — same bypass
+  // usePermission() uses. No separate Superadmin bypass needed: the
+  // Superadmin role is seeded with every single Rule connected (see
+  // prisma/seed.ts), so it already passes any real permission check on
+  // its own — a role-id shortcut here would just be redundant and, worse,
+  // fragile (nothing guarantees Superadmin's row id is always 1).
+  const allowed = isPersonalMode || (passesAction && passesAny && passesAll);
 
   return allowed ? <>{children}</> : <>{fallback}</>;
 }
 
 /**
  * import { Can } from "@/components/auth/can";
-import { PERMISSIONS } from "@/lib/permissions";
-
-<Can action={PERMISSIONS.ROLE_ADD}>
-  <Button onClick={openCreateModal}>Add role</Button>
-</Can>
-
-<Can anyOf={[PERMISSIONS.MEMBER_VIEW_ADMINS, PERMISSIONS.MEMBER_VIEW_MEMBERS]}>
-  <MembersTable />
-</Can>
+ * import { PERMISSIONS } from "@/lib/data/permissions";
+ *
+ * <Can action={PERMISSIONS.ROLE_ADD}>
+ *   <Button onClick={openCreateModal}>Add role</Button>
+ * </Can>
+ *
+ * <Can anyOf={[PERMISSIONS.MEMBER_VIEW_OWNER, PERMISSIONS.MEMBER_VIEW_MEMBERS]}>
+ *   <MembersTable />
+ * </Can>
  */

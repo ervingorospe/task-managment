@@ -2,7 +2,10 @@ import { notFound } from "next/navigation";
 import { getOrganizationBySlug } from "@/lib/data/organization-detail";
 import MemberGuard from "@/components/auth/member-guard";
 import { Can } from "@/components/auth/can";
-import { PERMISSIONS } from "@/lib/data/permissions";
+import {
+  REQUEST_ALL_PERMISSIONS,
+  REQUEST_OWN_PERMISSIONS,
+} from "@/lib/data/permissions";
 import EmptyState from "@/components/ui/empty-state";
 import RequestsPageClient from "@/components/organization/requests/requests-page-client";
 
@@ -23,7 +26,7 @@ export default async function RequestsPage({ params }: RequestsPageProps) {
       isActive={organization.settings.isActive}
     >
       <Can
-        anyOf={[PERMISSIONS.TICKET_VIEW_ALL, PERMISSIONS.TICKET_REQUEST]}
+        anyOf={[...REQUEST_ALL_PERMISSIONS, ...REQUEST_OWN_PERMISSIONS]}
         fallback={
           <EmptyState subtitle="You do not have permission to view requests." />
         }

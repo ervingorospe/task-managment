@@ -12,36 +12,20 @@ import type { CurrentUser } from "@/lib/types/user/current-user.type";
 import type { UserMembership } from "@/lib/types/user/user-membership.type";
 import type { Rule } from "@/lib/types/rule/rule.type";
 import type { Permission } from "@/lib/data/permissions";
-import { fetchUserByEmail } from "@/lib/api/users";
-import { SESSION_COOKIE_NAME } from "@/lib/constants/session-cookie.constant";
-import { ACCOUNT_TYPE } from "@/lib/constants/accoun-type.constant";
+import {
+  login as apiLogin,
+  logout as apiLogout,
+  fetchCurrentUser,
+  UnverifiedAccountError,
+} from "@/lib/api/auth";
+import { ApiError } from "@/lib/api/client";
 
-/** "personal" is a real, selectable state in the topbar org switcher — an
- * owner-account user's own standalone space, no organization involved —
- * not just a fallback for "nothing to select." Only owner accounts ever
- * land here; member accounts always default to a real org membership. */
+/** "personal" is a real, selectable state in the topbar org switcher —
+ * every user's own standalone space, no organization involved, not just a
+ * fallback for "nothing to select." Available to anyone regardless of how
+ * many organizations they belong to. */
 const PERSONAL = "personal" as const;
 type ActiveOrgId = number | typeof PERSONAL | null;
-
-// Carries the logged-in email so a reload can restore the session instead
-// of just losing it — not a token, there's still no real backend auth to
-// verify against (see DEFAULT_PASSWORD below), so this is only as trustworthy
-// as knowing someone's email address already is. Doubles as the marker
-// middleware checks for.
-function setSessionCookie(email: string) {
-  document.cookie = `${SESSION_COOKIE_NAME}=${encodeURIComponent(email)}; path=/; max-age=${60 * 60 * 24 * 7}; samesite=lax`;
-}
-
-function clearSessionCookie() {
-  document.cookie = `${SESSION_COOKIE_NAME}=; path=/; max-age=0; samesite=lax`;
-}
-
-function readSessionEmail(): string | null {
-  const match = document.cookie.match(
-    new RegExp(`(?:^|; )${SESSION_COOKIE_NAME}=([^;]*)`),
-  );
-  return match ? decodeURIComponent(match[1]) : null;
-}
 
 // Remembers which org was active so a restored session lands back where
 // the user left off, not always on their first membership.
@@ -59,36 +43,27 @@ function writeStoredActiveOrgId(id: ActiveOrgId) {
   else localStorage.setItem(ACTIVE_ORG_STORAGE_KEY, String(id));
 }
 
-// No auth backend yet, by design (see ticketing-backend's README) — so
-// there's no real password to check. Every user in the backend's users
-// table can log in with this one shared password until real auth exists.
-const DEFAULT_PASSWORD = "123";
-
-/** Owner accounts default to Personal unless a stored selection (a real
- * membership, or Personal itself) is still valid for this user; member
- * accounts keep the original behavior exactly — first membership, or
- * `null` if they somehow have none. Members never get Personal. */
+/** Honors a stored selection (Personal or a still-valid membership) for
+ * anyone; otherwise defaults to the first real membership, falling back to
+ * Personal only if they have none. */
 function defaultActiveOrgId(
   user: CurrentUser,
   storedOrgId: ActiveOrgId,
 ): ActiveOrgId {
-  if (user.accountType === ACCOUNT_TYPE.OWNER) {
-    if (storedOrgId === PERSONAL) return PERSONAL;
-    if (user.memberships.some((m) => m.organization.id === storedOrgId)) {
-      return storedOrgId;
-    }
-    return PERSONAL;
-  }
-
+  if (storedOrgId === PERSONAL) return PERSONAL;
   if (user.memberships.some((m) => m.organization.id === storedOrgId)) {
     return storedOrgId;
   }
-  return user.memberships[0]?.organization.id ?? null;
+  return user.memberships[0]?.organization.id ?? PERSONAL;
 }
 
 interface LoginResult {
   success: boolean;
   error?: string;
+  /** True when the credentials were correct but the account hasn't clicked
+   * its verification link yet — the login page redirects to
+   * /verify-pending instead of showing `error` as a generic failure. */
+  needsVerification?: boolean;
 }
 
 interface AuthContextValue {
@@ -121,7 +96,7 @@ interface AuthContextValue {
   isPersonalMode: boolean;
 
   login: (email: string, password: string) => Promise<LoginResult>;
-  logout: () => void;
+  logout: () => Promise<void>;
   switchOrganization: (organizationId: number | typeof PERSONAL) => void;
   updateProfile: (
     patch: Partial<Pick<CurrentUser, "firstName" | "lastName" | "email" | "avatar">>,
@@ -153,34 +128,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [activeOrgId, setActiveOrgId] = useState<ActiveOrgId>(null);
   const [isInitializing, setIsInitializing] = useState(true);
 
-  // Restores the session on first load from the cookie login() sets, so a
-  // reload doesn't just discard everything the way in-memory-only state
-  // used to.
+  // Restores the session on first load — the httpOnly cookie the backend
+  // set on login isn't readable from JS at all, so this just always asks
+  // the backend "who am I" and takes null (a 401) as "not logged in"
+  // rather than checking for a cookie's presence first.
   useEffect(() => {
-    const email = readSessionEmail();
-    if (!email) {
-      setIsInitializing(false);
-      return;
-    }
-
     let cancelled = false;
-    fetchUserByEmail(email)
+    fetchCurrentUser()
       .then((user) => {
-        if (cancelled) return;
-        if (!user) {
-          // Cookie points at a user that no longer exists — nothing to
-          // restore, so stop treating it as a session.
-          clearSessionCookie();
-          return;
-        }
+        if (cancelled || !user) return;
         setCurrentUser(user);
         const orgId = defaultActiveOrgId(user, readStoredActiveOrgId());
         setActiveOrgId(orgId);
       })
       .catch((error) => {
-        // Network/backend hiccup — leave the cookie alone so a later
-        // reload (once the backend's reachable) can still restore the
-        // session; this load just falls through to logged-out.
         console.error("Session restore failed", error);
       })
       .finally(() => {
@@ -196,37 +157,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   async function login(email: string, password: string): Promise<LoginResult> {
-    if (password !== DEFAULT_PASSWORD) {
-      return { success: false, error: "Invalid email or password." };
-    }
-
-    let user;
+    let user: CurrentUser;
     try {
-      user = await fetchUserByEmail(email.trim());
+      user = await apiLogin(email.trim(), password);
     } catch (error) {
-      console.error("Login lookup failed", error);
+      if (error instanceof UnverifiedAccountError) {
+        return { success: false, needsVerification: true, error: error.message };
+      }
+      if (error instanceof ApiError) {
+        return { success: false, error: error.message };
+      }
+      console.error("Login failed", error);
       return {
         success: false,
         error: "Couldn't reach the backend. Is it running?",
       };
     }
 
-    if (!user) {
-      return { success: false, error: "Invalid email or password." };
-    }
-
     const orgId = defaultActiveOrgId(user, readStoredActiveOrgId());
     setCurrentUser(user);
     setActiveOrgId(orgId);
     writeStoredActiveOrgId(orgId);
-    setSessionCookie(user.email);
     return { success: true };
   }
 
-  function logout() {
+  async function logout() {
+    try {
+      await apiLogout();
+    } catch (error) {
+      console.error("Logout request failed", error);
+    }
     setCurrentUser(null);
     setActiveOrgId(null);
-    clearSessionCookie();
     writeStoredActiveOrgId(null);
   }
 
@@ -241,9 +203,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!currentUser) return;
 
     if (organizationId === PERSONAL) {
-      // Personal is owner-only — a member account has no standalone
-      // space to switch to.
-      if (currentUser.accountType !== ACCOUNT_TYPE.OWNER) return;
       setActiveOrgId(PERSONAL);
       writeStoredActiveOrgId(PERSONAL);
       return;
@@ -276,8 +235,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   async function refreshCurrentUser() {
-    if (!currentUser) return;
-    const user = await fetchUserByEmail(currentUser.email);
+    const user = await fetchCurrentUser();
     if (user) setCurrentUser(user);
   }
 

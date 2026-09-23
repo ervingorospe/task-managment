@@ -52,7 +52,7 @@ function TicketListComponent({
   hideAssign = false,
 }: TicketListProps) {
   const canAssign = usePermission(PERMISSIONS.TICKET_ASSIGN);
-  const canChangeStatus = usePermission(PERMISSIONS.TICKET_CHANGE_STATUS);
+  const canChangeStatus = usePermission(PERMISSIONS.TICKET_CHANGE_TAG);
 
   if (tickets.length === 0) {
     return (

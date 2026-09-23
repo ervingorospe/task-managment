@@ -8,8 +8,6 @@ import List from "@/components/ui/list";
 import Avatar from "@/components/ui/avatar";
 import EmptyState from "@/components/ui/empty-state";
 import { fetchMyOwnOrganizations, type OwnedOrganization } from "@/lib/api/organizations";
-import { AccountTypeGuard } from "@/components/auth/account-type.guard";
-import { ACCOUNT_TYPE } from "@/lib/constants/accoun-type.constant";
 import { useAuth } from "@/providers/auth-provider";
 import { ListSkeleton } from "@/components/ui/skeletons";
 
@@ -35,7 +33,7 @@ export default function MyOrganizationsPage() {
   }, [currentUser]);
 
   return (
-    <AccountTypeGuard accountType={ACCOUNT_TYPE.OWNER}>
+    <>
       <div className="flex items-start justify-between">
         <div>
           <h1 className="text-lg font-semibold text-ink">My Organizations</h1>
@@ -96,6 +94,6 @@ export default function MyOrganizationsPage() {
           ))}
         </List>
       )}
-    </AccountTypeGuard>
+    </>
   );
 }

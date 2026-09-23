@@ -1,4 +1,4 @@
-import { api, ApiError } from "./client";
+import { api, isNotFoundOrForbidden } from "./client";
 import { adaptTicket, adaptComment, adaptAttachment } from "./adapters";
 import type { TicketDetail, TicketAttachment } from "@/lib/types/ticket/ticket-detail.type";
 import type { TicketComment } from "@/lib/types/ticket/ticket-comment.type";
@@ -168,7 +168,7 @@ export async function fetchTicketById(id: number): Promise<TicketDetail | null> 
     const ticket = await api.get<RawTicket>(`/tickets/${id}`);
     return adaptTicket(ticket);
   } catch (error) {
-    if (error instanceof ApiError && error.status === 404) return null;
+    if (isNotFoundOrForbidden(error)) return null;
     throw error;
   }
 }
@@ -190,13 +190,13 @@ export async function createTicket(
   return adaptTicket(ticket);
 }
 
+// Split into one call per field group, matching the backend's split ticket
+// endpoints — each is gated by a different Rule (ticket.update /
+// ticket.change.tag / ticket.assign / view access for starring).
 export interface UpdateTicketPayload {
   title?: string;
   description?: string;
-  tagId?: number;
-  assigneeIds?: number[];
   dueDate?: string | null;
-  starred?: boolean;
 }
 
 export async function updateTicket(
@@ -204,6 +204,34 @@ export async function updateTicket(
   payload: UpdateTicketPayload,
 ): Promise<TicketDetail> {
   const ticket = await api.patch<RawTicket>(`/tickets/${id}`, payload);
+  return adaptTicket(ticket);
+}
+
+export async function updateTicketTag(
+  id: number,
+  tagId: number,
+): Promise<TicketDetail> {
+  const ticket = await api.patch<RawTicket>(`/tickets/${id}/tag`, { tagId });
+  return adaptTicket(ticket);
+}
+
+export async function updateTicketAssignees(
+  id: number,
+  assigneeIds: number[],
+): Promise<TicketDetail> {
+  const ticket = await api.patch<RawTicket>(`/tickets/${id}/assignees`, {
+    assigneeIds,
+  });
+  return adaptTicket(ticket);
+}
+
+export async function updateTicketStar(
+  id: number,
+  starred: boolean,
+): Promise<TicketDetail> {
+  const ticket = await api.patch<RawTicket>(`/tickets/${id}/star`, {
+    starred,
+  });
   return adaptTicket(ticket);
 }
 
@@ -233,13 +261,13 @@ export async function removeTicketAttachment(
 
 export async function addTicketComment(
   ticketId: number,
-  payload: { userId: number; comment: string },
+  comment: string,
 ): Promise<TicketComment> {
-  const comment = await api.post<RawTicketComment>(
+  const created = await api.post<RawTicketComment>(
     `/tickets/${ticketId}/comments`,
-    payload,
+    { comment },
   );
-  return adaptComment(comment);
+  return adaptComment(created);
 }
 
 export async function updateTicketComment(

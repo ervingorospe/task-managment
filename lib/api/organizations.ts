@@ -1,4 +1,4 @@
-import { api, ApiError } from "./client";
+import { api, isNotFoundOrForbidden } from "./client";
 import type { CreateOrganizationPayload } from "@/lib/types/organization/create-organization-payload.type";
 import {
   adaptUser,
@@ -118,16 +118,31 @@ export async function uploadOrganizationLogo(
   return result.url;
 }
 
-export async function updateOrganizationSettings(
+// Split into one call per field, matching the backend's split settings
+// endpoints (each carries its own Rule — see organization.controller.ts).
+export async function updateOrganizationTimezone(
   orgId: number,
-  patch: {
-    logo?: string;
-    timezone?: string;
-    inviteExpiration?: string;
-    sendEmailNotif?: boolean;
-  },
+  timezone: string,
 ): Promise<void> {
-  await api.patch(`/organizations/${orgId}/settings`, patch);
+  await api.patch(`/organizations/${orgId}/settings/timezone`, { timezone });
+}
+
+export async function updateOrganizationInviteExpiration(
+  orgId: number,
+  inviteExpiration: string,
+): Promise<void> {
+  await api.patch(`/organizations/${orgId}/settings/invite-expiration`, {
+    inviteExpiration,
+  });
+}
+
+export async function updateOrganizationNotifications(
+  orgId: number,
+  sendEmailNotif: boolean,
+): Promise<void> {
+  await api.patch(`/organizations/${orgId}/settings/notifications`, {
+    sendEmailNotif,
+  });
 }
 
 export async function updateOrganizationActiveState(
@@ -159,15 +174,29 @@ async function composeOrganizationDetail(
   try {
     org = await fetchOrg();
   } catch (error) {
-    if (error instanceof ApiError && error.status === 404) return null;
+    if (isNotFoundOrForbidden(error)) return null;
     throw error;
+  }
+
+  // A caller can be a genuine member (passed the check above) while still
+  // lacking any ticket-view permission in their role — a 403 here means
+  // "nothing to show", not "the org doesn't exist", so it degrades to an
+  // empty list instead of failing the whole page like the org fetch above.
+  const emptyPage = { items: [], total: 0, page: 1, limit: 100 };
+  async function fetchOrEmpty<T>(path: string): Promise<RawPage<T>> {
+    try {
+      return await api.get<RawPage<T>>(path);
+    } catch (error) {
+      if (isNotFoundOrForbidden(error)) return emptyPage;
+      throw error;
+    }
   }
 
   // 100 is the backend's own max page size (PaginationQueryDto). Fine for
   // this org's current size — see this function's own doc comment above.
   const [ticketsPage, requestsPage] = await Promise.all([
-    api.get<RawPage<RawTicket>>(`/tickets?orgId=${org.id}&limit=100`),
-    api.get<RawPage<RawTicketRequest>>(
+    fetchOrEmpty<RawTicket>(`/tickets?orgId=${org.id}&limit=100`),
+    fetchOrEmpty<RawTicketRequest>(
       `/ticket-requests?orgId=${org.id}&limit=100`,
     ),
   ]);

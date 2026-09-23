@@ -2,6 +2,7 @@
 
 import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
+import { useAuth } from "@/providers/auth-provider";
 import { useIsOrganizationMember } from "@/hooks/use-is-organization-member";
 import { OrganizationDisabledState } from "@/components/organization/organization-disabled-state";
 
@@ -21,7 +22,14 @@ export default function MemberGuard({
 }) {
   if (!organizationId) notFound();
 
+  const { isInitializing } = useAuth();
   const isMember = useIsOrganizationMember(organizationId);
+
+  // currentUser/memberships are briefly empty while the session is still
+  // being restored from the backend — useIsOrganizationMember would read
+  // that as "not a member" and permanently 404 a legitimate member. Wait
+  // for the real answer instead of deciding on a stale/empty first render.
+  if (isInitializing) return null;
   if (!isMember) notFound();
 
   if (!isActive) {

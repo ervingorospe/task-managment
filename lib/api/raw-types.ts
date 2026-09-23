@@ -23,9 +23,10 @@ export interface RawUser {
   lastName: string;
   email: string;
   avatar: string | null;
-  accountType: "OWNER" | "MEMBER";
   isActive: boolean;
   isDeleted: boolean;
+  isVerified: boolean;
+  hasOnboarded: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -181,8 +182,9 @@ export interface RawTicketRequest {
   attachments: RawTicketAttachment[];
 }
 
-// GET /users/by-email/:email includes each membership's organization with
-// only `settings` — not `owner` — so this is narrower than RawOrganization.
+// GET /auth/me (and login/verify-email/Google OAuth) includes each
+// membership's organization with only `settings` — not `owner` — so this
+// is narrower than RawOrganization.
 export interface RawMembershipOrganization {
   id: number;
   organizationName: string;

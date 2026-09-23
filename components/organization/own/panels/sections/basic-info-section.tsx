@@ -22,8 +22,8 @@ import {
 } from "@/lib/schemas/organization.schema";
 import { FIELD_TYPES, InputFieldConfig } from "@/lib/types/form.type";
 import Link from "next/link";
-import { AccountTypeGuard } from "@/components/auth/account-type.guard";
-import { ACCOUNT_TYPE } from "@/lib/constants/accoun-type.constant";
+import { Can } from "@/components/auth/can";
+import { PERMISSIONS } from "@/lib/data/permissions";
 import { updateOrganizationBasicInfo } from "@/lib/api/organizations";
 interface BasicInformationProps {
   organization: OrganizationDetail;
@@ -160,7 +160,7 @@ export default function BasicInformation({
       }
       headerActions={
         isEditing ? (
-          <AccountTypeGuard accountType={ACCOUNT_TYPE.OWNER}>
+          <Can action={PERMISSIONS.ORGANIZATION_UPDATE_BASIC_INFO}>
             <div className="flex items-center gap-2">
               <Button type="button" variant="secondary" onClick={cancelEditing}>
                 <X size={14} className="mr-1.5" />
@@ -172,19 +172,19 @@ export default function BasicInformation({
                 Save
               </Button>
             </div>
-          </AccountTypeGuard>
+          </Can>
         ) : (
-          <AccountTypeGuard accountType={ACCOUNT_TYPE.OWNER}>
+          <Can action={PERMISSIONS.ORGANIZATION_UPDATE_BASIC_INFO}>
             <Button type="button" variant="secondary" onClick={startEditing}>
               <Pencil size={14} className="mr-1.5" />
               Edit
             </Button>
-          </AccountTypeGuard>
+          </Can>
         )
       }
     >
       {isEditing ? (
-        <AccountTypeGuard accountType={ACCOUNT_TYPE.OWNER}>
+        <Can action={PERMISSIONS.ORGANIZATION_UPDATE_BASIC_INFO}>
           <form
             onSubmit={handleSubmit(onSave)}
             className="grid gap-5 sm:grid-cols-2"
@@ -220,7 +220,7 @@ export default function BasicInformation({
               );
             })}
           </form>
-        </AccountTypeGuard>
+        </Can>
       ) : (
         <div className="grid gap-5 sm:grid-cols-2">
           <PropertyRow label="Organization Name" variant="plain">

@@ -33,17 +33,29 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { isAuthenticated, isInitializing, activeOrganization } = useAuth();
+  const { isAuthenticated, isInitializing, activeOrganization, currentUser } =
+    useAuth();
   const router = useRouter();
   const pathname = usePathname();
 
-  // A reload restores the session from the marker cookie (see
-  // auth-provider.tsx) before this fires — isInitializing gates the
-  // redirect so a real session doesn't get bounced to /login while that
-  // restore is still in flight.
+  // A reload restores the session from the backend (see
+  // auth-provider.tsx's GET /auth/me call) before this fires —
+  // isInitializing gates the redirect so a real session doesn't get
+  // bounced to /login while that restore is still in flight. There's no
+  // server-side middleware doing this anymore (it can't — the session
+  // cookie is httpOnly and set by a different origin, invisible to the
+  // Next.js server), so this client-side check is now the only gate.
   useEffect(() => {
     if (!isInitializing && !isAuthenticated) router.replace("/login");
   }, [isInitializing, isAuthenticated, router]);
+
+  // First-login onboarding (personal vs. organization) — a verified user
+  // who hasn't completed it yet gets sent there before anything else in
+  // the dashboard renders, regardless of which page they landed on.
+  useEffect(() => {
+    if (isInitializing || !isAuthenticated || !currentUser) return;
+    if (!currentUser.hasOnboarded) router.replace("/onboarding");
+  }, [isInitializing, isAuthenticated, currentUser, router]);
 
   // Force every dashboard page to refetch on navigation instead of
   // reusing Next's client Router Cache. This matters most for
@@ -62,6 +74,7 @@ export default function DashboardLayout({
   }, [pathname, router]);
 
   if (isInitializing || !isAuthenticated) return null;
+  if (currentUser && !currentUser.hasOnboarded) return null;
 
   const isExempt = EXEMPT_PREFIXES.some((prefix) =>
     pathname.startsWith(prefix),

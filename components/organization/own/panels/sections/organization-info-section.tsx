@@ -17,7 +17,7 @@ import { getTimezoneList } from "@/lib/helper/timezones";
 import { lazyNamed } from "@/lib/helper/lazy-named";
 import { OrganizationDetail } from "@/lib/types/organization/organization-detail.type";
 import {
-  updateOrganizationSettings,
+  updateOrganizationTimezone,
   uploadOrganizationLogo,
   cancelOwnershipTransfer,
 } from "@/lib/api/organizations";
@@ -91,8 +91,9 @@ export default function OrganizationInfoSection({
 
     setIsUploadingLogo(true);
     try {
+      // The upload endpoint persists the logo itself now — no separate
+      // settings call needed (see OrganizationService.uploadLogo()).
       const url = await uploadOrganizationLogo(organization.id, file);
-      await updateOrganizationSettings(organization.id, { logo: url });
       setLogo(url);
     } catch (error) {
       setLogo(previousLogo);
@@ -116,9 +117,7 @@ export default function OrganizationInfoSection({
 
   async function handleTimezoneSave(values: TimezoneFormValues) {
     try {
-      await updateOrganizationSettings(organization.id, {
-        timezone: values.timezone,
-      });
+      await updateOrganizationTimezone(organization.id, values.timezone);
       // Topbar's clock and every other org-timezone display read from
       // useAuth()'s currentUser, which is only fetched at login — without
       // this they'd keep showing the old timezone until the next reload.

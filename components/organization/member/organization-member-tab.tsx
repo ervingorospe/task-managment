@@ -13,8 +13,7 @@ import { OrganizationDisabledState } from "@/components/organization/organizatio
 import LeaveOrganizationSection, {
   LeaveOrganizationButton,
 } from "./organization-leave";
-import { AccountTypeGuard } from "@/components/auth/account-type.guard";
-import { ACCOUNT_TYPE } from "@/lib/constants/accoun-type.constant";
+import { useIsOrganizationOwner } from "@/hooks/use-is-organization-owner";
 
 const tabs = [
   {
@@ -44,6 +43,7 @@ export default function OrganizationMemberTabs({
   organization: OrganizationDetail;
 }) {
   const [activeTab, setActiveTab] = useState<Tab>("info");
+  const isOwner = useIsOrganizationOwner(organization.ownerId);
 
   // A member still needs a way out of a disabled org, so this page (unlike
   // the other /organizations/[slug]/** pages) isn't blocked wholesale by
@@ -54,11 +54,11 @@ export default function OrganizationMemberTabs({
       <OrganizationDisabledState
         organizationName={organization.organizationName}
         action={
-          <AccountTypeGuard accountType={ACCOUNT_TYPE.MEMBER}>
+          !isOwner && (
             <LeaveOrganizationButton
               organizationName={organization.organizationName}
             />
-          </AccountTypeGuard>
+          )
         }
       />
     );
@@ -120,11 +120,11 @@ export default function OrganizationMemberTabs({
         {activeTab === "info" && (
           <>
             <OrganizaionTab organization={organization} />
-            <AccountTypeGuard accountType={ACCOUNT_TYPE.MEMBER}>
+            {!isOwner && (
               <LeaveOrganizationSection
                 organizationName={organization.organizationName}
               />
-            </AccountTypeGuard>
+            )}
           </>
         )}
 

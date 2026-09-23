@@ -8,7 +8,6 @@ import { Pencil, X, Check } from "lucide-react";
 import Card from "@/components/ui/card";
 import Input from "@/components/ui/form/input";
 import { Button } from "@/components/ui/buttons/button";
-import { MetaBadge } from "@/components/ui/meta-badge";
 import Avatar from "@/components/ui/avatar";
 import AvatarUpload from "./avatar-upload";
 import { useAuth } from "@/providers/auth-provider";
@@ -165,11 +164,6 @@ export default function ProfileInfoSection() {
             <p className="mt-0.5 truncate text-sm text-ink-muted">
               {currentUser.email}
             </p>
-            <div className="mt-1.5">
-              <MetaBadge>
-                {currentUser.accountType === "owner" ? "Owner" : "Member"}
-              </MetaBadge>
-            </div>
           </div>
         </div>
       )}

@@ -6,7 +6,7 @@ import ReportsClient from "@/components/reports/reports-client";
 export default function ReportsPage() {
   return (
     <Can
-      action={PERMISSIONS.REPORT_VIEW}
+      anyOf={[PERMISSIONS.REPORT_VIEW_ALL, PERMISSIONS.REPORT_VIEW_OWN]}
       fallback={
         <EmptyState subtitle="You do not have permission to view reports." />
       }

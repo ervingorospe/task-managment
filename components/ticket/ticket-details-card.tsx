@@ -15,7 +15,11 @@ import { useLogActivity } from "@/hooks/use-log-activity";
 import { getMemberName } from "@/lib/helper/member-name";
 import { formatDueDate, getDueState } from "@/lib/helper/ticket-status";
 import { getTodayInTimeZone } from "@/lib/helper/format-date";
-import { updateTicket } from "@/lib/api/tickets";
+import {
+  updateTicket,
+  updateTicketTag,
+  updateTicketAssignees,
+} from "@/lib/api/tickets";
 import { PERMISSIONS } from "@/lib/data/permissions";
 import type { TagDetail } from "@/lib/types/organization/tag-detail.type";
 import type { MemberDetail } from "@/lib/types/organization/member-detail.type";
@@ -52,7 +56,7 @@ export default function TicketDetailsCard({
 }: TicketDetailsCardProps) {
   const toast = useToast();
   const logTicketActivity = useLogActivity("ticket");
-  const canChangeStatus = usePermission(PERMISSIONS.TICKET_CHANGE_STATUS);
+  const canChangeStatus = usePermission(PERMISSIONS.TICKET_CHANGE_TAG);
   const assignableMembers = organization.members.filter(
     (m) => m.role?.roleName !== "Client",
   );
@@ -64,7 +68,7 @@ export default function TicketDetailsCard({
     const previousTag = tag;
     onChangeTag(nextTag);
 
-    updateTicket(ticketId, { tagId: nextTag.id }).catch((error) => {
+    updateTicketTag(ticketId, nextTag.id).catch((error) => {
       onChangeTag(previousTag);
       notifyApiError(toast, error, "Failed to update status");
     });
@@ -87,7 +91,7 @@ export default function TicketDetailsCard({
     );
     onAssigneesChange(newAssignees);
 
-    updateTicket(ticketId, { assigneeIds: memberIds }).catch((error) => {
+    updateTicketAssignees(ticketId, memberIds).catch((error) => {
       onAssigneesChange(previousAssignees);
       notifyApiError(toast, error, "Failed to update assignees");
     });

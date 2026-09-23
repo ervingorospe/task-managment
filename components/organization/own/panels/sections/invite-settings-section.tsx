@@ -10,7 +10,7 @@ import { useToast } from "@/providers/toast-provider";
 import { InlineAlert } from "@/components/ui/inline-alert";
 import { useInlineAlert } from "@/hooks/use-inline-alert";
 import { notifyApiError } from "@/lib/helper/api-error-toast";
-import { updateOrganizationSettings } from "@/lib/api/organizations";
+import { updateOrganizationInviteExpiration } from "@/lib/api/organizations";
 
 const expirationOptions = [
   { value: "1_hour", label: "1 hour" },
@@ -45,9 +45,7 @@ export default function InviteSettingsSection({
 
   async function handleUpdate(values: InviteSettingsValues) {
     try {
-      await updateOrganizationSettings(orgId, {
-        inviteExpiration: values.expiration,
-      });
+      await updateOrganizationInviteExpiration(orgId, values.expiration);
     } catch (error) {
       notifyApiError(toast, error, "Failed to update invite settings");
       return;

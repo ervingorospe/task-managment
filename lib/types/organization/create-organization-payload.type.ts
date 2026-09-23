@@ -5,7 +5,6 @@ export interface CreateOrganizationPayload {
   organizationDesc?: string;
   logo?: string;
   timezone: string;
-  ownerId: number;
   roles: {
     id: number;
     isDefault: boolean;

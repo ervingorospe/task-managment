@@ -20,6 +20,12 @@ const nextConfig = {
         protocol: "https",
         hostname: "i.pravatar.cc",
       },
+      // Google account avatars — populated onto User.avatar from the
+      // OAuth profile on Google sign-in/sign-up.
+      {
+        protocol: "https",
+        hostname: "lh3.googleusercontent.com",
+      },
       // Ticket attachments and org logos (see ticketing-backend's
       // S3Service) — wildcarded so it works for any bucket/region, not
       // just whichever one this env happens to be configured with.

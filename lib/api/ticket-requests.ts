@@ -1,4 +1,4 @@
-import { api, ApiError } from "./client";
+import { api, isNotFoundOrForbidden } from "./client";
 import { adaptTicketRequest, adaptTicket } from "./adapters";
 import type { TicketRequest } from "@/lib/types/ticket/ticket-request.type";
 import type { TicketDetail } from "@/lib/types/ticket/ticket-detail.type";
@@ -11,7 +11,7 @@ export async function fetchTicketRequestById(
     const request = await api.get<RawTicketRequest>(`/ticket-requests/${id}`);
     return adaptTicketRequest(request);
   } catch (error) {
-    if (error instanceof ApiError && error.status === 404) return null;
+    if (isNotFoundOrForbidden(error)) return null;
     throw error;
   }
 }

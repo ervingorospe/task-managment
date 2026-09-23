@@ -14,7 +14,7 @@ import { notifyApiError } from "@/lib/helper/api-error-toast";
 import { setPendingAlert } from "@/lib/helper/pending-alert";
 import { useLogActivity } from "@/hooks/use-log-activity";
 import { PERMISSIONS } from "@/lib/data/permissions";
-import { updateTicket, deleteTicket } from "@/lib/api/tickets";
+import { updateTicket, updateTicketStar, deleteTicket } from "@/lib/api/tickets";
 import { DueChip } from "./due-chip";
 import { getDueState } from "@/lib/helper/ticket-status";
 import type { TagDetail } from "@/lib/types/organization/tag-detail.type";
@@ -64,7 +64,7 @@ export default function TicketDetailClient({
     const nowStarred = !starred;
     setStarred(nowStarred);
 
-    updateTicket(ticket.id, { starred: nowStarred }).catch((error) => {
+    updateTicketStar(ticket.id, nowStarred).catch((error) => {
       setStarred(!nowStarred);
       notifyApiError(
         toast,

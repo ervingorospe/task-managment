@@ -27,7 +27,7 @@ function CreateOrganizationInner() {
   async function handleCreateOrganization() {
     if (!currentUser) return;
 
-    const payload = buildCreateOrganizationPayload(formData, currentUser.id);
+    const payload = buildCreateOrganizationPayload(formData);
 
     let organization;
     try {
