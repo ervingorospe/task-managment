@@ -56,22 +56,22 @@ lib/mock/session.tsx        Mock auth context + mock permission hook
 
 Defined in `tailwind.config.ts`. Light mode only — no dark theme yet.
 
-| Token | Value | Use |
-|---|---|---|
-| `canvas` | `#F7F8F7` | Page background |
-| `surface` | `#FFFFFF` | Cards, panels, inputs |
-| `ink` / `ink-muted` / `ink-faint` | `#0E241C` / `#5B6B65` / `#94A39D` | Text hierarchy |
-| `accent` | `#00FA9A` | **Backgrounds only** — buttons, header bg, badges |
-| `accent-hover` | `#00C278` | Hover/pressed state — dark enough for white text |
-| `accent-subtle` | `#E2F8F0` | Light tint for selected rows, subtle badges |
-| `accent-text` | `#007A4B` | **Text/links/borders on white** — the raw accent fails contrast as text |
-| `danger` / `warning` | `#E5484D` / `#E2A03F` | Error and warning states — deliberately not green, so they don't compete with the brand color's meaning |
-| `status.*` | gray/blue/green/red | Ticket status dots |
+| Token                             | Value                             | Use                                                                                                     |
+| --------------------------------- | --------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| `canvas`                          | `#F7F8F7`                         | Page background                                                                                         |
+| `surface`                         | `#FFFFFF`                         | Cards, panels, inputs                                                                                   |
+| `ink` / `ink-muted` / `ink-faint` | `#0E241C` / `#5B6B65` / `#94A39D` | Text hierarchy                                                                                          |
+| `accent`                          | `#00FA9A`                         | **Backgrounds only** — buttons, header bg, badges                                                       |
+| `accent-hover`                    | `#00C278`                         | Hover/pressed state — dark enough for white text                                                        |
+| `accent-subtle`                   | `#E2F8F0`                         | Light tint for selected rows, subtle badges                                                             |
+| `accent-text`                     | `#007A4B`                         | **Text/links/borders on white** — the raw accent fails contrast as text                                 |
+| `danger` / `warning`              | `#E5484D` / `#E2A03F`             | Error and warning states — deliberately not green, so they don't compete with the brand color's meaning |
+| `status.*`                        | gray/blue/green/red               | Ticket status dots                                                                                      |
 
 **The one rule to keep in mind everywhere:** `#00FA9A` is bright enough that white
 text on it fails accessibility contrast (~1.4:1, needs 4.5:1). Use `ink` (dark)
 text on the raw accent, and reach for `accent-text` whenever green needs to be
-a *foreground* color (links, small labels, borders) rather than a background.
+a _foreground_ color (links, small labels, borders) rather than a background.
 
 Fonts: IBM Plex Sans (UI text), IBM Plex Mono (ticket IDs, timestamps).
 
