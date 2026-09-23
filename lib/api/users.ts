@@ -17,7 +17,12 @@ export async function fetchUserByEmail(email: string): Promise<CurrentUser | nul
 
 export async function updateUser(
   userId: number,
-  patch: { firstName?: string; lastName?: string; email?: string },
+  patch: {
+    firstName?: string;
+    lastName?: string;
+    email?: string;
+    avatar?: string | null;
+  },
 ): Promise<void> {
   await api.patch(`/users/${userId}`, patch);
 }

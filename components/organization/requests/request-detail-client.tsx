@@ -123,6 +123,7 @@ export default function RequestDetailClient({
   const { alert, showAlert, dismissAlert } = useInlineAlert();
   const canCreateTicket = usePermission(PERMISSIONS.TICKET_CREATE);
   const { activeMembership } = useAuth();
+  const timeZone = activeMembership?.organization.settings.timezone;
   const { entries } = useActivityLog();
   const logRequestActivity = useLogActivity("request");
   const logTicketActivity = useLogActivity("ticket");
@@ -167,7 +168,7 @@ export default function RequestDetailClient({
       key: `entry-${entry.id}`,
       icon: ACTIVITY_ACTION_ICON[entry.action] ?? RefreshCw,
       label: `${entry.actorName} ${entry.description}`,
-      date: `${formatDate(entry.createdAt)} · ${formatRelative(entry.createdAt)}`,
+      date: `${formatDate(entry.createdAt, timeZone)} · ${formatRelative(entry.createdAt)}`,
       tone: entry.action === "rejected" ? "danger" : "done",
     }));
 
@@ -181,7 +182,7 @@ export default function RequestDetailClient({
     }
 
     return steps;
-  }, [requestEntries, request.status]);
+  }, [requestEntries, request.status, timeZone]);
 
   async function handleReject(remarks: string) {
     try {

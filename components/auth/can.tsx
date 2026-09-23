@@ -25,7 +25,7 @@ export function Can({
   children,
   fallback = null,
 }: CanProps) {
-  const { activeMembership } = useAuth();
+  const { activeMembership, isPersonalMode } = useAuth();
 
   const rules = activeMembership?.role.rules ?? [];
   const isSuperAdmin = activeMembership?.role.id === SUPERADMIN_ROLE_ID;
@@ -40,7 +40,12 @@ export function Can({
     ? allOf.every((permission) => hasPermission(rules, permission))
     : true;
 
-  const allowed = isSuperAdmin || (passesAction && passesAny && passesAll);
+  // No team to restrict against in Personal mode — same bypass as
+  // usePermission() and the same reasoning as the Superadmin bypass above.
+  const allowed =
+    isPersonalMode ||
+    isSuperAdmin ||
+    (passesAction && passesAny && passesAll);
 
   return allowed ? <>{children}</> : <>{fallback}</>;
 }

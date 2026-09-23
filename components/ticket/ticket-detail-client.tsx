@@ -246,6 +246,8 @@ export default function TicketDetailClient({
         <div className="space-y-6">
           <TicketOverviewCard
             ticketId={ticket.id}
+            ticketTitle={title}
+            referenceId={ticket.referenceId}
             description={ticket.description}
             attachments={ticket.attachments}
             comments={ticket.comments}

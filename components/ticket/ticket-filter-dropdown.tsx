@@ -47,6 +47,11 @@ interface TicketFilterDropdownProps {
   onChange: (value: TicketFilterState) => void;
   members: MemberDetail[];
   tags: TagDetail[];
+  /** A personal (org-less) ticket has no members to filter by at all —
+   * the usual ticket.assign permission check passes in Personal mode (no
+   * team to restrict against), so this explicitly hides the section
+   * instead. */
+  hideMemberFilter?: boolean;
 }
 
 export function TicketFilterDropdown({
@@ -54,6 +59,7 @@ export function TicketFilterDropdown({
   onChange,
   members,
   tags,
+  hideMemberFilter = false,
 }: TicketFilterDropdownProps) {
   const [draft, setDraft] = useState<TicketFilterState>(value);
   const [memberSearch, setMemberSearch] = useState("");
@@ -87,6 +93,7 @@ export function TicketFilterDropdown({
         members={members}
         tags={tags}
         onChange={onChange}
+        hideMemberFilter={hideMemberFilter}
       />
     </Dropdown>
   );
@@ -100,6 +107,7 @@ interface TicketFilterContentProps {
   members: MemberDetail[];
   tags: TagDetail[];
   onChange: (value: TicketFilterState) => void;
+  hideMemberFilter: boolean;
 }
 
 function TicketFilterContent({
@@ -110,9 +118,11 @@ function TicketFilterContent({
   members,
   tags,
   onChange,
+  hideMemberFilter,
 }: TicketFilterContentProps) {
   const { close } = useDropdown();
-  const canFilterByMember = usePermission(PERMISSIONS.TICKET_ASSIGN);
+  const canFilterByMember =
+    usePermission(PERMISSIONS.TICKET_ASSIGN) && !hideMemberFilter;
 
   const filteredMembers = members.filter((member) => {
     const name = `${member.user?.firstName ?? ""} ${

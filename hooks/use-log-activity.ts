@@ -6,7 +6,8 @@ import { useAuth } from "@/providers/auth-provider";
 import type { ActivityModule } from "@/lib/types/activity/activity-log-entry.type";
 
 interface LogActivityParams {
-  orgId: number;
+  /** Absent for a personal (org-less) ticket's activity. */
+  orgId?: number;
   action: string;
   entityId: number;
   entityLabel: string;
@@ -36,7 +37,7 @@ export function useLogActivity(module: ActivityModule) {
       );
 
       logActivity({
-        orgId: params.orgId,
+        orgId: params.orgId ?? null,
         module,
         action: params.action,
         entityId: params.entityId,

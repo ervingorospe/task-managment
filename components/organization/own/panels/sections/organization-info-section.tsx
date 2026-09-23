@@ -10,6 +10,7 @@ import Avatar from "@/components/ui/avatar";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import Select from "@/components/ui/form/select";
 import { useToast } from "@/providers/toast-provider";
+import { useAuth } from "@/providers/auth-provider";
 import { notifyApiError } from "@/lib/helper/api-error-toast";
 
 import { getTimezoneList } from "@/lib/helper/timezones";
@@ -38,6 +39,7 @@ export default function OrganizationInfoSection({
   organization,
 }: OrganizationInfoSectionProps) {
   const toast = useToast();
+  const { refreshCurrentUser } = useAuth();
   const timezones = useMemo(getTimezoneList, []);
 
   const [logo, setLogo] = useState(organization.settings.logo);
@@ -117,6 +119,10 @@ export default function OrganizationInfoSection({
       await updateOrganizationSettings(organization.id, {
         timezone: values.timezone,
       });
+      // Topbar's clock and every other org-timezone display read from
+      // useAuth()'s currentUser, which is only fetched at login — without
+      // this they'd keep showing the old timezone until the next reload.
+      await refreshCurrentUser();
     } catch (error) {
       notifyApiError(toast, error, "Failed to update timezone");
       return;

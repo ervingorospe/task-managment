@@ -144,7 +144,9 @@ export interface RawTicketComment {
 
 export interface RawTicket {
   id: number;
-  orgId: number;
+  // Null for a personal (org-less) ticket — ownerId is set instead.
+  orgId: number | null;
+  ownerId?: number | null;
   referenceId: string;
   title: string;
   description: string | null;
@@ -203,7 +205,8 @@ export interface RawCurrentUser extends RawUser {
 
 export interface RawActivityLogEntry {
   id: number;
-  orgId: number;
+  // Null for a personal (org-less) ticket's activity.
+  orgId: number | null;
   module: "TICKET" | "REQUEST" | "MEMBER" | "ROLE" | "TAG";
   action: string;
   entityId: number;

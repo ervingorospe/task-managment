@@ -9,7 +9,11 @@ import {
   type PropsWithChildren,
 } from "react";
 import { useAuth } from "@/providers/auth-provider";
-import { fetchActivityLog, postActivityLog } from "@/lib/api/activity-log";
+import {
+  fetchActivityLog,
+  fetchPersonalActivityLog,
+  postActivityLog,
+} from "@/lib/api/activity-log";
 import type { ActivityLogEntry } from "@/lib/types/activity/activity-log-entry.type";
 
 interface ActivityLogContextValue {
@@ -20,14 +24,31 @@ interface ActivityLogContextValue {
 const ActivityLogContext = createContext<ActivityLogContextValue | null>(null);
 
 export function ActivityLogProvider({ children }: PropsWithChildren) {
-  const { activeOrganization } = useAuth();
+  const { currentUser, activeOrganization, isPersonalMode } = useAuth();
   const [entries, setEntries] = useState<ActivityLogEntry[]>([]);
 
-  // Hydrate real history for whichever org is active. Entries for other
-  // orgs (from earlier in the session) are left alone so switching back
-  // to them doesn't need a refetch.
+  // Hydrate real history for whichever org (or Personal) is active.
+  // Entries for other orgs/Personal (from earlier in the session) are left
+  // alone so switching back doesn't need a refetch.
   useEffect(() => {
     let cancelled = false;
+
+    if (isPersonalMode) {
+      if (!currentUser) return;
+      fetchPersonalActivityLog(currentUser.id).then((fetched) => {
+        if (cancelled) return;
+        setEntries((prev) => [
+          ...fetched,
+          ...prev.filter(
+            (e) => e.orgId != null || !fetched.some((f) => f.id === e.id),
+          ),
+        ]);
+      });
+      return () => {
+        cancelled = true;
+      };
+    }
+
     if (!activeOrganization) return;
 
     fetchActivityLog(activeOrganization.id).then((fetched) => {
@@ -45,7 +66,7 @@ export function ActivityLogProvider({ children }: PropsWithChildren) {
     return () => {
       cancelled = true;
     };
-  }, [activeOrganization]);
+  }, [activeOrganization, isPersonalMode, currentUser]);
 
   function logActivity(entry: Omit<ActivityLogEntry, "id" | "createdAt">) {
     const optimistic: ActivityLogEntry = {

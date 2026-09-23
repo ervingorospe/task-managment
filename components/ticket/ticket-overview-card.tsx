@@ -9,27 +9,43 @@ import TicketCommentsSection from "./ticket-comments-section";
 
 interface TicketOverviewCardProps {
   ticketId: number;
+  /** Current title/referenceId — used for activity-log descriptions.
+   * Required for a personal ticket, since there's no organization.tickets
+   * list to look them up from (see ticket-comments-section.tsx). */
+  ticketTitle: string;
+  referenceId: string;
   description?: string;
   attachments: TicketAttachment[];
   comments?: TicketComment[];
   client: MemberDetail | null;
   assignees: MemberDetail[];
-  organization: OrganizationDetail;
+  /** Null for a personal (org-less) ticket. */
+  organization: OrganizationDetail | null;
+  /** Personal tickets skip discussion entirely — it's just the owner,
+   * there's no one to discuss it with. */
+  hideComments?: boolean;
 }
 
 export default function TicketOverviewCard({
   ticketId,
+  ticketTitle,
+  referenceId,
   description,
   attachments,
   comments,
   client,
   assignees,
   organization,
+  hideComments = false,
 }: TicketOverviewCardProps) {
   return (
     <Card
       title="Overview"
-      subtitle="Description, attachments, and the discussion around this ticket."
+      subtitle={
+        hideComments
+          ? "Description and attachments."
+          : "Description, attachments, and the discussion around this ticket."
+      }
     >
       <div className="space-y-6">
         <TicketDescriptionSection ticketId={ticketId} description={description} />
@@ -38,21 +54,29 @@ export default function TicketOverviewCard({
 
         <TicketAttachmentsSection
           ticketId={ticketId}
+          ticketTitle={ticketTitle}
+          referenceId={referenceId}
           attachments={attachments}
           client={client}
           assignees={assignees}
           organization={organization}
         />
 
-        <div className="border-t border-line" />
+        {!hideComments && (
+          <>
+            <div className="border-t border-line" />
 
-        <TicketCommentsSection
-          ticketId={ticketId}
-          comments={comments}
-          client={client}
-          assignees={assignees}
-          organization={organization}
-        />
+            <TicketCommentsSection
+              ticketId={ticketId}
+              ticketTitle={ticketTitle}
+              referenceId={referenceId}
+              comments={comments}
+              client={client}
+              assignees={assignees}
+              organization={organization}
+            />
+          </>
+        )}
       </div>
     </Card>
   );

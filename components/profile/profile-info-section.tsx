@@ -74,6 +74,7 @@ export default function ProfileInfoSection() {
         firstName: values.firstName,
         lastName: values.lastName,
         email: values.email,
+        avatar: avatarUrl,
       });
     } catch (error) {
       notifyApiError(toast, error, "Failed to update profile");

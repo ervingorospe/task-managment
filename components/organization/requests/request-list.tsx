@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/buttons/button";
 import { ClampedText } from "@/components/ui/clamped-text";
 import { toPlainText } from "@/lib/helper/render-description";
 import { RequestStatusBadge } from "./request-status-badge";
+import { formatDate } from "@/lib/helper/format-date";
+import { useAuth } from "@/providers/auth-provider";
 import type { TicketRequest } from "@/lib/types/ticket/ticket-request.type";
 
 interface RequestListProps {
@@ -24,14 +26,6 @@ interface RequestListProps {
   emptyAction?: ReactNode;
 }
 
-function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString(undefined, {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-}
-
 function RequestListComponent({
   requests,
   canManage,
@@ -43,6 +37,9 @@ function RequestListComponent({
   emptySubtitle = "Requests submitted by clients will show up here.",
   emptyAction,
 }: RequestListProps) {
+  const { activeOrganization } = useAuth();
+  const timeZone = activeOrganization?.settings.timezone;
+
   if (requests.length === 0) {
     return (
       <EmptyState title={emptyTitle} subtitle={emptySubtitle}>
@@ -81,7 +78,8 @@ function RequestListComponent({
             <p className="mt-1.5 flex flex-wrap items-center gap-x-1 text-xs text-ink-faint">
               <span>
                 Requested by {request.client.firstName}{" "}
-                {request.client.lastName} · {formatDate(request.createdAt)}
+                {request.client.lastName} ·{" "}
+                {formatDate(request.createdAt, timeZone)}
               </span>
 
               {request.attachments.length > 0 && (

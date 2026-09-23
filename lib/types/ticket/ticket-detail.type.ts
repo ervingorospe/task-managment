@@ -12,7 +12,9 @@ export interface TicketAttachment {
 export interface TicketDetail {
   id: number;
   referenceId: string;
-  orgId: number;
+  // Null for a personal (org-less) ticket — ownerId is set instead.
+  orgId: number | null;
+  ownerId?: number | null;
   title: string;
   description?: string;
   attachments: TicketAttachment[];

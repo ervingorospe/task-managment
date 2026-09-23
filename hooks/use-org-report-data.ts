@@ -21,8 +21,13 @@ interface OrgReportData {
  * Dashboard/Reports/TicketReports, which each compute their own flexible
  * client-side aggregations (trend charts, assignee breakdown, month/year
  * comparison) that need row-level data rather than pre-aggregated counts.
+ *
+ * `orgId` overrides the topbar's active org — pass the URL-resolved org's
+ * id for a page like the org's own Tickets tab, which must show that
+ * specific org's data regardless of what's active in the topbar (which
+ * might be a different org, or Personal mode, i.e. no org at all).
  */
-export function useOrgReportData(): OrgReportData {
+export function useOrgReportData(orgId?: number): OrgReportData {
   const { currentUser } = useAuth();
   const canViewAll = usePermission(PERMISSIONS.TICKET_VIEW_ALL);
   // Not knowing the user yet must mean "show nothing" (an id no member can
@@ -31,15 +36,15 @@ export function useOrgReportData(): OrgReportData {
   const involvesUserId = canViewAll ? undefined : (currentUser?.id ?? -1);
 
   const fetcher = useCallback(
-    (orgId: number) =>
+    (fetchOrgId: number) =>
       Promise.all([
-        fetchAllTickets(orgId, involvesUserId),
-        fetchAllTicketRequests(orgId, involvesUserId),
+        fetchAllTickets(fetchOrgId, involvesUserId),
+        fetchAllTicketRequests(fetchOrgId, involvesUserId),
       ]).then(([tickets, requests]) => ({ tickets, requests })),
     [involvesUserId],
   );
 
-  const { data, loading } = useOrgScopedData(fetcher, [involvesUserId]);
+  const { data, loading } = useOrgScopedData(fetcher, [involvesUserId], orgId);
 
   return {
     tickets: data?.tickets ?? [],

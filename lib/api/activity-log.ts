@@ -27,6 +27,15 @@ export async function fetchActivityLog(orgId: number): Promise<ActivityLogEntry[
   return page.items.map(adaptEntry);
 }
 
+export async function fetchPersonalActivityLog(
+  userId: number,
+): Promise<ActivityLogEntry[]> {
+  const page = await api.get<RawPage<RawActivityLogEntry>>(
+    `/activity-log/personal?userId=${userId}&limit=100`,
+  );
+  return page.items.map(adaptEntry);
+}
+
 export async function postActivityLog(
   entry: Omit<ActivityLogEntry, "id" | "createdAt">,
 ): Promise<ActivityLogEntry> {

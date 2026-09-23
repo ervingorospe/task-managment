@@ -48,19 +48,23 @@ const insightNavItems: StaticNavItem[] = [
 
 export function Sidebar() {
   const pathname = usePathname();
-  const { currentUser, activeOrganization } = useAuth();
+  const { currentUser, activeOrganization, isPersonalMode } = useAuth();
 
   const memberships = currentUser?.memberships ?? [];
 
-  const ticketsHref = activeOrganization
-    ? `/dashboard/organizations/${activeOrganization.settings.slug}/tickets`
-    : "/dashboard";
+  const ticketsHref = isPersonalMode
+    ? "/dashboard/tickets"
+    : activeOrganization
+      ? `/dashboard/organizations/${activeOrganization.settings.slug}/tickets`
+      : "/dashboard";
 
   const ticketActive = pathname === ticketsHref;
 
-  const starredHref = activeOrganization
-    ? `/dashboard/organizations/${activeOrganization.settings.slug}/starred`
-    : "/dashboard";
+  const starredHref = isPersonalMode
+    ? "/dashboard/starred"
+    : activeOrganization
+      ? `/dashboard/organizations/${activeOrganization.settings.slug}/starred`
+      : "/dashboard";
 
   const starredActive = pathname === starredHref;
 
@@ -197,32 +201,39 @@ export function Sidebar() {
           </Link>,
         )}
 
-        {/* Requests — visible to staff (ticket.view.all) and clients (ticket.request) alike */}
-        <Can
-          anyOf={[PERMISSIONS.TICKET_VIEW_ALL, PERMISSIONS.TICKET_REQUEST]}
-        >
-          {withTooltip(
-            "Requests",
-            <Link
-              href={requestsHref}
-              className={navLinkClass(requestsActive)}
+        {/* Requests and Members are org concepts — no org in Personal
+            mode, so hide both outright rather than relying on the
+            permission bypass (which would otherwise show them). */}
+        {!isPersonalMode && (
+          <>
+            {/* Requests — visible to staff (ticket.view.all) and clients (ticket.request) alike */}
+            <Can
+              anyOf={[PERMISSIONS.TICKET_VIEW_ALL, PERMISSIONS.TICKET_REQUEST]}
             >
-              <Inbox size={16} strokeWidth={2} />
-              {!collapsed && "Requests"}
-            </Link>,
-          )}
-        </Can>
+              {withTooltip(
+                "Requests",
+                <Link
+                  href={requestsHref}
+                  className={navLinkClass(requestsActive)}
+                >
+                  <Inbox size={16} strokeWidth={2} />
+                  {!collapsed && "Requests"}
+                </Link>,
+              )}
+            </Can>
 
-        {/* Members */}
-        <Can action={PERMISSIONS.MEMBER_VIEW_MEMBERS}>
-          {withTooltip(
-            "Members",
-            <Link href={membersHref} className={navLinkClass(membersActive)}>
-              <Users size={16} strokeWidth={2} />
-              {!collapsed && "Members"}
-            </Link>,
-          )}
-        </Can>
+            {/* Members */}
+            <Can action={PERMISSIONS.MEMBER_VIEW_MEMBERS}>
+              {withTooltip(
+                "Members",
+                <Link href={membersHref} className={navLinkClass(membersActive)}>
+                  <Users size={16} strokeWidth={2} />
+                  {!collapsed && "Members"}
+                </Link>,
+              )}
+            </Can>
+          </>
+        )}
 
         {/* Reports */}
         {insightNavItems.map(renderStaticNavItem)}

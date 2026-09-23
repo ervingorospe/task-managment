@@ -15,7 +15,8 @@ import { PERMISSIONS } from "@/lib/data/permissions";
 import { isActivityEntryIncluded } from "@/lib/helper/activity-access";
 
 export default function ActivityLogClient() {
-  const { activeOrganization, activeMembership, currentUser } = useAuth();
+  const { activeOrganization, activeMembership, currentUser, isPersonalMode } =
+    useAuth();
   const { entries } = useActivityLog();
   const organization = useActiveOrganizationDetail();
 
@@ -28,8 +29,13 @@ export default function ActivityLogClient() {
   );
 
   const orgEntries = useMemo(
-    () => entries.filter((entry) => entry.orgId === activeOrganization?.id),
-    [entries, activeOrganization?.id],
+    () =>
+      entries.filter((entry) =>
+        isPersonalMode
+          ? entry.orgId == null
+          : entry.orgId === activeOrganization?.id,
+      ),
+    [entries, activeOrganization?.id, isPersonalMode],
   );
 
   /**
@@ -84,7 +90,7 @@ export default function ActivityLogClient() {
     [filtered, currentPage, pageSize],
   );
 
-  if (!activeOrganization) {
+  if (!isPersonalMode && !activeOrganization) {
     return (
       <div>
         <div>
@@ -98,7 +104,7 @@ export default function ActivityLogClient() {
     );
   }
 
-  if (!organization) {
+  if (!isPersonalMode && !organization) {
     return (
       <div>
         <PageHeaderSkeleton />
@@ -115,7 +121,9 @@ export default function ActivityLogClient() {
         <div>
           <h1 className="text-lg font-semibold text-ink">Activity Log</h1>
           <p className="mt-1 text-sm text-ink-muted">
-            Every action taken in {organization.organizationName}.
+            {isPersonalMode
+              ? "Every action across your personal tickets."
+              : `Every action taken in ${organization?.organizationName}.`}
           </p>
         </div>
       </div>
@@ -134,7 +142,10 @@ export default function ActivityLogClient() {
           />
         </div>
 
-        <ActivityLogList entries={paginated} />
+        <ActivityLogList
+          entries={paginated}
+          timeZone={activeOrganization?.settings.timezone}
+        />
 
         <Pagination
           page={currentPage}

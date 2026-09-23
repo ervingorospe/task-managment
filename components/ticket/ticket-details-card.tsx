@@ -14,6 +14,7 @@ import { notifyApiError } from "@/lib/helper/api-error-toast";
 import { useLogActivity } from "@/hooks/use-log-activity";
 import { getMemberName } from "@/lib/helper/member-name";
 import { formatDueDate, getDueState } from "@/lib/helper/ticket-status";
+import { getTodayInTimeZone } from "@/lib/helper/format-date";
 import { updateTicket } from "@/lib/api/tickets";
 import { PERMISSIONS } from "@/lib/data/permissions";
 import type { TagDetail } from "@/lib/types/organization/tag-detail.type";
@@ -57,10 +58,7 @@ export default function TicketDetailsCard({
   );
 
   const dueState = getDueState({ tag, dueDate });
-  // en-CA formats as YYYY-MM-DD, what <input type="date"> needs — and
-  // using the local calendar date (not toISOString, which is UTC) so the
-  // cutoff matches what the user sees as "today".
-  const todayStr = new Date().toLocaleDateString("en-CA");
+  const todayStr = getTodayInTimeZone(organization.settings.timezone);
 
   function handleChangeTag(nextTag: TagDetail) {
     const previousTag = tag;

@@ -149,6 +149,7 @@ export function adaptTicket(t: RawTicket): TicketDetail {
     id: t.id,
     referenceId: t.referenceId,
     orgId: t.orgId,
+    ownerId: t.ownerId ?? null,
     title: t.title,
     description: t.description ?? undefined,
     attachments: (t.attachments ?? []).map(adaptAttachment),

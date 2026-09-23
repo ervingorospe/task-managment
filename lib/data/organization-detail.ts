@@ -17,11 +17,16 @@ export async function getOrganizationBySlug(
   return fetchOrganizationDetailBySlug(slug);
 }
 
-export async function getTicketById(
-  id: number,
-): Promise<{ ticket: TicketDetail; organization: OrganizationDetail } | null> {
+export async function getTicketById(id: number): Promise<{
+  ticket: TicketDetail;
+  organization: OrganizationDetail | null;
+} | null> {
   const ticket = await fetchTicketById(id);
   if (!ticket) return null;
+
+  // A personal (org-less) ticket has no organization to fetch — the
+  // caller renders a simpler, org-free detail view for these.
+  if (ticket.orgId == null) return { ticket, organization: null };
 
   const organization = await fetchOrganizationDetailById(ticket.orgId);
   if (!organization) return null;

@@ -14,6 +14,14 @@ import type { Rule } from "@/lib/types/rule/rule.type";
 import type { Permission } from "@/lib/data/permissions";
 import { fetchUserByEmail } from "@/lib/api/users";
 import { SESSION_COOKIE_NAME } from "@/lib/constants/session-cookie.constant";
+import { ACCOUNT_TYPE } from "@/lib/constants/accoun-type.constant";
+
+/** "personal" is a real, selectable state in the topbar org switcher — an
+ * owner-account user's own standalone space, no organization involved —
+ * not just a fallback for "nothing to select." Only owner accounts ever
+ * land here; member accounts always default to a real org membership. */
+const PERSONAL = "personal" as const;
+type ActiveOrgId = number | typeof PERSONAL | null;
 
 // Carries the logged-in email so a reload can restore the session instead
 // of just losing it — not a token, there's still no real backend auth to
@@ -39,13 +47,14 @@ function readSessionEmail(): string | null {
 // the user left off, not always on their first membership.
 const ACTIVE_ORG_STORAGE_KEY = "ticketing_active_org_id";
 
-function readStoredActiveOrgId(): number | null {
+function readStoredActiveOrgId(): ActiveOrgId {
   const raw = localStorage.getItem(ACTIVE_ORG_STORAGE_KEY);
+  if (raw === PERSONAL) return PERSONAL;
   const id = raw ? Number(raw) : NaN;
   return Number.isFinite(id) ? id : null;
 }
 
-function writeStoredActiveOrgId(id: number | null) {
+function writeStoredActiveOrgId(id: ActiveOrgId) {
   if (id == null) localStorage.removeItem(ACTIVE_ORG_STORAGE_KEY);
   else localStorage.setItem(ACTIVE_ORG_STORAGE_KEY, String(id));
 }
@@ -54,6 +63,28 @@ function writeStoredActiveOrgId(id: number | null) {
 // there's no real password to check. Every user in the backend's users
 // table can log in with this one shared password until real auth exists.
 const DEFAULT_PASSWORD = "123";
+
+/** Owner accounts default to Personal unless a stored selection (a real
+ * membership, or Personal itself) is still valid for this user; member
+ * accounts keep the original behavior exactly — first membership, or
+ * `null` if they somehow have none. Members never get Personal. */
+function defaultActiveOrgId(
+  user: CurrentUser,
+  storedOrgId: ActiveOrgId,
+): ActiveOrgId {
+  if (user.accountType === ACCOUNT_TYPE.OWNER) {
+    if (storedOrgId === PERSONAL) return PERSONAL;
+    if (user.memberships.some((m) => m.organization.id === storedOrgId)) {
+      return storedOrgId;
+    }
+    return PERSONAL;
+  }
+
+  if (user.memberships.some((m) => m.organization.id === storedOrgId)) {
+    return storedOrgId;
+  }
+  return user.memberships[0]?.organization.id ?? null;
+}
 
 interface LoginResult {
   success: boolean;
@@ -71,17 +102,27 @@ interface AuthContextValue {
 
   /**
    * The membership of the organization currently selected by the user.
+   * `null` in Personal mode — there's no organization involved.
    */
   activeMembership: UserMembership | null;
 
   /**
-   * The organization currently selected by the user.
+   * The organization currently selected by the user. `null` in Personal
+   * mode.
    */
   activeOrganization: UserMembership["organization"] | null;
 
+  /**
+   * True when the topbar's "Personal" entry is selected — an owner
+   * account's own standalone space, no organization. Distinguishes this
+   * explicit state from the (otherwise identical-looking) case of a
+   * member account with no memberships at all.
+   */
+  isPersonalMode: boolean;
+
   login: (email: string, password: string) => Promise<LoginResult>;
   logout: () => void;
-  switchOrganization: (organizationId: number) => void;
+  switchOrganization: (organizationId: number | typeof PERSONAL) => void;
   updateProfile: (
     patch: Partial<Pick<CurrentUser, "firstName" | "lastName" | "email" | "avatar">>,
   ) => void;
@@ -109,7 +150,7 @@ const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
-  const [activeOrgId, setActiveOrgId] = useState<number | null>(null);
+  const [activeOrgId, setActiveOrgId] = useState<ActiveOrgId>(null);
   const [isInitializing, setIsInitializing] = useState(true);
 
   // Restores the session on first load from the cookie login() sets, so a
@@ -133,12 +174,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           return;
         }
         setCurrentUser(user);
-        const storedOrgId = readStoredActiveOrgId();
-        const orgId = user.memberships.some(
-          (m) => m.organization.id === storedOrgId,
-        )
-          ? storedOrgId
-          : (user.memberships[0]?.organization.id ?? null);
+        const orgId = defaultActiveOrgId(user, readStoredActiveOrgId());
         setActiveOrgId(orgId);
       })
       .catch((error) => {
@@ -179,7 +215,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return { success: false, error: "Invalid email or password." };
     }
 
-    const orgId = user.memberships[0]?.organization.id ?? null;
+    const orgId = defaultActiveOrgId(user, readStoredActiveOrgId());
     setCurrentUser(user);
     setActiveOrgId(orgId);
     writeStoredActiveOrgId(orgId);
@@ -201,8 +237,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // TODO: PATCH /users/me
   }
 
-  function switchOrganization(organizationId: number) {
+  function switchOrganization(organizationId: number | typeof PERSONAL) {
     if (!currentUser) return;
+
+    if (organizationId === PERSONAL) {
+      // Personal is owner-only — a member account has no standalone
+      // space to switch to.
+      if (currentUser.accountType !== ACCOUNT_TYPE.OWNER) return;
+      setActiveOrgId(PERSONAL);
+      writeStoredActiveOrgId(PERSONAL);
+      return;
+    }
 
     const belongsToOrg = currentUser.memberships.some(
       (membership) => membership.organization.id === organizationId,
@@ -236,12 +281,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (user) setCurrentUser(user);
   }
 
-  const activeMembership =
-    currentUser?.memberships.find(
-      (membership) => membership.organization.id === activeOrgId,
-    ) ??
-    currentUser?.memberships[0] ??
-    null;
+  const isPersonalMode = activeOrgId === PERSONAL;
+
+  // No fallback to memberships[0] when Personal is explicitly selected —
+  // that fallback is only for "activeOrgId doesn't match any membership
+  // yet" (e.g. right after login, before a stored id resolves).
+  const activeMembership = isPersonalMode
+    ? null
+    : (currentUser?.memberships.find(
+        (membership) => membership.organization.id === activeOrgId,
+      ) ??
+      currentUser?.memberships[0] ??
+      null);
 
   const activeOrganization = activeMembership?.organization ?? null;
 
@@ -253,6 +304,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isInitializing,
         activeMembership,
         activeOrganization,
+        isPersonalMode,
         login,
         logout,
         switchOrganization,
@@ -281,7 +333,12 @@ export function hasPermission(rules: Rule[], action: Permission): boolean {
 }
 
 export function usePermission(action: Permission) {
-  const { activeMembership } = useAuth();
+  const { activeMembership, isPersonalMode } = useAuth();
+
+  // No team to restrict against in Personal mode — the owner has full
+  // control over their own standalone space, same as how a Superadmin
+  // role bypasses these checks for a real org.
+  if (isPersonalMode) return true;
 
   if (!activeMembership) return false;
 

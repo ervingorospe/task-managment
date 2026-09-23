@@ -13,6 +13,7 @@ import { SectionHeading } from "./section-heading";
 import { TimelineStep } from "@/components/ui/timeline-step";
 import { formatDate, formatRelative } from "@/lib/helper/format-date";
 import { useActivityLog } from "@/providers/activity-log-provider";
+import { useAuth } from "@/providers/auth-provider";
 
 interface TicketActivityCardProps {
   ticketId: number;
@@ -46,6 +47,8 @@ export default function TicketActivityCard({
   createdAt,
 }: TicketActivityCardProps) {
   const { entries } = useActivityLog();
+  const { activeOrganization } = useAuth();
+  const timeZone = activeOrganization?.settings.timezone;
 
   // Newest first, so the latest activity reads at the top.
   const ticketEntries = useMemo(
@@ -68,7 +71,7 @@ export default function TicketActivityCard({
       key: String(entry.id),
       icon: ACTION_ICON[entry.action] ?? RefreshCw,
       label: `${entry.actorName} ${entry.description}`,
-      date: `${formatDate(entry.createdAt)} · ${formatRelative(entry.createdAt)}`,
+      date: `${formatDate(entry.createdAt, timeZone)} · ${formatRelative(entry.createdAt)}`,
     })),
     // The activity log only goes back to when logging was added, so older
     // tickets (or ones created outside the normal flow, e.g. bulk-seeded)
@@ -79,13 +82,13 @@ export default function TicketActivityCard({
           key: String(loggedCreation.id),
           icon: Send,
           label: `${loggedCreation.actorName} ${loggedCreation.description}`,
-          date: `${formatDate(loggedCreation.createdAt)} · ${formatRelative(loggedCreation.createdAt)}`,
+          date: `${formatDate(loggedCreation.createdAt, timeZone)} · ${formatRelative(loggedCreation.createdAt)}`,
         }
       : {
           key: "created-fallback",
           icon: Send,
           label: "Ticket created",
-          date: `${formatDate(createdAt)} · ${formatRelative(createdAt)}`,
+          date: `${formatDate(createdAt, timeZone)} · ${formatRelative(createdAt)}`,
         },
   ];
 

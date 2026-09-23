@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   AlertTriangle,
   CalendarClock,
@@ -23,6 +23,8 @@ import { ReportsSkeleton } from "@/components/ui/skeletons";
 import { useAuth } from "@/providers/auth-provider";
 import { useActiveOrganizationDetail } from "@/hooks/use-active-organization-detail";
 import { useOrgReportData } from "@/hooks/use-org-report-data";
+import { usePersonalTicketData } from "@/hooks/use-personal-ticket-data";
+import { getDefaultTags } from "@/lib/data/organizations";
 import {
   getAssigneeBreakdown,
   getStatusBreakdown,
@@ -30,15 +32,36 @@ import {
   type TrendSelection,
 } from "@/lib/helper/ticket-reports";
 import { getDueState, isDueThisWeek } from "@/lib/helper/ticket-status";
+import type { TagDetail } from "@/lib/types/organization/tag-detail.type";
 
 export default function ReportsClient() {
-  const { activeOrganization } = useAuth();
+  const { activeOrganization, isPersonalMode } = useAuth();
   const organization = useActiveOrganizationDetail();
-  const {
-    tickets: visibleTickets,
-    requests: visibleRequests,
-    loading: reportDataLoading,
-  } = useOrgReportData();
+  const orgData = useOrgReportData();
+  const personalData = usePersonalTicketData();
+
+  const visibleTickets = isPersonalMode ? personalData.tickets : orgData.tickets;
+  const reportDataLoading = isPersonalMode
+    ? personalData.loading
+    : orgData.loading;
+  // Requests is an org-only concept — a stable empty array in Personal
+  // mode, so it doesn't itself become a fresh reference every render.
+  const visibleRequests = useMemo(
+    () => (isPersonalMode ? [] : orgData.requests),
+    [isPersonalMode, orgData.requests],
+  );
+
+  const [personalTags, setPersonalTags] = useState<TagDetail[]>([]);
+  useEffect(() => {
+    if (!isPersonalMode) return;
+    getDefaultTags()
+      .then(setPersonalTags)
+      .catch(() => {});
+  }, [isPersonalMode]);
+  const tags = useMemo(
+    () => (isPersonalMode ? personalTags : (organization?.tags ?? [])),
+    [isPersonalMode, personalTags, organization],
+  );
 
   const [trendSelection, setTrendSelection] = useState<TrendSelection>({
     created: true,
@@ -59,8 +82,8 @@ export default function ReportsClient() {
     [visibleRequests],
   );
 
-  const statTiles: StatTile[] = useMemo(
-    () => [
+  const statTiles: StatTile[] = useMemo(() => {
+    const tiles: StatTile[] = [
       {
         label: "Total tickets",
         value: visibleTickets.length,
@@ -92,7 +115,10 @@ export default function ReportsClient() {
         valueColor: "text-ink",
         barColor: dueThisWeekCount > 0 ? "bg-warning" : "bg-line",
       },
-      {
+    ];
+
+    if (!isPersonalMode) {
+      tiles.push({
         label: "Pending requests",
         value: pendingRequestsCount,
         caption: "awaiting a decision",
@@ -102,15 +128,17 @@ export default function ReportsClient() {
           pendingRequestsCount > 0 ? "text-warning" : "text-ink-faint",
         valueColor: pendingRequestsCount > 0 ? "text-warning" : "text-ink",
         barColor: pendingRequestsCount > 0 ? "bg-warning" : "bg-line",
-      },
-    ],
-    [
-      visibleTickets.length,
-      overdueTickets.length,
-      dueThisWeekCount,
-      pendingRequestsCount,
-    ],
-  );
+      });
+    }
+
+    return tiles;
+  }, [
+    visibleTickets.length,
+    overdueTickets.length,
+    dueThisWeekCount,
+    pendingRequestsCount,
+    isPersonalMode,
+  ]);
 
   const statusRows = useMemo(
     () => getStatusBreakdown(visibleTickets),
@@ -122,14 +150,14 @@ export default function ReportsClient() {
   );
   const trendSeries = useMemo(
     () =>
-      getTrendSeries(visibleTickets, organization?.tags ?? [], {
+      getTrendSeries(visibleTickets, tags, {
         selection: trendSelection,
         range: { from: null, to: null },
       }),
-    [visibleTickets, organization, trendSelection],
+    [visibleTickets, tags, trendSelection],
   );
 
-  if (!activeOrganization) {
+  if (!isPersonalMode && !activeOrganization) {
     return (
       <div className="space-y-8">
         <div>
@@ -143,7 +171,9 @@ export default function ReportsClient() {
     );
   }
 
-  if (!organization || reportDataLoading) return <ReportsSkeleton />;
+  if (isPersonalMode ? reportDataLoading : !organization || reportDataLoading) {
+    return <ReportsSkeleton />;
+  }
 
   return (
     <div className="space-y-8">
@@ -151,8 +181,9 @@ export default function ReportsClient() {
         <div>
           <h1 className="text-lg font-semibold text-ink">Reports</h1>
           <p className="text-sm text-ink-muted">
-            A closer look at ticket activity in{" "}
-            {organization.organizationName}.
+            {isPersonalMode
+              ? "A closer look at activity across your personal tickets."
+              : `A closer look at ticket activity in ${organization!.organizationName}.`}
           </p>
         </div>
 
@@ -187,7 +218,7 @@ export default function ReportsClient() {
           <TrendSeriesSelect
             value={trendSelection}
             onChange={setTrendSelection}
-            tags={organization.tags}
+            tags={tags}
           />
           <TrendLineChart
             series={trendSeries}
@@ -200,19 +231,19 @@ export default function ReportsClient() {
         title="Compare two periods"
         subtitle="See how ticket creation compares month to month or year to year, by tag or overdue status."
       >
-        <MonthComparisonChart
-          tickets={visibleTickets}
-          tags={organization.tags}
-        />
+        <MonthComparisonChart tickets={visibleTickets} tags={tags} />
       </Card>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <Card
-          title="Tickets by assignee"
-          subtitle="Workload distribution across the team."
-        >
-          <AssigneeBreakdownList rows={assigneeRows} />
-        </Card>
+        {/* No team in Personal mode, so no assignee breakdown to show. */}
+        {!isPersonalMode && (
+          <Card
+            title="Tickets by assignee"
+            subtitle="Workload distribution across the team."
+          >
+            <AssigneeBreakdownList rows={assigneeRows} />
+          </Card>
+        )}
 
         <Card
           title="Overdue tickets"

@@ -9,7 +9,8 @@ export type ActivityModule = "ticket" | "request" | "member" | "role" | "tag";
  */
 export interface ActivityLogEntry {
   id: number;
-  orgId: number;
+  // Null for a personal (org-less) ticket's activity.
+  orgId: number | null;
   module: ActivityModule;
   /** Short verb-based key, e.g. "created", "status_changed", "commented". */
   action: string;

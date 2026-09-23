@@ -28,7 +28,10 @@ interface TicketReportsProps {
 export default function TicketReports({ organization }: TicketReportsProps) {
   // This tab is already gated behind ticket.view.all (see
   // OrganizationMemberTabs), so no per-user scoping is needed here.
-  const { tickets } = useOrgReportData();
+  // Scoped to this specific org (from the URL), not whatever's active in
+  // the topbar — those can differ, e.g. viewing this org's tab while
+  // Personal mode (or a different org) is active elsewhere in the app.
+  const { tickets } = useOrgReportData(organization.id);
 
   const [dateRange, setDateRange] = useState<DateRange>({
     from: null,

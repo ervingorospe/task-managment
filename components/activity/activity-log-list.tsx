@@ -9,12 +9,14 @@ interface ActivityLogListProps {
   entries: ActivityLogEntry[];
   emptyTitle?: string;
   emptySubtitle?: string;
+  timeZone?: string;
 }
 
 function ActivityLogListComponent({
   entries,
   emptyTitle = "No activity yet",
   emptySubtitle = "Actions taken across this organization will show up here.",
+  timeZone,
 }: ActivityLogListProps) {
   if (entries.length === 0) {
     return <EmptyState title={emptyTitle} subtitle={emptySubtitle} />;
@@ -47,7 +49,8 @@ function ActivityLogListComponent({
                   </span>
                 )}
                 {entry.referenceId && " · "}
-                {formatDate(entry.createdAt)} · {formatRelative(entry.createdAt)}
+                {formatDate(entry.createdAt, timeZone)} ·{" "}
+                {formatRelative(entry.createdAt)}
               </p>
             </div>
 

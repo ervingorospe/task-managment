@@ -28,6 +28,10 @@ interface TicketListProps {
   emptyTitle?: string;
   emptySubtitle?: string;
   emptyAction?: ReactNode;
+  /** A personal (org-less) ticket has no members to assign at all — the
+   * usual ticket.assign permission check passes in Personal mode (no team
+   * to restrict against), so this explicitly hides the column instead. */
+  hideAssign?: boolean;
 }
 
 function formatTimeframe(ticket: TicketDetail) {
@@ -45,6 +49,7 @@ function TicketListComponent({
   emptyTitle = "No tickets yet",
   emptySubtitle = "Create your first ticket to get started.",
   emptyAction,
+  hideAssign = false,
 }: TicketListProps) {
   const canAssign = usePermission(PERMISSIONS.TICKET_ASSIGN);
   const canChangeStatus = usePermission(PERMISSIONS.TICKET_CHANGE_STATUS);
@@ -129,7 +134,7 @@ function TicketListComponent({
               </td>
 
               {/* Assignees — clickable avatars with tooltip, or inline "Assign" when empty */}
-              {canAssign && (
+              {canAssign && !hideAssign && (
                 <td className="max-w-[40px] px-4 py-3">
                   <MultiSelectDropdown
                     value={ticket.assignees.map((member) => member.id)}

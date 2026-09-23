@@ -10,19 +10,26 @@ import {
   Settings,
   LogOut,
   Building2,
+  UserRound,
 } from "lucide-react";
 import { AccountTypeGuard } from "@/components/auth/account-type.guard";
 import { ACCOUNT_TYPE } from "@/lib/constants/accoun-type.constant";
 import { replaceUrlSlug } from "@/lib/helper/replace-url-slug";
+import { TopbarClock } from "@/components/topbar-clock";
 
 export function Topbar() {
   const router = useRouter();
   const pathname = usePathname();
 
-  const { currentUser, activeMembership, switchOrganization, logout } =
-    useAuth();
+  const {
+    currentUser,
+    activeMembership,
+    isPersonalMode,
+    switchOrganization,
+    logout,
+  } = useAuth();
 
-  if (!currentUser || !activeMembership) return null;
+  if (!currentUser) return null;
 
   function handleOrganizationSwitch(organizationId: number) {
     const membership = currentUser?.memberships.find(
@@ -31,15 +38,21 @@ export function Topbar() {
 
     if (!membership) return;
 
-    const newSlug = membership.organization.settings.slug;
-
-    // Change the active organization in auth state.
     switchOrganization(organizationId);
 
-    // Replace the organization slug in the current URL.
-    const newPathname = replaceUrlSlug(pathname, newSlug);
+    // Coming from Personal mode, the current URL (e.g. /dashboard/tickets)
+    // has no org slug to swap in — land on a safe, always-valid page
+    // instead of leaving a stale personal-only route in the address bar.
+    const newPathname = isPersonalMode
+      ? "/dashboard"
+      : replaceUrlSlug(pathname, membership.organization.settings.slug);
 
     router.push(newPathname);
+  }
+
+  function handlePersonalSwitch() {
+    switchOrganization("personal");
+    router.push("/dashboard");
   }
 
   return (
@@ -48,11 +61,26 @@ export function Topbar() {
         align="start"
         trigger={
           <span className="flex items-center gap-1.5 rounded px-2 py-1.5 text-sm font-medium text-ink hover:bg-black/5">
-            {activeMembership.organization.organizationName}
+            {isPersonalMode ? (
+              <UserRound size={14} className="text-ink/70" />
+            ) : null}
+            {isPersonalMode
+              ? "Personal"
+              : activeMembership?.organization.organizationName}
             <ChevronDown size={14} className="text-ink/70" />
           </span>
         }
       >
+        <AccountTypeGuard accountType={ACCOUNT_TYPE.OWNER}>
+          <Dropdown.DropdownItem onClick={handlePersonalSwitch}>
+            <UserRound size={14} />
+            Personal
+          </Dropdown.DropdownItem>
+          {currentUser.memberships.length > 0 && (
+            <Dropdown.DropdownSeparator />
+          )}
+        </AccountTypeGuard>
+
         {currentUser.memberships.map((membership) => (
           <Dropdown.DropdownItem
             key={membership.id}
@@ -64,6 +92,10 @@ export function Topbar() {
       </Dropdown>
 
       <div className="flex items-center gap-3">
+        <TopbarClock
+          timeZone={activeMembership?.organization.settings.timezone}
+        />
+
         <Dropdown
           side="bottom"
           align="end"
@@ -81,7 +113,7 @@ export function Topbar() {
             </p>
 
             <p className="truncate text-xs text-ink-muted">
-              {activeMembership.role.roleName}
+              {isPersonalMode ? "Personal" : activeMembership?.role.roleName}
             </p>
           </div>
 

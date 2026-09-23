@@ -31,10 +31,14 @@ import { SectionHeading } from "./section-heading";
 
 interface TicketCommentsSectionProps {
   ticketId: number;
+  ticketTitle: string;
+  referenceId: string;
   comments?: TicketComment[];
   client: MemberDetail | null;
   assignees: MemberDetail[];
-  organization: OrganizationDetail;
+  /** Null for a personal (org-less) ticket — @mention suggestions and
+   * timezone-aware timestamps fall back gracefully when absent. */
+  organization: OrganizationDetail | null;
 }
 
 type MentionField = "compose" | number;
@@ -89,6 +93,8 @@ function renderCommentText(text: string, mentionableNames: string[]) {
 
 export default function TicketCommentsSection({
   ticketId,
+  ticketTitle,
+  referenceId,
   comments: initialComments,
   client,
   assignees,
@@ -97,8 +103,6 @@ export default function TicketCommentsSection({
   const { currentUser } = useAuth();
   const toast = useToast();
   const logTicketActivity = useLogActivity("ticket");
-  const ticketForActivity = organization.tickets.find((t) => t.id === ticketId);
-  const ticketTitle = ticketForActivity?.title ?? "this ticket";
   const activityInvolvedUserIds = [
     client?.user?.id,
     ...assignees.map((a) => a.user?.id),
@@ -117,8 +121,12 @@ export default function TicketCommentsSection({
   );
   const [mentionState, setMentionState] = useState<MentionState | null>(null);
 
+  // No org, no members to mention — personal tickets skip @mentions.
   const mentionableMembers = useMemo(
-    () => getMentionableMembers(organization, { client, assignees }),
+    () =>
+      organization
+        ? getMentionableMembers(organization, { client, assignees })
+        : [],
     [organization, client, assignees],
   );
   const mentionableNames = useMemo(
@@ -190,11 +198,11 @@ export default function TicketCommentsSection({
     }
 
     logTicketActivity({
-      orgId: organization.id,
+      orgId: organization?.id,
       action: "commented",
       entityId: ticketId,
       entityLabel: ticketTitle,
-      referenceId: ticketForActivity?.referenceId,
+      referenceId,
       involvedUserIds: activityInvolvedUserIds,
       description: `commented on "${ticketTitle}"`,
     });
@@ -235,11 +243,11 @@ export default function TicketCommentsSection({
       ),
     );
     logTicketActivity({
-      orgId: organization.id,
+      orgId: organization?.id,
       action: "comment_edited",
       entityId: ticketId,
       entityLabel: ticketTitle,
-      referenceId: ticketForActivity?.referenceId,
+      referenceId,
       involvedUserIds: activityInvolvedUserIds,
       description: `edited a comment on "${ticketTitle}"`,
     });
@@ -259,11 +267,11 @@ export default function TicketCommentsSection({
 
     setComments((prev) => prev.filter((c) => c.id !== target.id));
     logTicketActivity({
-      orgId: organization.id,
+      orgId: organization?.id,
       action: "comment_removed",
       entityId: ticketId,
       entityLabel: ticketTitle,
-      referenceId: ticketForActivity?.referenceId,
+      referenceId,
       involvedUserIds: activityInvolvedUserIds,
       description: `removed a comment on "${ticketTitle}"`,
     });
@@ -298,7 +306,10 @@ export default function TicketCommentsSection({
                       {comment.author.firstName} {comment.author.lastName}
                     </span>
                     <span className="text-xs text-ink-faint">
-                      {formatDateTime(comment.createdAt)}
+                      {formatDateTime(
+                        comment.createdAt,
+                        organization?.settings.timezone,
+                      )}
                       {isEdited && " (edited)"}
                     </span>
 

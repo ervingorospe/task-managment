@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { AlertTriangle, CalendarClock, Inbox, Ticket as TicketIcon } from "lucide-react";
 import Card from "@/components/ui/card";
@@ -15,21 +15,46 @@ import { DashboardSkeleton } from "@/components/ui/skeletons";
 import { useAuth } from "@/providers/auth-provider";
 import { useActiveOrganizationDetail } from "@/hooks/use-active-organization-detail";
 import { useOrgReportData } from "@/hooks/use-org-report-data";
+import { usePersonalTicketData } from "@/hooks/use-personal-ticket-data";
+import { getDefaultTags } from "@/lib/data/organizations";
 import {
   getStatusBreakdown,
   getTrendSeries,
   type TrendSelection,
 } from "@/lib/helper/ticket-reports";
 import { getDueState, isDueThisWeek } from "@/lib/helper/ticket-status";
+import type { TagDetail } from "@/lib/types/organization/tag-detail.type";
 
 export default function DashboardClient() {
-  const { activeOrganization } = useAuth();
+  const { activeOrganization, isPersonalMode } = useAuth();
   const organization = useActiveOrganizationDetail();
-  const {
-    tickets: visibleTickets,
-    requests: visibleRequests,
-    loading: reportDataLoading,
-  } = useOrgReportData();
+  const orgData = useOrgReportData();
+  const personalData = usePersonalTicketData();
+
+  const visibleTickets = isPersonalMode ? personalData.tickets : orgData.tickets;
+  const reportDataLoading = isPersonalMode
+    ? personalData.loading
+    : orgData.loading;
+  // Requests is an org-only concept — a stable empty array in Personal
+  // mode, so it doesn't itself become a fresh reference every render.
+  const visibleRequests = useMemo(
+    () => (isPersonalMode ? [] : orgData.requests),
+    [isPersonalMode, orgData.requests],
+  );
+
+  // Personal mode has no org.tags to plot by — the fixed global tag set
+  // fills the same role.
+  const [personalTags, setPersonalTags] = useState<TagDetail[]>([]);
+  useEffect(() => {
+    if (!isPersonalMode) return;
+    getDefaultTags()
+      .then(setPersonalTags)
+      .catch(() => {});
+  }, [isPersonalMode]);
+  const tags = useMemo(
+    () => (isPersonalMode ? personalTags : (organization?.tags ?? [])),
+    [isPersonalMode, personalTags, organization],
+  );
 
   const [trendSelection, setTrendSelection] = useState<TrendSelection>({
     created: true,
@@ -50,8 +75,8 @@ export default function DashboardClient() {
     [visibleRequests],
   );
 
-  const statTiles: StatTile[] = useMemo(
-    () => [
+  const statTiles: StatTile[] = useMemo(() => {
+    const tiles: StatTile[] = [
       {
         label: "Total tickets",
         value: visibleTickets.length,
@@ -82,7 +107,11 @@ export default function DashboardClient() {
         valueColor: "text-ink",
         barColor: dueThisWeekCount > 0 ? "bg-warning" : "bg-line",
       },
-      {
+    ];
+
+    // Pending requests is an org-only concept — no tile for it in Personal mode.
+    if (!isPersonalMode) {
+      tiles.push({
         label: "Pending requests",
         value: pendingRequestsCount,
         caption: "awaiting a decision",
@@ -92,15 +121,17 @@ export default function DashboardClient() {
           pendingRequestsCount > 0 ? "text-warning" : "text-ink-faint",
         valueColor: pendingRequestsCount > 0 ? "text-warning" : "text-ink",
         barColor: pendingRequestsCount > 0 ? "bg-warning" : "bg-line",
-      },
-    ],
-    [
-      visibleTickets.length,
-      overdueCount,
-      dueThisWeekCount,
-      pendingRequestsCount,
-    ],
-  );
+      });
+    }
+
+    return tiles;
+  }, [
+    visibleTickets.length,
+    overdueCount,
+    dueThisWeekCount,
+    pendingRequestsCount,
+    isPersonalMode,
+  ]);
 
   const statusRows = useMemo(
     () => getStatusBreakdown(visibleTickets),
@@ -108,11 +139,11 @@ export default function DashboardClient() {
   );
   const trendSeries = useMemo(
     () =>
-      getTrendSeries(visibleTickets, organization?.tags ?? [], {
+      getTrendSeries(visibleTickets, tags, {
         selection: trendSelection,
         range: { from: null, to: null },
       }),
-    [visibleTickets, organization, trendSelection],
+    [visibleTickets, tags, trendSelection],
   );
 
   const recentTickets = useMemo(
@@ -131,7 +162,7 @@ export default function DashboardClient() {
     [visibleRequests],
   );
 
-  if (!activeOrganization) {
+  if (!isPersonalMode && !activeOrganization) {
     return (
       <div className="space-y-8">
         <div>
@@ -145,19 +176,25 @@ export default function DashboardClient() {
     );
   }
 
-  if (!organization || reportDataLoading) return <DashboardSkeleton />;
+  if (isPersonalMode ? reportDataLoading : !organization || reportDataLoading) {
+    return <DashboardSkeleton />;
+  }
 
-  const slug = activeOrganization.settings.slug;
-  const ticketsHref = `/dashboard/organizations/${slug}/tickets`;
-  const requestsHref = `/dashboard/organizations/${slug}/requests`;
+  const ticketsHref = isPersonalMode
+    ? "/dashboard/tickets"
+    : `/dashboard/organizations/${activeOrganization!.settings.slug}/tickets`;
+  const requestsHref = isPersonalMode
+    ? null
+    : `/dashboard/organizations/${activeOrganization!.settings.slug}/requests`;
 
   return (
     <div className="space-y-8">
       <div>
         <h1 className="text-lg font-semibold text-ink">Dashboard</h1>
         <p className="text-sm text-ink-muted">
-          Here&apos;s what&apos;s moving across {organization.organizationName}
-          .
+          {isPersonalMode
+            ? "Here's what's moving across your personal tickets."
+            : `Here's what's moving across ${organization!.organizationName}.`}
         </p>
       </div>
 
@@ -185,7 +222,7 @@ export default function DashboardClient() {
           <TrendSeriesSelect
             value={trendSelection}
             onChange={setTrendSelection}
-            tags={organization.tags}
+            tags={tags}
           />
           <TrendLineChart
             series={trendSeries}
@@ -239,42 +276,44 @@ export default function DashboardClient() {
           )}
         </Card>
 
-        <Card
-          title="Recent requests"
-          headerActions={
-            <Link
-              href={requestsHref}
-              className="text-sm text-accent-text hover:underline"
-            >
-              View all
-            </Link>
-          }
-        >
-          {recentRequests.length === 0 ? (
-            <EmptyState subtitle="No requests yet." />
-          ) : (
-            <ul className="-mx-6 -mb-5 divide-y divide-line">
-              {recentRequests.map((request) => (
-                <li key={request.id}>
-                  <Link
-                    href={`/dashboard/requests/${request.id}`}
-                    className="flex items-center gap-3 px-6 py-3 hover:bg-canvas"
-                  >
-                    <span className="w-16 shrink-0 font-mono text-xs text-ink-faint">
-                      {request.referenceId}
-                    </span>
-                    <span className="min-w-0 flex-1 truncate text-sm text-ink">
-                      {request.title}
-                    </span>
-                    <span className="shrink-0">
-                      <RequestStatusBadge status={request.status} />
-                    </span>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          )}
-        </Card>
+        {!isPersonalMode && requestsHref && (
+          <Card
+            title="Recent requests"
+            headerActions={
+              <Link
+                href={requestsHref}
+                className="text-sm text-accent-text hover:underline"
+              >
+                View all
+              </Link>
+            }
+          >
+            {recentRequests.length === 0 ? (
+              <EmptyState subtitle="No requests yet." />
+            ) : (
+              <ul className="-mx-6 -mb-5 divide-y divide-line">
+                {recentRequests.map((request) => (
+                  <li key={request.id}>
+                    <Link
+                      href={`/dashboard/requests/${request.id}`}
+                      className="flex items-center gap-3 px-6 py-3 hover:bg-canvas"
+                    >
+                      <span className="w-16 shrink-0 font-mono text-xs text-ink-faint">
+                        {request.referenceId}
+                      </span>
+                      <span className="min-w-0 flex-1 truncate text-sm text-ink">
+                        {request.title}
+                      </span>
+                      <span className="shrink-0">
+                        <RequestStatusBadge status={request.status} />
+                      </span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Card>
+        )}
       </div>
     </div>
   );

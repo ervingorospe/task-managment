@@ -16,14 +16,19 @@ import { SectionHeading } from "./section-heading";
 
 interface TicketAttachmentsSectionProps {
   ticketId: number;
+  ticketTitle: string;
+  referenceId: string;
   attachments: TicketAttachment[];
   client: MemberDetail | null;
   assignees: MemberDetail[];
-  organization: OrganizationDetail;
+  /** Null for a personal (org-less) ticket. */
+  organization: OrganizationDetail | null;
 }
 
 export default function TicketAttachmentsSection({
   ticketId,
+  ticketTitle,
+  referenceId,
   attachments: initialAttachments,
   client,
   assignees,
@@ -31,8 +36,6 @@ export default function TicketAttachmentsSection({
 }: TicketAttachmentsSectionProps) {
   const toast = useToast();
   const logTicketActivity = useLogActivity("ticket");
-  const ticketForActivity = organization.tickets.find((t) => t.id === ticketId);
-  const ticketTitle = ticketForActivity?.title ?? "this ticket";
   const activityInvolvedUserIds = [
     client?.user?.id,
     ...assignees.map((a) => a.user?.id),
@@ -55,11 +58,11 @@ export default function TicketAttachmentsSection({
       const attachment = await uploadTicketAttachment(ticketId, file);
       setAttachments((prev) => [...prev, attachment]);
       logTicketActivity({
-        orgId: organization.id,
+        orgId: organization?.id,
         action: "attachment_added",
         entityId: ticketId,
         entityLabel: ticketTitle,
-        referenceId: ticketForActivity?.referenceId,
+        referenceId,
         involvedUserIds: activityInvolvedUserIds,
         description: `attached "${attachment.name}" to "${ticketTitle}"`,
       });
@@ -80,11 +83,11 @@ export default function TicketAttachmentsSection({
       await removeTicketAttachment(ticketId, target.id);
       setAttachments((prev) => prev.filter((a) => a.id !== target.id));
       logTicketActivity({
-        orgId: organization.id,
+        orgId: organization?.id,
         action: "attachment_removed",
         entityId: ticketId,
         entityLabel: ticketTitle,
-        referenceId: ticketForActivity?.referenceId,
+        referenceId,
         involvedUserIds: activityInvolvedUserIds,
         description: `removed "${target.name}" from "${ticketTitle}"`,
       });
