@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { notFound } from "next/navigation";
 import {
   getDefaultRoles,
   getDefaultTags,
@@ -12,6 +13,7 @@ import {
 import { OrganizationDefaultsProvider } from "@/providers/organization-defaults.provider";
 import { CreateOrganizationClient } from "@/components/organization/create/create-organization-client";
 import BackButton from "@/components/ui/buttons/button-back";
+import { useAuth } from "@/providers/auth-provider";
 import type { RoleDetail } from "@/lib/types/organization/role-detail.type";
 import type { TagDetail } from "@/lib/types/organization/tag-detail.type";
 import type { RuleCategory } from "@/lib/types/rule/rule-category.type";
@@ -31,6 +33,7 @@ interface DefaultsData {
 // page never carries it in production (only a real browser fetch,
 // credentials: "include", does). See hooks/use-organization-by-slug.ts.
 export default function CreateOrganizationPage() {
+  const { currentUser, isInitializing } = useAuth();
   const [data, setData] = useState<DefaultsData | null>(null);
 
   useEffect(() => {
@@ -49,6 +52,17 @@ export default function CreateOrganizationPage() {
       cancelled = true;
     };
   }, []);
+
+  // isInitializing gates this the same way MemberGuard waits for session
+  // restore — currentUser is briefly null on a hard reload before that
+  // resolves, and reading that as "not invite-only" would flash the form
+  // before redirecting. An invite-only account (see current-user.type.ts's
+  // doc comment) can never create an organization, backed by the same
+  // check on the backend (organization.controller.ts) — this just avoids
+  // showing the form at all instead of letting them fill it out and hit
+  // a 403 on submit.
+  if (isInitializing) return <Loading />;
+  if (currentUser?.createdViaInvite) notFound();
 
   if (!data) return <Loading />;
 

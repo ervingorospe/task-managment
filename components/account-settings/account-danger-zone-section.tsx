@@ -6,6 +6,8 @@ import { DangerZoneCard, DangerZoneRow } from "@/components/ui/danger-zone-card"
 import { lazyNamed } from "@/lib/helper/lazy-named";
 import { useAuth } from "@/providers/auth-provider";
 import { useToast } from "@/providers/toast-provider";
+import { deleteUserAccount } from "@/lib/api/users";
+import { notifyApiError } from "@/lib/helper/api-error-toast";
 
 const ConfirmDialog = lazyNamed(
   () => import("@/components/ui/confirm-dialog"),
@@ -16,19 +18,29 @@ type PendingAction = "sign-out-others" | "delete" | null;
 
 export default function AccountDangerZoneSection() {
   const router = useRouter();
-  const { logout } = useAuth();
+  const { currentUser, logout } = useAuth();
   const toast = useToast();
   const [pendingAction, setPendingAction] = useState<PendingAction>(null);
+  // An account created only by accepting an invite can never delete
+  // itself — see current-user.type.ts's doc comment.
+  const canDelete = !currentUser?.createdViaInvite;
 
-  function handleConfirm() {
+  async function handleConfirm() {
     if (pendingAction === "sign-out-others") {
       toast("Signed out of all other sessions");
       // TODO: POST /users/me/sessions/revoke-others
-    } else if (pendingAction === "delete") {
-      toast("Account deleted", "error");
-      // TODO: DELETE /users/me — soft delete server-side.
-      logout();
-      router.replace("/login");
+      setPendingAction(null);
+      return;
+    }
+
+    if (pendingAction === "delete" && currentUser) {
+      try {
+        await deleteUserAccount(currentUser.id);
+        await logout();
+        router.replace("/login");
+      } catch (error) {
+        notifyApiError(toast, error, "Failed to delete account");
+      }
     }
     setPendingAction(null);
   }
@@ -52,7 +64,10 @@ export default function AccountDangerZoneSection() {
   };
 
   return (
-    <DangerZoneCard subtitle="Irreversible and access-affecting actions for your account.">
+    <DangerZoneCard
+      title="Advanced"
+      subtitle="Irreversible and access-affecting actions for your account."
+    >
       <DangerZoneRow
         variant="default"
         title="Sign out of all other sessions"
@@ -61,12 +76,14 @@ export default function AccountDangerZoneSection() {
         onAction={() => setPendingAction("sign-out-others")}
       />
 
-      <DangerZoneRow
-        title="Delete my account"
-        description="Permanently deletes your account. This cannot be reversed."
-        actionLabel="Delete account"
-        onAction={() => setPendingAction("delete")}
-      />
+      {canDelete && (
+        <DangerZoneRow
+          title="Delete my account"
+          description="Permanently deletes your account. This cannot be reversed."
+          actionLabel="Delete account"
+          onAction={() => setPendingAction("delete")}
+        />
+      )}
 
       {pendingAction && (
         <ConfirmDialog

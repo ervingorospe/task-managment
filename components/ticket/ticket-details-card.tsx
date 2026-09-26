@@ -7,7 +7,6 @@ import Card from "@/components/ui/card";
 import MultiSelectDropdown from "@/components/ui/form/multi-select-dropdown";
 import PropertyRow from "@/components/ui/property-row";
 import { InlineButton } from "@/components/ui/buttons";
-import { Can } from "@/components/auth/can";
 import { useToast } from "@/providers/toast-provider";
 import { usePermission } from "@/providers/auth-provider";
 import { notifyApiError } from "@/lib/helper/api-error-toast";
@@ -57,6 +56,9 @@ export default function TicketDetailsCard({
   const toast = useToast();
   const logTicketActivity = useLogActivity("ticket");
   const canChangeStatus = usePermission(PERMISSIONS.TICKET_CHANGE_TAG);
+  const canAssign = usePermission(PERMISSIONS.TICKET_ASSIGN);
+  const hasAssignView = usePermission(PERMISSIONS.TICKET_ASSIGN_VIEW);
+  const canViewAssignees = canAssign || hasAssignView;
   const assignableMembers = organization.members.filter(
     (m) => m.role?.roleName !== "Client",
   );
@@ -154,43 +156,63 @@ export default function TicketDetailsCard({
           )}
         </PropertyRow>
 
-        <Can action={PERMISSIONS.TICKET_ASSIGN}>
+        {canViewAssignees && (
           <PropertyRow label="Assignees">
-            <MultiSelectDropdown
-              isWidthFull
-              value={assignees.map((m) => m.id)}
-              onChange={handleAssign}
-              options={assignableMembers.map((m) => ({
-                value: m.id,
-                label: getMemberName(m),
-              }))}
-              emptyMessage="No assignable members"
-              trigger={
-                assignees.length === 0 ? (
-                  <InlineButton icon={<UserPlus size={12} />}>
-                    Assign
-                  </InlineButton>
-                ) : (
-                  <div className="flex flex-wrap gap-1.5">
-                    {assignees.map((member) => (
-                      <span
-                        key={member.id}
-                        className="flex items-center gap-1.5 rounded-full bg-canvas py-0.5 pl-0.5 pr-2.5 text-xs text-ink"
-                      >
-                        <Avatar
-                          firstName={member.user?.firstName ?? member.firstName}
-                          lastName={member.user?.lastName ?? member.lastName}
-                          size="sm"
-                        />
-                        {getMemberName(member)}
-                      </span>
-                    ))}
-                  </div>
-                )
-              }
-            />
+            {canAssign ? (
+              <MultiSelectDropdown
+                isWidthFull
+                value={assignees.map((m) => m.id)}
+                onChange={handleAssign}
+                options={assignableMembers.map((m) => ({
+                  value: m.id,
+                  label: getMemberName(m),
+                }))}
+                emptyMessage="No assignable members"
+                trigger={
+                  assignees.length === 0 ? (
+                    <InlineButton icon={<UserPlus size={12} />}>
+                      Assign
+                    </InlineButton>
+                  ) : (
+                    <div className="flex flex-wrap gap-1.5">
+                      {assignees.map((member) => (
+                        <span
+                          key={member.id}
+                          className="flex items-center gap-1.5 rounded-full bg-canvas py-0.5 pl-0.5 pr-2.5 text-xs text-ink"
+                        >
+                          <Avatar
+                            firstName={member.user?.firstName ?? member.firstName}
+                            lastName={member.user?.lastName ?? member.lastName}
+                            size="sm"
+                          />
+                          {getMemberName(member)}
+                        </span>
+                      ))}
+                    </div>
+                  )
+                }
+              />
+            ) : assignees.length === 0 ? (
+              <span className="text-sm text-ink-faint">No assignees</span>
+            ) : (
+              <div className="flex flex-wrap gap-1.5">
+                {assignees.map((member) => (
+                  <span
+                    key={member.id}
+                    className="flex items-center gap-1.5 rounded-full bg-canvas py-0.5 pl-0.5 pr-2.5 text-xs text-ink"
+                  >
+                    <Avatar
+                      firstName={member.user?.firstName ?? member.firstName}
+                      lastName={member.user?.lastName ?? member.lastName}
+                      size="sm"
+                    />
+                    {getMemberName(member)}
+                  </span>
+                ))}
+              </div>
+            )}
           </PropertyRow>
-        </Can>
+        )}
 
         <PropertyRow label="Client">
           {client ? (

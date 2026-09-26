@@ -123,10 +123,24 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
+// Pre-real-auth builds set this directly from JS (plaintext email, not
+// httpOnly) as the "session" marker — real auth replaced it with the
+// backend-issued, httpOnly `ticketing_auth` cookie (see auth.constants.ts),
+// but a browser that used this app before that rewrite still has the old
+// one sitting around indefinitely, since nothing ever cleared it. One-time
+// best-effort cleanup; harmless no-op if it isn't present.
+function clearLegacySessionCookie() {
+  document.cookie = "ticketing_session=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
   const [activeOrgId, setActiveOrgId] = useState<ActiveOrgId>(null);
   const [isInitializing, setIsInitializing] = useState(true);
+
+  useEffect(() => {
+    clearLegacySessionCookie();
+  }, []);
 
   // Restores the session on first load — the httpOnly cookie the backend
   // set on login isn't readable from JS at all, so this just always asks

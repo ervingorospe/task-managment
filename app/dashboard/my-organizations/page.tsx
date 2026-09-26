@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { notFound } from "next/navigation";
 import { ChevronRight, Plus } from "lucide-react";
 import { Button } from "@/components/ui/buttons/button";
 import List from "@/components/ui/list";
@@ -15,7 +16,7 @@ import { ListSkeleton } from "@/components/ui/skeletons";
 // whoever useAuth() says is logged in — see auth-provider.tsx's own note
 // on why login doesn't set a cookie/token yet.
 export default function MyOrganizationsPage() {
-  const { currentUser } = useAuth();
+  const { currentUser, isInitializing } = useAuth();
   const [organizations, setOrganizations] = useState<OwnedOrganization[] | null>(null);
 
   useEffect(() => {
@@ -31,6 +32,14 @@ export default function MyOrganizationsPage() {
       cancelled = true;
     };
   }, [currentUser]);
+
+  // This whole "My Organizations" section is only relevant to accounts
+  // that could ever own one — an account created only by accepting an
+  // invite can't (see current-user.type.ts's doc comment), so it never
+  // reaches this page at all, matching the create page's identical guard
+  // and the hidden "Organization" menu item that would otherwise link here.
+  if (isInitializing) return null;
+  if (currentUser?.createdViaInvite) notFound();
 
   return (
     <>

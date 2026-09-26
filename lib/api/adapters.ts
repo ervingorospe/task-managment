@@ -168,9 +168,12 @@ export function adaptTicket(t: RawTicket): TicketDetail {
 export function adaptCurrentUser(u: RawCurrentUser): CurrentUser {
   return {
     ...adaptUser(u),
+    hasPassword: u.hasPassword,
+    createdViaInvite: u.createdViaInvite,
     memberships: (u.memberships ?? []).map((m) => ({
       id: m.id,
       role: adaptRole(m.role),
+      isActive: m.isActive,
       organization: {
         id: m.organization.id,
         organizationName: m.organization.organizationName,

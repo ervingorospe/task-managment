@@ -32,7 +32,10 @@ const tabs = [
     id: "tickets",
     label: "Tickets",
     icon: FolderKanban,
-    permission: PERMISSIONS.TICKET_VIEW_ALL,
+    // Reports/charts, not ticket management — gated on the dedicated
+    // report.view.all rule rather than ticket.view.all, so a role that
+    // just needs broad ticket visibility isn't also handed full reporting.
+    permission: PERMISSIONS.REPORT_VIEW_ALL,
   },
 ] as const;
 type Tab = (typeof tabs)[number]["id"];
@@ -141,9 +144,9 @@ export default function OrganizationMemberTabs({
 
         {activeTab === "tickets" && (
           <Can
-            action={PERMISSIONS.TICKET_VIEW_ALL}
+            action={PERMISSIONS.REPORT_VIEW_ALL}
             fallback={
-              <EmptyState subtitle="You do not have permission to view organization tickets." />
+              <EmptyState subtitle="You do not have permission to view organization reports." />
             }
           >
             <TicketReports organization={organization} />

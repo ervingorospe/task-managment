@@ -121,10 +121,12 @@ export function Topbar() {
             Settings
           </Dropdown.DropdownItem>
 
-          <Dropdown.DropdownItem href="/dashboard/my-organizations">
-            <Building2 size={15} />
-            Organization
-          </Dropdown.DropdownItem>
+          {!currentUser.createdViaInvite && (
+            <Dropdown.DropdownItem href="/dashboard/my-organizations">
+              <Building2 size={15} />
+              Organization
+            </Dropdown.DropdownItem>
+          )}
 
           <Dropdown.DropdownSeparator />
 

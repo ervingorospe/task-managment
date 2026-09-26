@@ -17,7 +17,6 @@ import { StatusPieChart } from "@/components/organization/ticket-reports/status-
 import { TrendSeriesSelect } from "@/components/organization/ticket-reports/trend-series-select";
 import { TrendLineChart } from "@/components/organization/ticket-reports/trend-line-chart";
 import { MonthComparisonChart } from "@/components/organization/ticket-reports/month-comparison-chart";
-import { AssigneeBreakdownList } from "./assignee-breakdown-list";
 import { OverdueTicketList } from "./overdue-ticket-list";
 import { ReportsSkeleton } from "@/components/ui/skeletons";
 import { useAuth } from "@/providers/auth-provider";
@@ -26,7 +25,6 @@ import { useOrgReportData } from "@/hooks/use-org-report-data";
 import { usePersonalTicketData } from "@/hooks/use-personal-ticket-data";
 import { getDefaultTags } from "@/lib/data/organizations";
 import {
-  getAssigneeBreakdown,
   getStatusBreakdown,
   getTrendSeries,
   type TrendSelection,
@@ -144,10 +142,6 @@ export default function ReportsClient() {
     () => getStatusBreakdown(visibleTickets),
     [visibleTickets],
   );
-  const assigneeRows = useMemo(
-    () => getAssigneeBreakdown(visibleTickets),
-    [visibleTickets],
-  );
   const trendSeries = useMemo(
     () =>
       getTrendSeries(visibleTickets, tags, {
@@ -234,24 +228,12 @@ export default function ReportsClient() {
         <MonthComparisonChart tickets={visibleTickets} tags={tags} />
       </Card>
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        {/* No team in Personal mode, so no assignee breakdown to show. */}
-        {!isPersonalMode && (
-          <Card
-            title="Tickets by assignee"
-            subtitle="Workload distribution across the team."
-          >
-            <AssigneeBreakdownList rows={assigneeRows} />
-          </Card>
-        )}
-
-        <Card
-          title="Overdue tickets"
-          subtitle="The tickets that need attention first."
-        >
-          <OverdueTicketList tickets={overdueTickets} />
-        </Card>
-      </div>
+      <Card
+        title="Overdue tickets"
+        subtitle="The tickets that need attention first."
+      >
+        <OverdueTicketList tickets={overdueTickets} />
+      </Card>
     </div>
   );
 }

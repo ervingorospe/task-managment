@@ -8,17 +8,26 @@ export const profileSchema = z.object({
 });
 export type ProfileValues = z.infer<typeof profileSchema>;
 
-export const changePasswordSchema = z
-  .object({
-    currentPassword: z.string().min(1, "Enter your current password"),
-    newPassword: z
-      .string()
-      .min(6, "Must be at least 6 characters")
-      .max(72),
-    confirmPassword: z.string().min(1, "Confirm your new password"),
-  })
-  .refine((data) => data.newPassword === data.confirmPassword, {
-    message: "Passwords do not match",
-    path: ["confirmPassword"],
-  });
-export type ChangePasswordValues = z.infer<typeof changePasswordSchema>;
+// currentPassword is required only when the account already has one — an
+// OAuth-only account (see ChangePasswordSection) is setting its first
+// password, not changing an existing one.
+export function makeChangePasswordSchema(hasPassword: boolean) {
+  return z
+    .object({
+      currentPassword: hasPassword
+        ? z.string().min(1, "Enter your current password")
+        : z.string().optional(),
+      newPassword: z
+        .string()
+        .min(8, "Must be at least 8 characters")
+        .max(72),
+      confirmPassword: z.string().min(1, "Confirm your new password"),
+    })
+    .refine((data) => data.newPassword === data.confirmPassword, {
+      message: "Passwords do not match",
+      path: ["confirmPassword"],
+    });
+}
+export type ChangePasswordValues = z.infer<
+  ReturnType<typeof makeChangePasswordSchema>
+>;

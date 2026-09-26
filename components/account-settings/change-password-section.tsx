@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { KeyRound } from "lucide-react";
@@ -7,9 +8,13 @@ import { KeyRound } from "lucide-react";
 import Card from "@/components/ui/card";
 import Input from "@/components/ui/form/input";
 import { Button } from "@/components/ui/buttons/button";
-import { useToast } from "@/providers/toast-provider";
+import { InlineAlert } from "@/components/ui/inline-alert";
+import { useInlineAlert } from "@/hooks/use-inline-alert";
+import { useAuth } from "@/providers/auth-provider";
+import { changeUserPassword } from "@/lib/api/users";
+import { apiErrorMessage } from "@/lib/helper/api-error-toast";
 import {
-  changePasswordSchema,
+  makeChangePasswordSchema,
   type ChangePasswordValues,
 } from "@/lib/schemas/user.schema";
 
@@ -20,33 +25,62 @@ const defaultValues: ChangePasswordValues = {
 };
 
 export default function ChangePasswordSection() {
-  const toast = useToast();
+  const { alert, showAlert, dismissAlert } = useInlineAlert();
+  const { currentUser } = useAuth();
+  const hasPassword = currentUser?.hasPassword ?? true;
 
+  const schema = useMemo(() => makeChangePasswordSchema(hasPassword), [hasPassword]);
   const { control, handleSubmit, reset } = useForm<ChangePasswordValues>({
-    resolver: zodResolver(changePasswordSchema),
+    resolver: zodResolver(schema),
     defaultValues,
   });
 
-  function onSubmit(values: ChangePasswordValues) {
-    // TODO: PATCH /users/me/password
-    console.log("Change password payload", values);
-    reset(defaultValues);
-    toast("Password updated");
+  async function onSubmit(values: ChangePasswordValues) {
+    if (!currentUser) return;
+    try {
+      await changeUserPassword(currentUser.id, {
+        currentPassword: hasPassword ? values.currentPassword : undefined,
+        newPassword: values.newPassword,
+        confirmPassword: values.confirmPassword,
+      });
+      reset(defaultValues);
+      showAlert(hasPassword ? "Password updated" : "Password set", "success");
+    } catch (error) {
+      showAlert(
+        apiErrorMessage(error, "Failed to update password"),
+        "error",
+      );
+    }
   }
 
   return (
     <Card
       title="Password"
-      subtitle="Change the password you use to sign in."
+      subtitle={
+        hasPassword
+          ? "Change the password you use to sign in."
+          : "Your account signed in with Google and has no password yet — set one to also sign in with email and password."
+      }
+      banner={
+        alert && (
+          <InlineAlert
+            message={alert.message}
+            variant={alert.variant}
+            onDismiss={dismissAlert}
+          />
+        )
+      }
     >
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-        <Input
-          name="currentPassword"
-          control={control}
-          label="Current Password"
-          type="password"
-          icon={KeyRound}
-        />
+        {hasPassword && (
+          <Input
+            name="currentPassword"
+            control={control}
+            label="Current Password"
+            type="password"
+            icon={KeyRound}
+          />
+        )}
 
         <div className="grid gap-5 sm:grid-cols-2">
           <Input
@@ -66,7 +100,9 @@ export default function ChangePasswordSection() {
         </div>
 
         <div className="flex justify-end">
-          <Button type="submit">Update password</Button>
+          <Button type="submit">
+            {hasPassword ? "Update password" : "Set password"}
+          </Button>
         </div>
       </form>
     </Card>

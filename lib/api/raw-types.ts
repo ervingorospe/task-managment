@@ -199,10 +199,13 @@ export interface RawMembership {
   id: number;
   role: RawRole;
   organization: RawMembershipOrganization;
+  isActive: boolean;
 }
 
 export interface RawCurrentUser extends RawUser {
   memberships: RawMembership[];
+  hasPassword: boolean;
+  createdViaInvite: boolean;
 }
 
 export interface RawActivityLogEntry {

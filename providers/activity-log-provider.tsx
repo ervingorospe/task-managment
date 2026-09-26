@@ -35,15 +35,19 @@ export function ActivityLogProvider({ children }: PropsWithChildren) {
 
     if (isPersonalMode) {
       if (!currentUser) return;
-      fetchPersonalActivityLog(currentUser.id).then((fetched) => {
-        if (cancelled) return;
-        setEntries((prev) => [
-          ...fetched,
-          ...prev.filter(
-            (e) => e.orgId != null || !fetched.some((f) => f.id === e.id),
-          ),
-        ]);
-      });
+      fetchPersonalActivityLog(currentUser.id)
+        .then((fetched) => {
+          if (cancelled) return;
+          setEntries((prev) => [
+            ...fetched,
+            ...prev.filter(
+              (e) => e.orgId != null || !fetched.some((f) => f.id === e.id),
+            ),
+          ]);
+        })
+        .catch((error) => {
+          console.error("Failed to load personal activity log", error);
+        });
       return () => {
         cancelled = true;
       };
@@ -51,17 +55,27 @@ export function ActivityLogProvider({ children }: PropsWithChildren) {
 
     if (!activeOrganization) return;
 
-    fetchActivityLog(activeOrganization.id).then((fetched) => {
-      if (cancelled) return;
-      setEntries((prev) => [
-        ...fetched,
-        ...prev.filter(
-          (e) =>
-            e.orgId !== activeOrganization.id ||
-            !fetched.some((f) => f.id === e.id),
-        ),
-      ]);
-    });
+    // This provider fetches proactively for whichever org is active,
+    // independent of what page is actually rendering — including a
+    // deactivated membership, where the backend correctly 403s (see
+    // permissions.service.ts's getMembership) even though DashboardLayout
+    // is already blocking the page content for that case. Without a
+    // catch, that rejection was uncaught and crashed the whole app.
+    fetchActivityLog(activeOrganization.id)
+      .then((fetched) => {
+        if (cancelled) return;
+        setEntries((prev) => [
+          ...fetched,
+          ...prev.filter(
+            (e) =>
+              e.orgId !== activeOrganization.id ||
+              !fetched.some((f) => f.id === e.id),
+          ),
+        ]);
+      })
+      .catch((error) => {
+        console.error("Failed to load activity log", error);
+      });
 
     return () => {
       cancelled = true;

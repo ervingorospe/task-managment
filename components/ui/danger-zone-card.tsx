@@ -5,15 +5,17 @@ import { Button } from "@/components/ui/buttons/button";
 
 interface DangerZoneCardProps {
   children: ReactNode;
+  title?: string;
   subtitle?: string;
 }
 
 export function DangerZoneCard({
   children,
+  title = "Danger Zone",
   subtitle = "Irreversible and access-affecting actions for this organization.",
 }: DangerZoneCardProps) {
   return (
-    <Card title="Danger Zone" subtitle={subtitle}>
+    <Card title={title} subtitle={subtitle}>
       <div className="space-y-3">{children}</div>
     </Card>
   );

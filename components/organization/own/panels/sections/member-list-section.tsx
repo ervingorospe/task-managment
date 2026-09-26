@@ -11,6 +11,7 @@ import { RoleDetail } from "@/lib/types/organization/role-detail.type";
 import { getMemberEmail, getMemberName } from "@/lib/helper/member-name";
 import { PERMISSIONS } from "@/lib/data/permissions";
 import { Can } from "@/components/auth/can";
+import { usePermission } from "@/providers/auth-provider";
 
 interface MemberListProps {
   members: MemberDetail[];
@@ -33,6 +34,8 @@ function MemberListSection({
   emptySubtitle = "Members who accept an invitation will appear here.",
   emptyAction,
 }: MemberListProps) {
+  const canUpdateRole = usePermission(PERMISSIONS.MEMBER_UPDATE_ROLE);
+
   if (members.length === 0) {
     return (
       <EmptyState title={emptyTitle} subtitle={emptySubtitle}>
@@ -62,12 +65,7 @@ function MemberListSection({
               subtitle={email}
               trailing={
                 <div className="flex items-center gap-2">
-                  <Can
-                    allOf={[
-                      PERMISSIONS.MEMBER_VIEW_MEMBERS,
-                      PERMISSIONS.MEMBER_UPDATE_ROLE,
-                    ]}
-                  >
+                  {canUpdateRole ? (
                     <button
                       type="button"
                       onClick={() => onChangeRole(member)}
@@ -76,7 +74,11 @@ function MemberListSection({
                       <Shuffle size={12} />
                       {role?.roleName ?? "No role"}
                     </button>
-                  </Can>
+                  ) : (
+                    <span className="rounded border border-line px-2 py-1 text-xs text-ink-muted">
+                      {role?.roleName ?? "No role"}
+                    </span>
+                  )}
 
                   <Can
                     allOf={[

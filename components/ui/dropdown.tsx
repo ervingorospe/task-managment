@@ -37,6 +37,13 @@ interface Position {
 
 const PANEL_WIDTH = 224; // matches w-56
 const ARROW_MARGIN = 16; // keeps the arrow clear of the panel's rounded corners
+// The panel's actual height varies with its content and isn't known until
+// it's rendered — this is a conservative estimate of how much room a
+// typical panel needs below the trigger before flipping to render above it
+// instead. Good enough to avoid the common case (a short list, trigger
+// near the bottom of a short page) without the complexity of measuring the
+// real panel and repositioning after the fact.
+const ESTIMATED_PANEL_HEIGHT = 240;
 
 function Dropdown({
   trigger,
@@ -48,6 +55,7 @@ function Dropdown({
   const [open, setOpen] = useState(false);
   const [visible, setVisible] = useState(false);
   const [position, setPosition] = useState<Position | null>(null);
+  const [resolvedSide, setResolvedSide] = useState(side);
   const [mounted, setMounted] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
@@ -71,6 +79,28 @@ function Dropdown({
     const viewportWidth = document.documentElement.clientWidth;
     const viewportHeight = document.documentElement.clientHeight;
 
+    // Flip to the other side when the preferred side doesn't have enough
+    // room but the opposite one does — e.g. a filter dropdown whose
+    // trigger ends up near the bottom of a short (one-row) list would
+    // otherwise render its panel partly below the viewport.
+    const spaceBelow = viewportHeight - rect.bottom;
+    const spaceAbove = rect.top;
+    let effectiveSide = side;
+    if (
+      side === "bottom" &&
+      spaceBelow < ESTIMATED_PANEL_HEIGHT &&
+      spaceAbove > spaceBelow
+    ) {
+      effectiveSide = "top";
+    } else if (
+      side === "top" &&
+      spaceAbove < ESTIMATED_PANEL_HEIGHT &&
+      spaceBelow > spaceAbove
+    ) {
+      effectiveSide = "bottom";
+    }
+    setResolvedSide(effectiveSide);
+
     // The panel's aligned edge sits flush with the trigger's edge (see the
     // left/right assignments below), so the arrow's distance from that edge
     // to the trigger's center is always half the trigger's width — clamped
@@ -88,7 +118,7 @@ function Dropdown({
       right: viewportWidth - rect.right,
       arrowOffset,
     });
-  }, []);
+  }, [side]);
 
   useEffect(() => {
     if (!open) return;
@@ -168,8 +198,8 @@ function Dropdown({
             data-floating-panel
             style={{
               position: "fixed",
-              top: side === "bottom" ? position.top : undefined,
-              bottom: side === "top" ? position.bottom : undefined,
+              top: resolvedSide === "bottom" ? position.top : undefined,
+              bottom: resolvedSide === "top" ? position.bottom : undefined,
               left: align === "start" ? position.left : undefined,
               right: align === "end" ? position.right - 5 : undefined,
             }}
@@ -182,7 +212,7 @@ function Dropdown({
               className={clsx(
                 "absolute h-2.5 w-2.5 rotate-45 border-line bg-surface transition-opacity duration-150",
                 visible ? "opacity-100" : "opacity-0",
-                side === "bottom"
+                resolvedSide === "bottom"
                   ? "-top-[5px] border-l border-t"
                   : "-bottom-[5px] border-b border-r",
               )}

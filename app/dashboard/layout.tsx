@@ -7,6 +7,7 @@ import { ActivityLogProvider } from "@/providers/activity-log-provider";
 import { Sidebar } from "@/components/sidebar";
 import { Topbar } from "@/components/topbar";
 import { OrganizationDisabledState } from "@/components/organization/organization-disabled-state";
+import { MemberRemovedState } from "@/components/organization/member-removed-state";
 
 // Pages under these prefixes aren't scoped to `activeOrganization` (the
 // topbar switcher's selection) the way /dashboard, /reports and /activity
@@ -33,8 +34,13 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { isAuthenticated, isInitializing, activeOrganization, currentUser } =
-    useAuth();
+  const {
+    isAuthenticated,
+    isInitializing,
+    activeOrganization,
+    activeMembership,
+    currentUser,
+  } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
 
@@ -79,17 +85,34 @@ export default function DashboardLayout({
   const isExempt = EXEMPT_PREFIXES.some((prefix) =>
     pathname.startsWith(prefix),
   );
+  // Checked from currentUser.memberships (already in hand, no fetch)
+  // *before* children ever mount — children's data hooks (tickets,
+  // requests, org detail) all hit org-scoped backend routes that require
+  // an *active* membership (see permissions.service.ts's getMembership),
+  // so letting them mount first for a deactivated member means every one
+  // of those fetches 403s, several of them uncaught. This is the specific
+  // fix for that: block before any of it fires.
+  const isMemberDeactivated = !isExempt && activeMembership?.isActive === false;
   const isOrgDisabled =
-    !isExempt && activeOrganization?.settings.isActive === false;
+    !isExempt && !isMemberDeactivated && activeOrganization?.settings.isActive === false;
 
   return (
     <ActivityLogProvider>
       <div className="flex min-h-screen bg-canvas print:block">
         <Sidebar />
-        <div className="flex flex-1 flex-col pb-[100px] print:pb-0">
+        {/* min-w-0 overrides this flex item's default min-width: auto —
+            without it, a wide child further down (e.g. a table with its
+            own min-width + overflow-x-auto) can force this whole column,
+            and the page along with it, to scroll horizontally instead of
+            the table scrolling on its own. */}
+        <div className="flex min-w-0 flex-1 flex-col pb-[100px] print:pb-0">
           <Topbar />
           <main className="flex-1 p-6 print:p-0">
-            {isOrgDisabled ? (
+            {isMemberDeactivated ? (
+              <MemberRemovedState
+                organizationName={activeOrganization!.organizationName}
+              />
+            ) : isOrgDisabled ? (
               <OrganizationDisabledState
                 organizationName={activeOrganization!.organizationName}
               />

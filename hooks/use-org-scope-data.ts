@@ -41,12 +41,26 @@ export function useOrgScopedData<T>(
     let cancelled = false;
     setLoading(true);
 
-    fetcher(orgId).then((result) => {
-      if (!cancelled) {
-        setData(result);
-        setLoading(false);
-      }
-    });
+    fetcher(orgId)
+      .then((result) => {
+        if (!cancelled) {
+          setData(result);
+          setLoading(false);
+        }
+      })
+      .catch((error) => {
+        // A 403 here almost always means the caller's membership in this
+        // org was deactivated after it became "active" in the topbar
+        // (DashboardLayout blocks the common case before this even
+        // fires — see its own comment — but this covers any other
+        // consumer of this hook so a stray failure degrades to "no data"
+        // instead of an uncaught rejection crashing the page).
+        console.error("useOrgScopedData fetch failed", error);
+        if (!cancelled) {
+          setData(null);
+          setLoading(false);
+        }
+      });
 
     return () => {
       cancelled = true;

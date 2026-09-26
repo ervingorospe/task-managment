@@ -1,7 +1,6 @@
 import type { TicketDetail } from "../types/ticket/ticket-detail.type";
 import type { TagDetail } from "../types/organization/tag-detail.type";
 import { getDueState } from "./ticket-status";
-import { getMemberName } from "./member-name";
 
 export interface DateRange {
   from: string | null; // YYYY-MM-DD
@@ -52,35 +51,6 @@ export function getStatusBreakdown(
   return Array.from(byTag.values()).sort((a, b) => b.count - a.count);
 }
 
-export interface AssigneeBreakdownRow {
-  memberId: number;
-  name: string;
-  count: number;
-}
-
-/** How many tickets each member is currently assigned to, busiest first. */
-export function getAssigneeBreakdown(
-  tickets: TicketDetail[],
-): AssigneeBreakdownRow[] {
-  const byMember = new Map<number, AssigneeBreakdownRow>();
-
-  for (const ticket of tickets) {
-    for (const member of ticket.assignees) {
-      const existing = byMember.get(member.id);
-      if (existing) {
-        existing.count += 1;
-      } else {
-        byMember.set(member.id, {
-          memberId: member.id,
-          name: getMemberName(member),
-          count: 1,
-        });
-      }
-    }
-  }
-
-  return Array.from(byMember.values()).sort((a, b) => b.count - a.count);
-}
 
 export interface DueSummary {
   total: number;

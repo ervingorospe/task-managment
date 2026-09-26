@@ -24,3 +24,22 @@ export async function uploadUserAvatar(
   );
   return result.url;
 }
+
+export interface ChangePasswordPayload {
+  /** Omitted when the account has no password yet (Google-only) — see
+   * ChangePasswordSection. */
+  currentPassword?: string;
+  newPassword: string;
+  confirmPassword: string;
+}
+
+export async function changeUserPassword(
+  userId: number,
+  payload: ChangePasswordPayload,
+): Promise<void> {
+  await api.patch(`/users/${userId}/password`, payload);
+}
+
+export async function deleteUserAccount(userId: number): Promise<void> {
+  await api.delete(`/users/${userId}`);
+}

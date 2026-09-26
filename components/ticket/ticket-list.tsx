@@ -52,6 +52,8 @@ function TicketListComponent({
   hideAssign = false,
 }: TicketListProps) {
   const canAssign = usePermission(PERMISSIONS.TICKET_ASSIGN);
+  const hasAssignView = usePermission(PERMISSIONS.TICKET_ASSIGN_VIEW);
+  const canViewAssignees = canAssign || hasAssignView;
   const canChangeStatus = usePermission(PERMISSIONS.TICKET_CHANGE_TAG);
 
   if (tickets.length === 0) {
@@ -63,141 +65,191 @@ function TicketListComponent({
   }
 
   return (
-    <table className="w-full text-sm">
-      <tbody>
-        {tickets.map((ticket) => {
-          const timeframe = formatTimeframe(ticket);
-          const dueState = getDueState(ticket);
+    <div className="overflow-x-auto">
+      <table className="w-full min-w-[840px] text-sm">
+        <thead>
+          <tr className="border-b border-line text-left text-xs font-medium uppercase tracking-wide text-ink-faint">
+            <th scope="col" className="w-8 px-4 py-2 font-medium">
+              <span className="sr-only">Starred</span>
+            </th>
+            <th scope="col" className="w-20 px-2 py-2 font-medium">
+              ID
+            </th>
+            <th scope="col" className="px-4 py-2 font-medium">
+              Ticket
+            </th>
+            <th scope="col" className="px-4 py-2 font-medium">
+              Description
+            </th>
+            {canViewAssignees && !hideAssign && (
+              <th scope="col" className="px-4 py-2 font-medium">
+                Assignees
+              </th>
+            )}
+            <th scope="col" className="px-4 py-2 font-medium">
+              Status
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          {tickets.map((ticket) => {
+            const timeframe = formatTimeframe(ticket);
+            const dueState = getDueState(ticket);
 
-          return (
-            <tr
-              key={ticket.id}
-              className="border-b border-line align-top last:border-0"
-            >
-              {/* Star toggle */}
-              <td className="w-8 px-4 py-3 align-middle">
-                <button
-                  type="button"
-                  onClick={() => onToggleStar(ticket.id)}
-                  aria-label={ticket.starred ? "Unstar ticket" : "Star ticket"}
-                  aria-pressed={ticket.starred}
-                  className="text-ink-faint transition-colors hover:text-warning"
-                >
-                  <Star
-                    size={16}
-                    className={ticket.starred ? "fill-warning text-warning" : ""}
-                  />
-                </button>
-              </td>
+            return (
+              <tr
+                key={ticket.id}
+                className="border-b border-line align-top last:border-0"
+              >
+                {/* Star toggle */}
+                <td className="w-8 px-4 py-3 align-middle">
+                  <button
+                    type="button"
+                    onClick={() => onToggleStar(ticket.id)}
+                    aria-label={ticket.starred ? "Unstar ticket" : "Star ticket"}
+                    aria-pressed={ticket.starred}
+                    className="text-ink-faint transition-colors hover:text-warning"
+                  >
+                    <Star
+                      size={16}
+                      className={ticket.starred ? "fill-warning text-warning" : ""}
+                    />
+                  </button>
+                </td>
 
-              {/* Reference id */}
-              <td className="w-20 whitespace-nowrap px-2 py-3 align-middle">
-                <Link
-                  href={`/dashboard/tickets/${ticket.id}`}
-                  className="font-mono text-xs text-ink-muted hover:text-accent-text"
-                >
-                  {ticket.referenceId}
-                </Link>
-              </td>
+                {/* Reference id */}
+                <td className="w-20 whitespace-nowrap px-2 py-3 align-middle">
+                  <Link
+                    href={`/dashboard/tickets/${ticket.id}`}
+                    className="font-mono text-xs text-ink-muted hover:text-accent-text"
+                  >
+                    {ticket.referenceId}
+                  </Link>
+                </td>
 
-              {/* Title, with timeframe + due chip + client stacked below */}
-              <td className="max-w-[70px] px-4 py-3">
-                <Link
-                  href={`/dashboard/tickets/${ticket.id}`}
-                  className="font-medium text-ink hover:text-accent-text"
-                >
-                  {ticket.title}
-                </Link>
-                <div className="mt-1 space-y-0.5 text-xs text-ink-muted">
-                  {timeframe && (
-                    <p className="flex items-center gap-1.5">
-                      {timeframe}
-                      {dueState && <DueChip state={dueState} />}
-                    </p>
-                  )}
-                  {ticket.client?.user && (
-                    <p>
-                      Client: {ticket.client.user.firstName}{" "}
-                      {ticket.client.user.lastName}
-                    </p>
-                  )}
-                </div>
-              </td>
+                {/* Title, with timeframe + due chip + client stacked below */}
+                <td className="max-w-[70px] px-4 py-3">
+                  <Link
+                    href={`/dashboard/tickets/${ticket.id}`}
+                    className="font-medium text-ink hover:text-accent-text"
+                  >
+                    {ticket.title}
+                  </Link>
+                  <div className="mt-1 space-y-0.5 text-xs text-ink-muted">
+                    {timeframe && (
+                      <p className="flex items-center gap-1.5">
+                        {timeframe}
+                        {dueState && <DueChip state={dueState} />}
+                      </p>
+                    )}
+                    {ticket.client?.user && (
+                      <p>
+                        Client: {ticket.client.user.firstName}{" "}
+                        {ticket.client.user.lastName}
+                      </p>
+                    )}
+                  </div>
+                </td>
 
-              {/* Description — markdown, clamped, "View more" links to the ticket page */}
-              <td className="max-w-[140px] px-4 py-3">
-                <TicketDescriptionCell
-                  ticketId={ticket.id}
-                  description={ticket.description}
-                  attachments={ticket.attachments}
-                />
-              </td>
-
-              {/* Assignees — clickable avatars with tooltip, or inline "Assign" when empty */}
-              {canAssign && !hideAssign && (
-                <td className="max-w-[40px] px-4 py-3">
-                  <MultiSelectDropdown
-                    value={ticket.assignees.map((member) => member.id)}
-                    onChange={(memberIds) => onAssign(ticket.id, memberIds)}
-                    options={assignableMembers.map((member) => ({
-                      value: member.id,
-                      label: `${member.user?.firstName ?? ""} ${
-                        member.user?.lastName ?? ""
-                      }`.trim(),
-                    }))}
-                    emptyMessage="No assignable members"
-                    trigger={
-                      ticket.assignees.length === 0 ? (
-                        <InlineButton icon={<UserPlus size={12} />}>
-                          Assign
-                        </InlineButton>
-                      ) : (
-                        <div className="flex -space-x-2">
-                          {ticket.assignees.map((member) => (
-                            <Tooltip
-                              key={member.id}
-                              label={`${member.user?.firstName ?? ""} ${
-                                member.user?.lastName ?? ""
-                              }`.trim()}
-                            >
-                              <Avatar
-                                firstName={member.user?.firstName ?? "?"}
-                                lastName={member.user?.lastName}
-                                size="sm"
-                                className="cursor-pointer ring-2 ring-surface transition-transform hover:z-10 hover:scale-110"
-                              />
-                            </Tooltip>
-                          ))}
-                        </div>
-                      )
-                    }
+                {/* Description — markdown, clamped, "View more" links to the ticket page */}
+                <td className="max-w-[140px] px-4 py-3">
+                  <TicketDescriptionCell
+                    ticketId={ticket.id}
+                    description={ticket.description}
+                    attachments={ticket.attachments}
                   />
                 </td>
-              )}
 
-              {/* Change tag */}
-              <td className="max-w-[40px] whitespace-nowrap px-4 py-3">
-                {canChangeStatus ? (
-                  <TagPicker
-                    value={ticket.tag}
-                    options={availableTags}
-                    onChange={(tag) => onChangeTag(ticket.id, tag)}
-                  />
-                ) : (
-                  <span className="flex items-center gap-1.5 rounded-sm border border-line px-2 py-1 text-xs text-ink">
-                    <span
-                      className="h-2 w-2 rounded-full"
-                      style={{ backgroundColor: ticket.tag.color }}
-                    />
-                    {ticket.tag.tagName}
-                  </span>
+                {/* Assignees — clickable avatars with tooltip, or inline "Assign" when empty.
+                    Read-only (no dropdown) for a viewer who can see assignees
+                    (ticket.assign.view) but can't reassign (ticket.assign). */}
+                {canViewAssignees && !hideAssign && (
+                  <td className="max-w-[40px] px-4 py-3">
+                    {canAssign ? (
+                      <MultiSelectDropdown
+                        value={ticket.assignees.map((member) => member.id)}
+                        onChange={(memberIds) => onAssign(ticket.id, memberIds)}
+                        options={assignableMembers.map((member) => ({
+                          value: member.id,
+                          label: `${member.user?.firstName ?? ""} ${
+                            member.user?.lastName ?? ""
+                          }`.trim(),
+                        }))}
+                        emptyMessage="No assignable members"
+                        trigger={
+                          ticket.assignees.length === 0 ? (
+                            <InlineButton icon={<UserPlus size={12} />}>
+                              Assign
+                            </InlineButton>
+                          ) : (
+                            <div className="flex -space-x-2">
+                              {ticket.assignees.map((member) => (
+                                <Tooltip
+                                  key={member.id}
+                                  label={`${member.user?.firstName ?? ""} ${
+                                    member.user?.lastName ?? ""
+                                  }`.trim()}
+                                >
+                                  <Avatar
+                                    firstName={member.user?.firstName ?? "?"}
+                                    lastName={member.user?.lastName}
+                                    size="sm"
+                                    className="cursor-pointer ring-2 ring-surface transition-transform hover:z-10 hover:scale-110"
+                                  />
+                                </Tooltip>
+                              ))}
+                            </div>
+                          )
+                        }
+                      />
+                    ) : ticket.assignees.length === 0 ? (
+                      <span className="text-xs text-ink-faint">Unassigned</span>
+                    ) : (
+                      <div className="flex -space-x-2">
+                        {ticket.assignees.map((member) => (
+                          <Tooltip
+                            key={member.id}
+                            label={`${member.user?.firstName ?? ""} ${
+                              member.user?.lastName ?? ""
+                            }`.trim()}
+                          >
+                            <Avatar
+                              firstName={member.user?.firstName ?? "?"}
+                              lastName={member.user?.lastName}
+                              size="sm"
+                              className="ring-2 ring-surface"
+                            />
+                          </Tooltip>
+                        ))}
+                      </div>
+                    )}
+                  </td>
                 )}
-              </td>
-            </tr>
-          );
-        })}
-      </tbody>
-    </table>
+
+                {/* Change tag */}
+                <td className="max-w-[40px] whitespace-nowrap px-4 py-3">
+                  {canChangeStatus ? (
+                    <TagPicker
+                      value={ticket.tag}
+                      options={availableTags}
+                      onChange={(tag) => onChangeTag(ticket.id, tag)}
+                    />
+                  ) : (
+                    <span className="flex items-center gap-1.5 rounded-sm border border-line px-2 py-1 text-xs text-ink">
+                      <span
+                        className="h-2 w-2 rounded-full"
+                        style={{ backgroundColor: ticket.tag.color }}
+                      />
+                      {ticket.tag.tagName}
+                    </span>
+                  )}
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
   );
 }
 
