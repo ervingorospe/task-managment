@@ -94,8 +94,14 @@ export default function SignupPage() {
               control={control}
               label="First name"
               icon={User}
+              maxLength={50}
             />
-            <Input name="lastName" control={control} label="Last name" />
+            <Input
+              name="lastName"
+              control={control}
+              label="Last name"
+              maxLength={50}
+            />
           </div>
 
           <Input
@@ -105,6 +111,7 @@ export default function SignupPage() {
             type="email"
             placeholder="you@company.com"
             icon={Mail}
+            maxLength={255}
           />
 
           <Input
@@ -114,6 +121,7 @@ export default function SignupPage() {
             type="password"
             placeholder="••••••••"
             icon={Lock}
+            maxLength={72}
           />
 
           <Input
@@ -122,6 +130,7 @@ export default function SignupPage() {
             label="Confirm password"
             type="password"
             placeholder="••••••••"
+            maxLength={72}
             icon={Lock}
           />
 

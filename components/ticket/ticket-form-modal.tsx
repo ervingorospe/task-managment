@@ -160,6 +160,7 @@ export default function TicketFormModal({
           control={control}
           label="Title"
           placeholder="e.g. Checkout button not responding"
+          maxLength={150}
         />
 
         <MarkdownEditor

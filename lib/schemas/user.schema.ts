@@ -3,7 +3,7 @@ import { z } from "zod";
 export const profileSchema = z.object({
   firstName: z.string().trim().min(1, "First name is required").max(50),
   lastName: z.string().trim().min(1, "Last name is required").max(50),
-  email: z.string().trim().email("Enter a valid email address"),
+  email: z.string().trim().email("Enter a valid email address").max(50),
   avatar: z.instanceof(File).nullable(),
 });
 export type ProfileValues = z.infer<typeof profileSchema>;

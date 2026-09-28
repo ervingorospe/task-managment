@@ -64,6 +64,7 @@ export function RequestFormModal({
           control={control}
           label="Title"
           placeholder="What do you need?"
+          maxLength={150}
         />
 
         <MarkdownEditor

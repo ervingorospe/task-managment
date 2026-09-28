@@ -89,6 +89,7 @@ export default function ChangePasswordSection() {
             label="New Password"
             type="password"
             icon={KeyRound}
+            maxLength={72}
           />
           <Input
             name="confirmPassword"
@@ -96,6 +97,7 @@ export default function ChangePasswordSection() {
             label="Confirm New Password"
             type="password"
             icon={KeyRound}
+            maxLength={72}
           />
         </div>
 

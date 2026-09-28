@@ -94,6 +94,7 @@ function LoginPageContent() {
             type="email"
             placeholder="you@company.com"
             icon={Mail}
+            maxLength={255}
           />
 
           <Input
@@ -103,6 +104,7 @@ function LoginPageContent() {
             type="password"
             placeholder="••••••••"
             icon={Lock}
+            maxLength={72}
           />
 
           <Button type="submit" className="w-full" disabled={isSubmitting}>

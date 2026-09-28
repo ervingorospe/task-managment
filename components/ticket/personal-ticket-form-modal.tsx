@@ -92,6 +92,7 @@ export default function PersonalTicketFormModal({
           control={control}
           label="Title"
           placeholder="e.g. Renew passport"
+          maxLength={150}
         />
 
         <MarkdownEditor

@@ -137,13 +137,24 @@ export default function ProfileInfoSection() {
           />
 
           <div className="grid gap-5 sm:grid-cols-2">
-            <Input name="firstName" control={control} label="First Name" />
-            <Input name="lastName" control={control} label="Last Name" />
+            <Input
+              name="firstName"
+              control={control}
+              label="First Name"
+              maxLength={50}
+            />
+            <Input
+              name="lastName"
+              control={control}
+              label="Last Name"
+              maxLength={50}
+            />
             <Input
               name="email"
               control={control}
               label="Email"
               type="email"
+              maxLength={50}
               className="sm:col-span-2"
             />
           </div>

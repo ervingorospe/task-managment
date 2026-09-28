@@ -43,6 +43,7 @@ const inputFields: InputFieldConfig<BasicInfoValues>[] = [
     label: "Organization Name",
     placeholder: "Acme Studio",
     type: "text",
+    maxLength: 50,
   },
   {
     fieldType: FIELD_TYPES.INPUT,
@@ -52,6 +53,7 @@ const inputFields: InputFieldConfig<BasicInfoValues>[] = [
     optional: true,
     type: "email",
     iconPosition: "right",
+    maxLength: 50,
   },
   {
     fieldType: FIELD_TYPES.INPUT,
@@ -61,6 +63,7 @@ const inputFields: InputFieldConfig<BasicInfoValues>[] = [
     optional: true,
     type: "text",
     iconPosition: "right",
+    maxLength: 50,
   },
   {
     fieldType: FIELD_TYPES.TEXTAREA,
@@ -69,6 +72,7 @@ const inputFields: InputFieldConfig<BasicInfoValues>[] = [
     placeholder: "What does your organization do?",
     optional: true,
     rows: 3,
+    maxLength: 300,
   },
 ];
 
@@ -202,6 +206,7 @@ export default function BasicInformation({
                     type={field.type}
                     icon={field.icon}
                     iconPosition={field.iconPosition}
+                    maxLength={field.maxLength}
                   />
                 );
               }
@@ -215,6 +220,7 @@ export default function BasicInformation({
                   placeholder={field.placeholder}
                   optional={field.optional}
                   rows={field.rows}
+                  maxLength={field.maxLength}
                   className="sm:col-span-2"
                 />
               );

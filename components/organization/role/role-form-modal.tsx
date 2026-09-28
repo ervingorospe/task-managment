@@ -155,6 +155,7 @@ export function RoleFormModal({
           control={control}
           label="Role name"
           placeholder="e.g. Admin"
+          maxLength={40}
         />
 
         <Textarea
@@ -164,6 +165,7 @@ export function RoleFormModal({
           optional
           rows={2}
           placeholder="What can this role do?"
+          maxLength={200}
         />
 
         <div>

@@ -5,17 +5,19 @@ export const basicInfoSchema = z.object({
     .string()
     .trim()
     .min(2, "Organization name must be at least 2 characters")
-    .max(80),
+    .max(50),
   email: z
     .string()
     .trim()
     .email("Enter a valid email address")
+    .max(50)
     .optional()
     .or(z.literal("")),
   website: z
     .string()
     .trim()
     .url("Enter a valid URL, e.g. https://example.com")
+    .max(50)
     .optional()
     .or(z.literal("")),
   organizationDesc: z.string().trim().max(300).optional().or(z.literal("")),
@@ -32,7 +34,7 @@ export const invitesSchema = z.object({
   invites: z.array(
     z.object({
       id: z.number(),
-      email: z.string().email(),
+      email: z.string().email().max(50),
       roleId: z.number(),
     }),
   ),
@@ -46,7 +48,7 @@ export const tagsSchema = z.object({
   tags: z.array(
     z.object({
       id: z.number(),
-      tagName: z.string(),
+      tagName: z.string().max(50),
       color: z.string(),
       isDefault: z.boolean(),
     }),
@@ -65,6 +67,6 @@ export const roleFormSchema = z.object({
 export type RoleFormValues = z.infer<typeof roleFormSchema>;
 
 export const changeOwnerSchema = z.object({
-  email: z.string().trim().email("Enter a valid email address"),
+  email: z.string().trim().email("Enter a valid email address").max(50),
 });
 export type ChangeOwnerValues = z.infer<typeof changeOwnerSchema>;

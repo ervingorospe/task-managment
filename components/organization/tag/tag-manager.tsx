@@ -87,6 +87,7 @@ export default function TagManager({
               }}
               onKeyDown={handleKeyDown}
               placeholder="e.g. On Hold"
+              maxLength={50}
               className="flex-1 rounded border border-line bg-surface px-3 py-2 text-sm text-ink placeholder:text-ink-faint focus:border-accent-text"
             />
 

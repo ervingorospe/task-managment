@@ -16,6 +16,7 @@ type InputField<T extends FieldValues> = {
   type?: ComponentProps<"input">["type"];
   icon?: ComponentType<LucideProps>;
   iconPosition?: "left" | "right";
+  maxLength?: number;
 };
 
 type TextareaField<T extends FieldValues> = {
@@ -25,6 +26,7 @@ type TextareaField<T extends FieldValues> = {
   placeholder?: string;
   optional?: boolean;
   rows?: number;
+  maxLength?: number;
 };
 
 export type InputFieldConfig<T extends FieldValues> =

@@ -7,6 +7,12 @@ import { PERMISSIONS } from "@/lib/data/permissions";
 import { Can } from "@/components/auth/can";
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+// Matches the backend's InviteMemberDto/OrgInviteDto email @MaxLength.
+const MAX_EMAIL_LENGTH = 50;
+
+function isValidEmail(value: string): boolean {
+  return emailRegex.test(value) && value.length <= MAX_EMAIL_LENGTH;
+}
 
 interface EmailChipInputProps {
   atCapacity: boolean;
@@ -26,8 +32,12 @@ export function EmailChipInput({
   function commitChip(raw: string) {
     const value = raw.trim();
     if (!value) return;
-    if (!emailRegex.test(value)) {
-      setError(`"${value}" isn't a valid email`);
+    if (!isValidEmail(value)) {
+      setError(
+        value.length > MAX_EMAIL_LENGTH
+          ? `Email must be ${MAX_EMAIL_LENGTH} characters or fewer`
+          : `"${value}" isn't a valid email`,
+      );
       return;
     }
     if (!chips.includes(value)) setChips((prev) => [...prev, value]);
@@ -51,7 +61,7 @@ export function EmailChipInput({
   function handleAdd() {
     const pending = inputValue.trim();
     const all = pending ? [...chips, pending] : chips;
-    const valid = all.filter((e) => emailRegex.test(e));
+    const valid = all.filter(isValidEmail);
 
     if (atCapacity) {
       setError("Reached invite capacity");
@@ -99,6 +109,7 @@ export function EmailChipInput({
           placeholder={
             chips.length === 0 ? "Type an email and press space" : ""
           }
+          maxLength={MAX_EMAIL_LENGTH}
           className="min-w-[160px] flex-1 bg-transparent px-1 py-0.5 text-sm text-ink placeholder:text-ink-faint outline-none"
         />
       </div>

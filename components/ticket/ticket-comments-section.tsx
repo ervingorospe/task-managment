@@ -337,6 +337,7 @@ export default function TicketCommentsSection({
                         value={editCommentDraft}
                         onChange={handleEditChange}
                         rows={3}
+                        maxLength={10000}
                         className="w-full resize-none rounded border border-line bg-surface px-3 py-2 text-sm text-ink placeholder:text-ink-faint focus:border-accent-text focus:outline-none"
                       />
                       {mentionState?.field === comment.id && (
@@ -388,6 +389,7 @@ export default function TicketCommentsSection({
               onChange={handleComposeChange}
               placeholder="Leave a comment... use @ to mention someone"
               rows={3}
+              maxLength={10000}
               className="w-full resize-none rounded border border-line bg-surface px-3 py-2 text-sm text-ink placeholder:text-ink-faint focus:border-accent-text focus:outline-none"
             />
             {mentionState?.field === "compose" && (

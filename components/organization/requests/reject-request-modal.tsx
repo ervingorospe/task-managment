@@ -75,6 +75,7 @@ export function RejectRequestModal({
             label="Reason for rejection"
             placeholder="Let the client know why this request is being rejected."
             rows={3}
+            maxLength={1000}
           />
         </div>
       </div>

@@ -86,6 +86,7 @@ export function ChangeOwnerModal({
             {...register("email")}
             type="email"
             placeholder="new-owner@company.com"
+            maxLength={50}
             className="w-full rounded border border-line bg-surface px-3 py-2 text-sm text-ink placeholder:text-ink-faint focus:border-accent-text"
           />
           {errors.email && (

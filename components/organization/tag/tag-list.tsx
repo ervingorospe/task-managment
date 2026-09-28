@@ -92,6 +92,7 @@ const TagListItem = memo(function TagListItem({
                 if (error) setError(null);
               }}
               onKeyDown={handleKeyDown}
+              maxLength={50}
               className="w-full rounded border border-line bg-surface px-2 py-1 text-sm text-ink focus:border-accent-text focus:outline-none"
             />
             {error && <p className="mt-1 text-xs text-danger">{error}</p>}

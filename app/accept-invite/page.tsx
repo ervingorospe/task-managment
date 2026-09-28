@@ -159,8 +159,19 @@ function AcceptInviteContent() {
           {invite.requiresPassword ? (
             <form onSubmit={handleSubmit(onSubmitForm)} className="mt-6 space-y-4">
               <div className="grid grid-cols-2 gap-3">
-                <Input name="firstName" control={control} label="First name" icon={User} />
-                <Input name="lastName" control={control} label="Last name" />
+                <Input
+                  name="firstName"
+                  control={control}
+                  label="First name"
+                  icon={User}
+                  maxLength={50}
+                />
+                <Input
+                  name="lastName"
+                  control={control}
+                  label="Last name"
+                  maxLength={50}
+                />
               </div>
 
               <Input
