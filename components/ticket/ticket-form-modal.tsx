@@ -49,6 +49,7 @@ function emptyDefaults(
     description: "",
     assigneeIds: [],
     clientId: null,
+    projectId: null,
     dueDate: "",
     attachments: [],
     ...initialValues,
@@ -115,6 +116,9 @@ export default function TicketFormModal({
     lastOrgId.current = selectedOrgId;
     setValue("assigneeIds", []);
     setValue("clientId", null);
+    // A project belongs to one org — switching org invalidates whatever
+    // was selected here, same as assignees/client above.
+    setValue("projectId", null);
   }, [selectedOrgId, setValue]);
 
   function submit(values: TicketFormValues) {
@@ -243,6 +247,20 @@ export default function TicketFormModal({
             ...clientMembers.map((m) => ({
               value: String(m.id),
               label: `${m.user?.firstName} ${m.user?.lastName}`,
+            })),
+          ]}
+        />
+
+        <Select
+          name="projectId"
+          control={control}
+          label="Project"
+          optional
+          options={[
+            { value: "", label: "No project" },
+            ...(selectedOrg?.projects ?? []).map((p) => ({
+              value: String(p.id),
+              label: p.name,
             })),
           ]}
         />

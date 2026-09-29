@@ -38,6 +38,12 @@ interface Position {
   right: number;
   /** Distance from the panel's aligned edge to the arrow, in px. */
   arrowOffset: number;
+  /** How tall the panel can actually get before it would run past the
+   * viewport edge on its open side — a hard cap, independent of the
+   * flip-to-top heuristic below (which only decides which side to prefer,
+   * and can still guess wrong for a panel taller than
+   * ESTIMATED_PANEL_HEIGHT). The panel scrolls internally past this. */
+  maxHeight: number;
 }
 
 const PANEL_WIDTH = 224; // matches w-56
@@ -128,12 +134,24 @@ function Dropdown({
       Math.max(ARROW_MARGIN, rect.width / 2),
     );
 
+    // Hard cap regardless of which side won above — a panel taller than
+    // ESTIMATED_PANEL_HEIGHT (e.g. the ticket filter panel) can still get
+    // placed on a side that doesn't actually have room for all of it, so
+    // this clamps to whatever room is really there and lets the panel
+    // scroll internally past that instead of running off-screen.
+    const viewportMargin = 16;
+    const maxHeight =
+      (effectiveSide === "bottom" ? spaceBelow : spaceAbove) -
+      gap -
+      viewportMargin;
+
     setPosition({
       top: rect.bottom + gap,
       bottom: viewportHeight - rect.top + gap,
       left: rect.left,
       right: viewportWidth - rect.right,
       arrowOffset,
+      maxHeight: Math.max(maxHeight, 120),
     });
   }, [side]);
 
@@ -243,8 +261,9 @@ function Dropdown({
               <div className="overflow-hidden">
                 <div
                   role="menu"
+                  style={{ maxHeight: position.maxHeight }}
                   className={clsx(
-                    "rounded border border-line bg-surface py-1 shadow-sm transition-opacity duration-150",
+                    "overflow-y-auto rounded border border-line bg-surface py-1 shadow-sm transition-opacity duration-150",
                     visible ? "opacity-100 delay-75" : "opacity-0",
                   )}
                 >

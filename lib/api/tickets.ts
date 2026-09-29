@@ -11,6 +11,7 @@ export interface TicketsPageQuery {
   /** Tag ids plus the literals "overdue" and "starred". */
   filterBy?: (number | "overdue" | "starred")[];
   memberIds?: number[];
+  projectIds?: number[];
   dueDateFrom?: string;
   dueDateTo?: string;
   /** Restricts to tickets where this user is the client or an assignee. */
@@ -28,6 +29,7 @@ function buildTicketsQuery(orgId: number, query: TicketsPageQuery): string {
   if (query.involvesUserId) params.set("involvesUserId", String(query.involvesUserId));
   for (const value of query.filterBy ?? []) params.append("filterBy", String(value));
   for (const id of query.memberIds ?? []) params.append("memberIds", String(id));
+  for (const id of query.projectIds ?? []) params.append("projectIds", String(id));
   return params.toString();
 }
 
@@ -76,6 +78,7 @@ export async function fetchTicketCountNumbers(
   orgId: number,
   options?: {
     filterBy?: (number | "overdue" | "starred")[];
+    projectIds?: number[];
     involvesUserId?: number;
   },
 ): Promise<TicketCountNumbers> {
@@ -85,6 +88,7 @@ export async function fetchTicketCountNumbers(
     params.set("involvesUserId", String(options.involvesUserId));
   }
   for (const value of options?.filterBy ?? []) params.append("filterBy", String(value));
+  for (const id of options?.projectIds ?? []) params.append("projectIds", String(id));
   return api.get<TicketCountNumbers>(`/tickets/count-numbers?${params.toString()}`);
 }
 
@@ -178,6 +182,7 @@ export interface CreateTicketPayload {
   description?: string;
   tagId: number;
   clientId?: number;
+  projectId?: number;
   assigneeIds?: number[];
   dueDate?: string;
 }

@@ -4,6 +4,7 @@ import {
   adaptUser,
   adaptRole,
   adaptTag,
+  adaptProject,
   adaptMember,
   adaptSettings,
   adaptInvite,
@@ -14,13 +15,14 @@ import type { OrganizationDetail } from "@/lib/types/organization/organization-d
 import type {
   RawOrganization,
   RawPage,
+  RawProject,
   RawTicket,
   RawTicketRequest,
 } from "./raw-types";
 
 function adaptOrganizationBase(
   org: RawOrganization,
-): Omit<OrganizationDetail, "tickets" | "ticketRequests"> {
+): Omit<OrganizationDetail, "tickets" | "ticketRequests" | "projects"> {
   return {
     id: org.id,
     organizationName: org.organizationName,
@@ -75,7 +77,12 @@ export async function createOrganization(
   payload: CreateOrganizationPayload,
 ): Promise<OrganizationDetail> {
   const org = await api.post<RawOrganization>("/organizations", payload);
-  return { ...adaptOrganizationBase(org), tickets: [], ticketRequests: [] };
+  return {
+    ...adaptOrganizationBase(org),
+    tickets: [],
+    ticketRequests: [],
+    projects: [],
+  };
 }
 
 export interface OwnedOrganization {
@@ -192,18 +199,34 @@ async function composeOrganizationDetail(
     }
   }
 
+  // Same 403-degrades-to-empty reasoning as fetchOrEmpty above, for an
+  // endpoint that returns a plain array rather than a page.
+  async function fetchArrayOrEmpty<T>(path: string): Promise<T[]> {
+    try {
+      return await api.get<T[]>(path);
+    } catch (error) {
+      if (isNotFoundOrForbidden(error)) return [];
+      throw error;
+    }
+  }
+
   // 100 is the backend's own max page size (PaginationQueryDto). Fine for
   // this org's current size — see this function's own doc comment above.
-  const [ticketsPage, requestsPage] = await Promise.all([
+  const [ticketsPage, requestsPage, projects] = await Promise.all([
     fetchOrEmpty<RawTicket>(`/tickets?orgId=${org.id}&limit=100`),
     fetchOrEmpty<RawTicketRequest>(
       `/ticket-requests?orgId=${org.id}&limit=100`,
     ),
+    // Not paginated (see project.service.ts) — already server-scoped to
+    // whatever this caller can see (project.view vs project.view.own), so
+    // no involvesUserId-style query param to pass here.
+    fetchArrayOrEmpty<RawProject>(`/projects?orgId=${org.id}`),
   ]);
 
   return {
     ...adaptOrganizationBase(org),
     tickets: ticketsPage.items.map(adaptTicket),
     ticketRequests: requestsPage.items.map(adaptTicketRequest),
+    projects: projects.map(adaptProject),
   };
 }

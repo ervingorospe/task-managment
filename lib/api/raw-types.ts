@@ -55,6 +55,19 @@ export interface RawTag {
   updatedAt: string;
 }
 
+export interface RawProject {
+  id: number;
+  orgId: number;
+  clientId: number | null;
+  name: string;
+  description: string | null;
+  isDeleted: boolean;
+  createdAt: string;
+  updatedAt: string;
+  client?: RawMember | null;
+  assignees?: RawMember[];
+}
+
 export interface RawMember {
   id: number;
   orgId: number;
@@ -121,6 +134,10 @@ export interface RawOrganization {
   owner: RawUser;
   roles: RawRole[];
   tags: RawTag[];
+  // Not part of this bundle — a project's visibility is caller-scoped
+  // (project.view vs project.view.own), so it's fetched separately via
+  // GET /projects, same reason tickets/ticketRequests are too. See
+  // composeOrganizationDetail() in lib/api/organizations.ts.
   members: RawMember[];
   pendingInvites: RawMemberInvite[];
   pendingOwnershipTransfer: RawMemberInvite | null;
@@ -148,6 +165,7 @@ export interface RawTicket {
   // Null for a personal (org-less) ticket — ownerId is set instead.
   orgId: number | null;
   ownerId?: number | null;
+  projectId?: number | null;
   referenceId: string;
   title: string;
   description: string | null;
@@ -159,6 +177,7 @@ export interface RawTicket {
   createdAt: string;
   updatedAt: string;
   tag: RawTag;
+  project?: RawProject | null;
   client: RawMember | null;
   assignees: RawMember[];
   attachments: RawTicketAttachment[];

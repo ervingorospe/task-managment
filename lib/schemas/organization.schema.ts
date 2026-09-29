@@ -66,6 +66,18 @@ export const roleFormSchema = z.object({
 });
 export type RoleFormValues = z.infer<typeof roleFormSchema>;
 
+export const projectFormSchema = z.object({
+  name: z
+    .string()
+    .trim()
+    .min(2, "Project name must be at least 2 characters")
+    .max(50),
+  description: z.string().trim().max(10000).optional().or(z.literal("")),
+  clientId: z.string().nullable(),
+  assigneeIds: z.array(z.number()),
+});
+export type ProjectFormValues = z.infer<typeof projectFormSchema>;
+
 export const changeOwnerSchema = z.object({
   email: z.string().trim().email("Enter a valid email address").max(50),
 });

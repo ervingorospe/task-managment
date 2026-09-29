@@ -1,7 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { AlertTriangle, Plus, Tag as TagIcon, Ticket as TicketIcon } from "lucide-react";
+import {
+  AlertTriangle,
+  Plus,
+  Tag as TagIcon,
+  Ticket as TicketIcon,
+} from "lucide-react";
 import { Can } from "@/components/auth/can";
 import { PERMISSIONS } from "@/lib/data/permissions";
 import { Button } from "@/components/ui/buttons/button";
@@ -39,11 +44,14 @@ interface TicketsPageClientProps {
   organization: OrganizationDetail;
   /** Scopes the list to only the current user's starred tickets — used by the Starred page. */
   starredOnly?: boolean;
+  /** Scopes the list (and new tickets) to a single project — used by the project detail page. */
+  projectId?: number;
 }
 
 export default function TicketsPageClient({
   organization,
   starredOnly = false,
+  projectId,
 }: TicketsPageClientProps) {
   const { currentUser } = useAuth();
   const toast = useToast();
@@ -95,9 +103,7 @@ export default function TicketsPageClient({
     const requestId = ++requestIdRef.current;
     setIsLoading(true);
 
-    const filterBy: (number | "overdue" | "starred")[] = [
-      ...filter.tagIds,
-    ];
+    const filterBy: (number | "overdue" | "starred")[] = [...filter.tagIds];
     if (filter.overdueOnly) filterBy.push("overdue");
     if (starredOnly) filterBy.push("starred");
 
@@ -107,8 +113,8 @@ export default function TicketsPageClient({
         limit: pageSize,
         search: search || undefined,
         filterBy: filterBy.length > 0 ? filterBy : undefined,
-        memberIds:
-          filter.memberIds.length > 0 ? filter.memberIds : undefined,
+        memberIds: filter.memberIds.length > 0 ? filter.memberIds : undefined,
+        projectIds: projectId ? [projectId] : undefined,
         dueDateFrom: filter.dateFrom ?? undefined,
         dueDateTo: filter.dateTo ?? undefined,
         involvesUserId,
@@ -129,6 +135,7 @@ export default function TicketsPageClient({
     search,
     filter,
     starredOnly,
+    projectId,
     involvesUserId,
     toast,
   ]);
@@ -137,13 +144,14 @@ export default function TicketsPageClient({
     try {
       const result = await fetchTicketCountNumbers(organization.id, {
         filterBy: starredOnly ? ["starred"] : undefined,
+        projectIds: projectId ? [projectId] : undefined,
         involvesUserId,
       });
       setCountNumbers(result);
     } catch (error) {
       notifyApiError(toast, error, "Failed to load ticket stats");
     }
-  }, [organization.id, starredOnly, involvesUserId, toast]);
+  }, [organization.id, starredOnly, projectId, involvesUserId, toast]);
 
   useEffect(() => {
     loadTickets();
@@ -227,16 +235,17 @@ export default function TicketsPageClient({
   const handleCreate = useCallback(
     async (values: TicketFormValues) => {
       const targetOrg =
-        allOrganizations.find(
-          (o) => String(o.id) === values.organizationId,
-        ) ?? organization;
+        allOrganizations.find((o) => String(o.id) === values.organizationId) ??
+        organization;
       const targetTodoTag =
         targetOrg.tags.find((t) => t.tagName === "To Do") ?? targetOrg.tags[0];
       if (!targetTodoTag) return;
 
       const client =
-        targetOrg.members.find((m) => String(m.id) === values.clientId) ??
-        null;
+        targetOrg.members.find((m) => String(m.id) === values.clientId) ?? null;
+      const selectedProject = targetOrg.projects.find(
+        (p) => String(p.id) === values.projectId,
+      );
       const assignees = targetOrg.members.filter((m) =>
         values.assigneeIds.includes(m.id),
       );
@@ -248,6 +257,7 @@ export default function TicketsPageClient({
           description: values.description || undefined,
           tagId: targetTodoTag.id,
           clientId: client?.id,
+          projectId: selectedProject?.id,
           assigneeIds: assignees.map((m) => m.id),
           dueDate: values.dueDate || undefined,
         });
@@ -371,7 +381,9 @@ export default function TicketsPageClient({
       const nowStarred = !target.starred;
 
       setTickets((prev) =>
-        prev.map((t) => (t.id === ticketId ? { ...t, starred: nowStarred } : t)),
+        prev.map((t) =>
+          t.id === ticketId ? { ...t, starred: nowStarred } : t,
+        ),
       );
 
       updateTicketStar(ticketId, nowStarred)
@@ -497,8 +509,14 @@ export default function TicketsPageClient({
         open={modalOpen}
         onClose={() => setModalOpen(false)}
         onSubmit={handleCreate}
-        organizations={allOrganizations}
+        // A project is scoped to one org — no cross-org switching while
+        // creating a ticket from a project's own page.
+        organizations={projectId ? [organization] : allOrganizations}
         currentOrganizationId={organization.id}
+        // Pre-selects this page's project when creating from its own
+        // page; the plain Tickets page passes no projectId, so the form's
+        // own default (None) applies there.
+        initialValues={projectId ? { projectId: String(projectId) } : undefined}
       />
     </div>
   );

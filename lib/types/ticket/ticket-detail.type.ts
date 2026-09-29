@@ -1,5 +1,6 @@
 import type { MemberDetail } from "../organization/member-detail.type";
 import type { TagDetail } from "../organization/tag-detail.type";
+import type { ProjectDetail } from "../organization/project-detail.type";
 import type { TicketComment } from "./ticket-comment.type";
 
 export interface TicketAttachment {
@@ -15,6 +16,8 @@ export interface TicketDetail {
   // Null for a personal (org-less) ticket — ownerId is set instead.
   orgId: number | null;
   ownerId?: number | null;
+  projectId?: number | null;
+  project?: ProjectDetail | null;
   title: string;
   description?: string;
   attachments: TicketAttachment[];

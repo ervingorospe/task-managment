@@ -7,6 +7,7 @@ import type { User } from "@/lib/types/user/user.type";
 import type { CurrentUser } from "@/lib/types/user/current-user.type";
 import type { RoleDetail } from "@/lib/types/organization/role-detail.type";
 import type { TagDetail } from "@/lib/types/organization/tag-detail.type";
+import type { ProjectDetail } from "@/lib/types/organization/project-detail.type";
 import type { MemberDetail } from "@/lib/types/organization/member-detail.type";
 import type { OrgSettingsDetail } from "@/lib/types/organization/organization-settings.type";
 import type { MemberInviteDetail } from "@/lib/types/organization/member-invite-detail.type";
@@ -17,6 +18,7 @@ import type {
   RawUser,
   RawRole,
   RawTag,
+  RawProject,
   RawMember,
   RawOrganizationSettings,
   RawMemberInvite,
@@ -75,6 +77,19 @@ export function adaptTag(t: RawTag): TagDetail {
     isDefault: t.isDefault,
     orgId: t.orgId ?? undefined,
     isDeleted: t.isDeleted ?? false,
+  };
+}
+
+export function adaptProject(p: RawProject): ProjectDetail {
+  return {
+    id: p.id,
+    name: p.name,
+    description: p.description ?? undefined,
+    orgId: p.orgId,
+    clientId: p.clientId,
+    client: p.client ? adaptMember(p.client) : null,
+    assignees: (p.assignees ?? []).map(adaptMember),
+    isDeleted: p.isDeleted,
   };
 }
 
@@ -151,6 +166,8 @@ export function adaptTicket(t: RawTicket): TicketDetail {
     referenceId: t.referenceId,
     orgId: t.orgId,
     ownerId: t.ownerId ?? null,
+    projectId: t.projectId ?? null,
+    project: t.project ? adaptProject(t.project) : null,
     title: t.title,
     description: t.description ?? undefined,
     attachments: (t.attachments ?? []).map(adaptAttachment),

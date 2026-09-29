@@ -14,6 +14,7 @@ import {
   Users,
   Inbox,
   History,
+  FolderKanban,
   PanelLeftClose,
   PanelLeftOpen,
 } from "lucide-react";
@@ -75,6 +76,12 @@ export function Sidebar() {
     : "/dashboard";
 
   const membersActive = pathname === membersHref;
+
+  const projectsHref = activeOrganization
+    ? `/dashboard/organizations/${activeOrganization.settings.slug}/projects`
+    : "/dashboard";
+
+  const projectsActive = pathname === projectsHref;
 
   const activityActive = pathname.startsWith("/dashboard/activity");
 
@@ -225,6 +232,19 @@ export function Sidebar() {
                 <Link href={membersHref} className={navLinkClass(membersActive)}>
                   <Users size={16} strokeWidth={2} />
                   {!collapsed && "Members"}
+                </Link>,
+              )}
+            </Can>
+
+            {/* Projects */}
+            <Can
+              anyOf={[PERMISSIONS.PROJECT_VIEW, PERMISSIONS.PROJECT_VIEW_OWN]}
+            >
+              {withTooltip(
+                "Projects",
+                <Link href={projectsHref} className={navLinkClass(projectsActive)}>
+                  <FolderKanban size={16} strokeWidth={2} />
+                  {!collapsed && "Projects"}
                 </Link>,
               )}
             </Can>

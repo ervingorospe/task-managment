@@ -1,4 +1,10 @@
-export type ActivityModule = "ticket" | "request" | "member" | "role" | "tag";
+export type ActivityModule =
+  | "ticket"
+  | "request"
+  | "member"
+  | "role"
+  | "tag"
+  | "project";
 
 /**
  * Standalone log table — no foreign keys, no joins against tickets/members/

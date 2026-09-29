@@ -19,6 +19,8 @@ export const ticketFormSchema = z.object({
 
   clientId: z.string().nullable(),
 
+  projectId: z.string().nullable(),
+
   dueDate: z
     .string()
     .optional()
