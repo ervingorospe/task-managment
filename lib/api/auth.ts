@@ -99,3 +99,7 @@ export async function acceptInvite(
   const user = await api.post<RawCurrentUser>("/auth/accept-invite", payload);
   return adaptCurrentUser(user);
 }
+
+export async function declineInvite(token: string): Promise<void> {
+  await api.post("/auth/decline-invite", { token });
+}

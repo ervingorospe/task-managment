@@ -4,18 +4,37 @@ import { Suspense, useEffect, useState, type ReactNode } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Lock, User, Building2, CheckCircle2, AlertCircle } from "lucide-react";
+import {
+  Lock,
+  User,
+  Building2,
+  CheckCircle2,
+  AlertCircle,
+  XCircle,
+} from "lucide-react";
 import { Button } from "@/components/ui/buttons/button";
 import Input from "@/components/ui/form/input";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { useAuth } from "@/providers/auth-provider";
 import { ApiError } from "@/lib/api/client";
-import { getInvite, acceptInvite, type InviteInfo } from "@/lib/api/auth";
+import {
+  getInvite,
+  acceptInvite,
+  declineInvite,
+  type InviteInfo,
+} from "@/lib/api/auth";
 import {
   acceptInviteSchema,
   type AcceptInviteValues,
 } from "@/lib/schemas/accept-invite.schema";
 
-type Status = "loading" | "invalid" | "ready" | "accepting";
+type Status =
+  | "loading"
+  | "invalid"
+  | "ready"
+  | "accepting"
+  | "declining"
+  | "declined";
 
 function CenteredCard({ children }: { children: ReactNode }) {
   return (
@@ -36,6 +55,7 @@ function AcceptInviteContent() {
   const [status, setStatus] = useState<Status>("loading");
   const [invite, setInvite] = useState<InviteInfo | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [showDeclineConfirm, setShowDeclineConfirm] = useState(false);
 
   useEffect(() => {
     if (!token) {
@@ -96,6 +116,40 @@ function AcceptInviteContent() {
 
   async function handleAcceptNoPassword() {
     await completeAccept({});
+  }
+
+  async function handleDecline() {
+    setStatus("declining");
+    setError(null);
+    try {
+      await declineInvite(token);
+      setStatus("declined");
+    } catch (err) {
+      setError(
+        err instanceof ApiError ? err.message : "Failed to decline invite.",
+      );
+      setStatus("ready");
+    }
+  }
+
+  if (status === "declined") {
+    return (
+      <CenteredCard>
+        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-ink-faint/20 text-ink-muted">
+          <XCircle size={28} strokeWidth={1.75} />
+        </div>
+        <h1 className="mt-5 text-lg font-semibold text-ink">Invite declined</h1>
+        <p className="mt-2 text-sm text-ink-muted">
+          You&apos;ve declined this invite. The organization has been notified.
+        </p>
+        <a
+          href="/login"
+          className="mt-5 inline-block text-sm text-accent-text hover:underline"
+        >
+          Back to log in
+        </a>
+      </CenteredCard>
+    );
   }
 
   if (status === "loading") {
@@ -195,24 +249,53 @@ function AcceptInviteContent() {
               <Button
                 type="submit"
                 className="w-full"
-                disabled={isSubmitting || status === "accepting"}
+                disabled={isSubmitting || status !== "ready"}
               >
                 {status === "accepting" ? "Setting up your account..." : "Accept invite"}
               </Button>
+              <Button
+                type="button"
+                variant="secondary"
+                className="w-full"
+                onClick={() => setShowDeclineConfirm(true)}
+                disabled={isSubmitting || status !== "ready"}
+              >
+                {status === "declining" ? "Declining..." : "Decline invite"}
+              </Button>
             </form>
           ) : (
-            <Button
-              type="button"
-              className="mt-6 w-full gap-2"
-              onClick={handleAcceptNoPassword}
-              disabled={status === "accepting"}
-            >
-              <CheckCircle2 size={15} />
-              {status === "accepting" ? "Joining..." : "Accept & continue"}
-            </Button>
+            <div className="mt-6 space-y-3">
+              <Button
+                type="button"
+                className="w-full gap-2"
+                onClick={handleAcceptNoPassword}
+                disabled={status !== "ready"}
+              >
+                <CheckCircle2 size={15} />
+                {status === "accepting" ? "Joining..." : "Accept & continue"}
+              </Button>
+              <Button
+                type="button"
+                variant="secondary"
+                className="w-full"
+                onClick={() => setShowDeclineConfirm(true)}
+                disabled={status !== "ready"}
+              >
+                {status === "declining" ? "Declining..." : "Decline invite"}
+              </Button>
+            </div>
           )}
         </div>
       </div>
+
+      <ConfirmDialog
+        open={showDeclineConfirm}
+        onClose={() => setShowDeclineConfirm(false)}
+        onConfirm={handleDecline}
+        title="Decline this invite?"
+        description={`You won't join ${invite.organizationName}, and the organization will be notified that you declined.`}
+        confirmLabel="Decline invite"
+      />
     </div>
   );
 }
