@@ -24,6 +24,11 @@ interface DropdownProps {
   side?: Side;
   align?: Align;
   isWidthFull?: boolean;
+  /** Fires exactly when the panel transitions from closed to open — not
+   * on close, and not on a toggle that was already open. For anything
+   * that should happen once per "opened this", not once per click (e.g.
+   * the notification bell marking itself seen). */
+  onOpen?: () => void;
 }
 
 interface Position {
@@ -51,6 +56,7 @@ function Dropdown({
   side = "bottom",
   align = "end",
   isWidthFull = false,
+  onOpen,
 }: DropdownProps) {
   const [open, setOpen] = useState(false);
   const [visible, setVisible] = useState(false);
@@ -61,6 +67,14 @@ function Dropdown({
   const panelRef = useRef<HTMLDivElement>(null);
 
   const close = useCallback(() => setOpen(false), []);
+
+  const toggleOpen = useCallback(() => {
+    setOpen((v) => {
+      const next = !v;
+      if (next) onOpen?.();
+      return next;
+    });
+  }, [onOpen]);
 
   useEffect(() => setMounted(true), []);
 
@@ -174,11 +188,11 @@ function Dropdown({
         <div
           role="button"
           tabIndex={0}
-          onClick={() => setOpen((v) => !v)}
+          onClick={toggleOpen}
           onKeyDown={(e) => {
             if (e.key === "Enter" || e.key === " ") {
               e.preventDefault();
-              setOpen((v) => !v);
+              toggleOpen();
             }
           }}
           aria-haspopup="menu"

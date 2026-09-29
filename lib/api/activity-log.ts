@@ -45,3 +45,23 @@ export async function postActivityLog(
   });
   return adaptEntry(created);
 }
+
+export interface TicketNotifications {
+  items: ActivityLogEntry[];
+  unreadCount: number;
+}
+
+/** The bell icon's feed — ticket activity involving the current user,
+ * across every org they belong to. See activity-log.service.ts's
+ * getNotifications for the exact scoping rule. */
+export async function fetchTicketNotifications(): Promise<TicketNotifications> {
+  const raw = await api.get<{
+    items: RawActivityLogEntry[];
+    unreadCount: number;
+  }>("/activity-log/notifications");
+  return { items: raw.items.map(adaptEntry), unreadCount: raw.unreadCount };
+}
+
+export async function markNotificationsSeen(): Promise<void> {
+  await api.patch("/activity-log/notifications/seen");
+}

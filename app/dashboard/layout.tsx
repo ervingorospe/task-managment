@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/providers/auth-provider";
 import { ActivityLogProvider } from "@/providers/activity-log-provider";
+import { NotificationsProvider } from "@/providers/notifications-provider";
 import { Sidebar } from "@/components/sidebar";
 import { Topbar } from "@/components/topbar";
 import { OrganizationDisabledState } from "@/components/organization/organization-disabled-state";
@@ -98,30 +99,32 @@ export default function DashboardLayout({
 
   return (
     <ActivityLogProvider>
-      <div className="flex min-h-screen bg-canvas print:block">
-        <Sidebar />
-        {/* min-w-0 overrides this flex item's default min-width: auto —
-            without it, a wide child further down (e.g. a table with its
-            own min-width + overflow-x-auto) can force this whole column,
-            and the page along with it, to scroll horizontally instead of
-            the table scrolling on its own. */}
-        <div className="flex min-w-0 flex-1 flex-col pb-[100px] print:pb-0">
-          <Topbar />
-          <main className="flex-1 p-6 print:p-0">
-            {isMemberDeactivated ? (
-              <MemberRemovedState
-                organizationName={activeOrganization!.organizationName}
-              />
-            ) : isOrgDisabled ? (
-              <OrganizationDisabledState
-                organizationName={activeOrganization!.organizationName}
-              />
-            ) : (
-              children
-            )}
-          </main>
+      <NotificationsProvider>
+        <div className="flex min-h-screen bg-canvas print:block">
+          <Sidebar />
+          {/* min-w-0 overrides this flex item's default min-width: auto —
+              without it, a wide child further down (e.g. a table with its
+              own min-width + overflow-x-auto) can force this whole column,
+              and the page along with it, to scroll horizontally instead of
+              the table scrolling on its own. */}
+          <div className="flex min-w-0 flex-1 flex-col pb-[100px] print:pb-0">
+            <Topbar />
+            <main className="flex-1 p-6 print:p-0">
+              {isMemberDeactivated ? (
+                <MemberRemovedState
+                  organizationName={activeOrganization!.organizationName}
+                />
+              ) : isOrgDisabled ? (
+                <OrganizationDisabledState
+                  organizationName={activeOrganization!.organizationName}
+                />
+              ) : (
+                children
+              )}
+            </main>
+          </div>
         </div>
-      </div>
+      </NotificationsProvider>
     </ActivityLogProvider>
   );
 }

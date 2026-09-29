@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { replaceUrlSlug } from "@/lib/helper/replace-url-slug";
 import { TopbarClock } from "@/components/topbar-clock";
+import { NotificationBell } from "@/components/notifications/notification-bell";
 
 export function Topbar() {
   const router = useRouter();
@@ -89,6 +90,8 @@ export function Topbar() {
         <TopbarClock
           timeZone={activeMembership?.organization.settings.timezone}
         />
+
+        <NotificationBell />
 
         <Dropdown
           side="bottom"
