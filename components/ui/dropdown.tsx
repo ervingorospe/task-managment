@@ -68,13 +68,16 @@ function Dropdown({
 
   const close = useCallback(() => setOpen(false), []);
 
+  // Reads `open` directly rather than deciding inside setOpen's updater —
+  // an updater function isn't a safe place to call another component's
+  // setState (onOpen), since React can invoke it outside a normal event
+  // handler's timing (e.g. while rendering), which is exactly what caused
+  // "Cannot update a component while rendering a different component"
+  // here before this was split apart.
   const toggleOpen = useCallback(() => {
-    setOpen((v) => {
-      const next = !v;
-      if (next) onOpen?.();
-      return next;
-    });
-  }, [onOpen]);
+    if (!open) onOpen?.();
+    setOpen((v) => !v);
+  }, [open, onOpen]);
 
   useEffect(() => setMounted(true), []);
 

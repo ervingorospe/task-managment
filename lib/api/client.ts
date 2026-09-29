@@ -1,13 +1,22 @@
 import { AUTH_COOKIE_NAME } from "@/lib/constants/auth-cookie.constant";
 
-export const API_BASE_URL =
+// The backend's own origin, no version prefix — used for anything that
+// isn't a versioned JSON API call (see toAbsoluteApiUrl below).
+const BACKEND_ORIGIN =
   process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
 
+// Every JSON API route is versioned (see main.ts's enableVersioning) —
+// this is the one place that adds /v1, so a version bump later is a
+// one-line change here instead of touching every lib/api/*.ts call site.
+export const API_BASE_URL = `${BACKEND_ORIGIN}/v1`;
+
 // Attachment URLs come back from the backend as a path relative to it
-// (e.g. "/uploads/<file>") since it just serves them off its own disk —
-// resolve them against the API origin, not the frontend's.
+// (e.g. "/uploads/<file>") for any that aren't already absolute S3 URLs —
+// resolve them against the backend's origin, not the frontend's, and
+// deliberately not through the versioned API_BASE_URL, since this isn't
+// an API call.
 export function toAbsoluteApiUrl(path: string): string {
-  return /^https?:\/\//.test(path) ? path : `${API_BASE_URL}${path}`;
+  return /^https?:\/\//.test(path) ? path : `${BACKEND_ORIGIN}${path}`;
 }
 
 const MUTATING_METHODS = new Set(["POST", "PATCH", "PUT", "DELETE"]);
