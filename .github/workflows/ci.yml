@@ -17,7 +17,11 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          # jsdom@30 (via isomorphic-dompurify) pulls in undici@8, which
+          # needs a newer Node baseline than a plain "20" reliably gives
+          # you in Actions' runner image — 22 is the first LTS confirmed
+          # to have the built-in APIs it expects.
+          node-version: 22
           cache: npm
 
       - name: Install dependencies
@@ -54,6 +58,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
       - name: Install Vercel CLI
         run: npm install --global vercel@latest
 
@@ -85,6 +94,11 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
 
       - name: Install Vercel CLI
         run: npm install --global vercel@latest
