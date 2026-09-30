@@ -44,6 +44,35 @@ export class ApiError extends Error {
   }
 }
 
+/** Thrown when the backend itself can't be reached at all — connection
+ * refused/DNS failure (fetch throws) or its host's gateway reporting it's
+ * down (502/503/504) — as opposed to ApiError, which means the backend
+ * DID respond, just with an error status. Most call sites never see this:
+ * handleServerUnreachable() below redirects before it has a chance to
+ * become an unhandled rejection in a hook with no .catch(). */
+export class ServerUnreachableError extends Error {
+  constructor() {
+    super("Unable to reach the server.");
+    this.name = "ServerUnreachableError";
+  }
+}
+
+const GATEWAY_DOWN_STATUSES = new Set([502, 503, 504]);
+
+// Read by the server-down page's "Try again" button, so it can send the
+// user back to whatever they were on instead of just reloading itself.
+export const SERVER_DOWN_RETURN_TO_KEY = "server_down_return_to";
+
+function handleServerUnreachable(): void {
+  if (typeof window === "undefined") return;
+  if (window.location.pathname === "/server-down") return;
+  sessionStorage.setItem(
+    SERVER_DOWN_RETURN_TO_KEY,
+    window.location.pathname + window.location.search,
+  );
+  window.location.href = "/server-down";
+}
+
 /** True for a 404 (genuinely doesn't exist) or a 403 (exists, but the
  * caller isn't authorized to see it — e.g. an org/ticket/request they
  * aren't a member of). Callers fetching a single resource by id treat
@@ -88,15 +117,26 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     }
   }
 
-  const res = await fetch(`${API_BASE_URL}${path}`, {
-    ...init,
-    headers,
-    cache: "no-store",
-    // The session cookie is httpOnly and set by the backend, a different
-    // origin from this app (even in dev — different ports) — fetch won't
-    // send/accept cookies cross-origin without this.
-    credentials: "include",
-  });
+  let res: Response;
+  try {
+    res = await fetch(`${API_BASE_URL}${path}`, {
+      ...init,
+      headers,
+      cache: "no-store",
+      // The session cookie is httpOnly and set by the backend, a different
+      // origin from this app (even in dev — different ports) — fetch won't
+      // send/accept cookies cross-origin without this.
+      credentials: "include",
+    });
+  } catch {
+    handleServerUnreachable();
+    throw new ServerUnreachableError();
+  }
+
+  if (GATEWAY_DOWN_STATUSES.has(res.status)) {
+    handleServerUnreachable();
+    throw new ServerUnreachableError();
+  }
 
   if (!res.ok) {
     const body = await res.json().catch(() => null);
