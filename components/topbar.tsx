@@ -31,11 +31,11 @@ export function Topbar() {
   if (!currentUser) return null;
 
   function handleOrganizationSwitch(organizationId: number) {
-    const membership = currentUser?.memberships.find(
+    // Always called with an id taken from currentUser.memberships itself
+    // (the dropdown's own .map() below), so the lookup always finds one.
+    const membership = currentUser!.memberships.find(
       (m) => m.organization.id === organizationId,
-    );
-
-    if (!membership) return;
+    )!;
 
     switchOrganization(organizationId);
 

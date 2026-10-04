@@ -23,7 +23,7 @@ function NotificationRow({ entry }: { entry: ActivityLogEntry }) {
       className="flex items-start gap-2.5 px-3 py-2.5 hover:bg-canvas"
     >
       <Avatar
-        firstName={entry.actorName.split(" ")[0] ?? "?"}
+        firstName={entry.actorName.split(" ")[0]}
         lastName={entry.actorName.split(" ")[1]}
         src={entry.actorAvatar ?? undefined}
         size="sm"

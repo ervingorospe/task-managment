@@ -20,9 +20,6 @@ export function ClampedText({
   const [isTruncated, setIsTruncated] = useState(false);
 
   useEffect(() => {
-    const element = ref.current;
-    if (!element) return;
-
     // Let the browser render the text first.
     requestAnimationFrame(() => {
       if (!ref.current) return;

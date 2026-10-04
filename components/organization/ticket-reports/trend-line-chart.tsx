@@ -54,8 +54,9 @@ export function TrendLineChart({
   }
 
   function handleMouseMove(e: React.MouseEvent<SVGSVGElement>) {
-    const rect = svgRef.current?.getBoundingClientRect();
-    if (!rect) return;
+    // svgRef is always attached here — React binds it before this handler,
+    // which lives on the element itself, can ever fire.
+    const rect = svgRef.current!.getBoundingClientRect();
     const relX = ((e.clientX - rect.left) / rect.width) * WIDTH;
     const domainX = minX + (relX / WIDTH) * (maxX - minX);
     setHoverX(Math.min(Math.max(Math.round(domainX), minX), maxX));

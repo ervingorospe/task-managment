@@ -84,10 +84,6 @@ export default function TicketsPageClient({
     setSearchInput,
   } = useTicketListQueryState();
 
-  const [allOrganizations, setAllOrganizations] = useState<
-    OrganizationDetail[]
-  >([organization]);
-
   // ticket.view.all sees everything; ticket.view.included (or nothing) only
   // sees tickets the current user requested or is assigned to. When that's
   // the case but the user id isn't known yet, fall back to an id no member
@@ -233,26 +229,28 @@ export default function TicketsPageClient({
   );
 
   const handleCreate = useCallback(
+    // The form only ever offers this one organization (see the
+    // `organizations` prop passed to TicketFormModal below), so
+    // values.organizationId always refers to it.
     async (values: TicketFormValues) => {
-      const targetOrg =
-        allOrganizations.find((o) => String(o.id) === values.organizationId) ??
-        organization;
       const targetTodoTag =
-        targetOrg.tags.find((t) => t.tagName === "To Do") ?? targetOrg.tags[0];
+        organization.tags.find((t) => t.tagName === "To Do") ??
+        organization.tags[0];
       if (!targetTodoTag) return;
 
       const client =
-        targetOrg.members.find((m) => String(m.id) === values.clientId) ?? null;
-      const selectedProject = targetOrg.projects.find(
+        organization.members.find((m) => String(m.id) === values.clientId) ??
+        null;
+      const selectedProject = organization.projects.find(
         (p) => String(p.id) === values.projectId,
       );
-      const assignees = targetOrg.members.filter((m) =>
+      const assignees = organization.members.filter((m) =>
         values.assigneeIds.includes(m.id),
       );
 
       let newTicket: TicketDetail;
       try {
-        newTicket = await createTicket(targetOrg.id, {
+        newTicket = await createTicket(organization.id, {
           title: values.title,
           description: values.description || undefined,
           tagId: targetTodoTag.id,
@@ -266,12 +264,10 @@ export default function TicketsPageClient({
         return;
       }
 
-      if (targetOrg.id === organization.id) {
-        loadTickets();
-        loadCounts();
-      }
+      loadTickets();
+      loadCounts();
       logTicketActivity({
-        orgId: targetOrg.id,
+        orgId: organization.id,
         action: "created",
         entityId: newTicket.id,
         entityLabel: newTicket.title,
@@ -285,7 +281,6 @@ export default function TicketsPageClient({
       showAlert(`New ticket ${newTicket.title} was created`);
     },
     [
-      allOrganizations,
       organization,
       toast,
       showAlert,
@@ -509,9 +504,7 @@ export default function TicketsPageClient({
         open={modalOpen}
         onClose={() => setModalOpen(false)}
         onSubmit={handleCreate}
-        // A project is scoped to one org — no cross-org switching while
-        // creating a ticket from a project's own page.
-        organizations={projectId ? [organization] : allOrganizations}
+        organizations={[organization]}
         currentOrganizationId={organization.id}
         // Pre-selects this page's project when creating from its own
         // page; the plain Tickets page passes no projectId, so the form's

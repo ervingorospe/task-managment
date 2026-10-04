@@ -56,7 +56,7 @@ export default function RolesSection({
     const newRole: RoleDetail = {
       id: tempId,
       roleName: values.roleName,
-      roleDesc: values.roleDesc ?? "",
+      roleDesc: values.roleDesc,
       rules: resolveRules(values.rules, permissionOptions),
       isDefault: false,
       orgId: Number(orgId),
@@ -101,7 +101,9 @@ export default function RolesSection({
       return `A role named "${values.roleName}" already exists`;
     }
 
-    const previous = roles.find((r) => r.id === id);
+    // updateRole is only ever called with an id that already exists in
+    // `roles`, so this lookup always succeeds.
+    const previous = roles.find((r) => r.id === id)!;
 
     setRoles((prev) =>
       prev.map((r) =>
@@ -109,7 +111,7 @@ export default function RolesSection({
           ? {
               ...r,
               roleName: values.roleName,
-              roleDesc: values.roleDesc ?? "",
+              roleDesc: values.roleDesc,
               rules: resolveRules(values.rules, permissionOptions),
             }
           : r,
@@ -131,18 +133,17 @@ export default function RolesSection({
         showAlert(`Role "${values.roleName}" updated`);
       })
       .catch((error) => {
-        if (previous) {
-          setRoles((prev) => prev.map((r) => (r.id === id ? previous : r)));
-        }
+        setRoles((prev) => prev.map((r) => (r.id === id ? previous : r)));
         notifyApiError(toast, error, `Failed to update role "${values.roleName}"`);
       });
 
     return undefined;
   }
 
+  // Only ever invoked as the delete ConfirmDialog's onConfirm, which only
+  // renders once deletingRole is already set.
   function handleConfirmDelete() {
-    if (!deletingRole) return;
-    const removed = deletingRole;
+    const removed = deletingRole!;
     setRoles((prev) => prev.filter((r) => r.id !== removed.id));
     setDeletingRole(null);
 

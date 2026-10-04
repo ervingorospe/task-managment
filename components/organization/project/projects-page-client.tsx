@@ -198,7 +198,9 @@ export default function ProjectsPageClient({
     const assignees = assignableMembers.filter((m) =>
       values.assigneeIds.includes(m.id),
     );
-    const previous = projects.find((p) => p.id === id);
+    // updateProject is only ever called with an id that already exists
+    // in `projects`, so this lookup always succeeds.
+    const previous = projects.find((p) => p.id === id)!;
 
     setProjects((prev) =>
       prev.map((p) =>
@@ -232,9 +234,7 @@ export default function ProjectsPageClient({
         showAlert(`Project "${values.name}" updated`);
       })
       .catch((error) => {
-        if (previous) {
-          setProjects((prev) => prev.map((p) => (p.id === id ? previous : p)));
-        }
+        setProjects((prev) => prev.map((p) => (p.id === id ? previous : p)));
         notifyApiError(
           toast,
           error,
@@ -254,9 +254,10 @@ export default function ProjectsPageClient({
     return undefined;
   }
 
+  // Only ever invoked as the delete ConfirmDialog's onConfirm, which only
+  // renders once deletingProject is already set.
   function handleConfirmDelete() {
-    if (!deletingProject) return;
-    const removed = deletingProject;
+    const removed = deletingProject!;
     setProjects((prev) => prev.filter((p) => p.id !== removed.id));
     setDeletingProject(null);
 

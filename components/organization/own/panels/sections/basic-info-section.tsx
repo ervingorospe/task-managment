@@ -240,7 +240,7 @@ export default function BasicInformation({
             </p>
           </PropertyRow>
 
-          <Link href={displayInfo.website ?? "#"} target="_blank">
+          <Link href={displayInfo.website} target="_blank">
             <PropertyRow label="Website" variant="plain">
               <Globe
                 size={14}

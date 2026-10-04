@@ -57,11 +57,9 @@ export default function RequestsPageClient({
   const isClientRole = activeMembership?.role.roleName === "Client";
 
   const [requests, setRequests] = useState<TicketRequest[]>(
-    organization.ticketRequests ?? [],
+    organization.ticketRequests,
   );
-  const [tickets, setTickets] = useState<TicketDetail[]>(
-    organization.tickets ?? [],
-  );
+  const [tickets, setTickets] = useState<TicketDetail[]>(organization.tickets);
 
   const {
     page,
@@ -244,9 +242,10 @@ export default function RequestsPageClient({
   );
 
   const handleReject = useCallback(
+    // Only ever invoked as RejectRequestModal's onConfirm, which only
+    // opens (via `open={!!request}`) once rejectTarget is already set.
     async (remarks: string) => {
-      if (!rejectTarget) return;
-      const target = rejectTarget;
+      const target = rejectTarget!;
 
       try {
         await rejectTicketRequest(target.id, remarks);
@@ -312,9 +311,11 @@ export default function RequestsPageClient({
   );
 
   const handleApproveSubmit = useCallback(
+    // Only ever invoked as the approve TicketFormModal's onSubmit, which
+    // only renders (via `{approveTarget && (...)}`) once approveTarget is
+    // already set.
     async (values: TicketFormValues) => {
-      if (!approveTarget) return;
-      const target = approveTarget;
+      const target = approveTarget!;
 
       const targetTodoTag =
         organization.tags.find((t) => t.tagName === "To Do") ??

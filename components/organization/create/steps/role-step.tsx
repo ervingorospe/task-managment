@@ -15,7 +15,7 @@ export default function RolesStep() {
     roles: defaultRoles,
   });
 
-  const roles = (watch("roles") as RoleDetail[] | undefined) ?? defaultRoles;
+  const roles = watch("roles") as RoleDetail[];
 
   const addRole = useCallback(
     (values: RoleFormValues): string | undefined => {

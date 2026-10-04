@@ -29,9 +29,10 @@ export function SetRoleModal({
     setSelected(currentRoleId);
   }, [currentRoleId, open]);
 
+  // Only ever clickable when `selected` is set — the Confirm button is
+  // disabled whenever `!selected`.
   function handleConfirm() {
-    if (!selected) return;
-    onConfirm(selected);
+    onConfirm(selected!);
     onClose();
   }
 

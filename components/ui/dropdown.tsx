@@ -88,9 +88,9 @@ function Dropdown({
   useEffect(() => setMounted(true), []);
 
   const updatePosition = useCallback(() => {
-    const el = wrapperRef.current;
-    if (!el) return;
-    const rect = el.getBoundingClientRect();
+    // wrapperRef is attached to the trigger's wrapper as soon as this
+    // component mounts, regardless of open state.
+    const rect = wrapperRef.current!.getBoundingClientRect();
     const gap = 8;
 
     // window.innerWidth/innerHeight include the scrollbar's own thickness,

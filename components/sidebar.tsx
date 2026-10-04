@@ -24,7 +24,6 @@ import {
   PERMISSIONS,
   REQUEST_ALL_PERMISSIONS,
   REQUEST_OWN_PERMISSIONS,
-  type Permission,
 } from "@/lib/data/permissions";
 import Tooltip from "@/components/ui/tooltip";
 
@@ -32,7 +31,6 @@ type StaticNavItem = {
   href: string;
   label: string;
   icon: typeof LayoutGrid;
-  permission: Permission | null;
 };
 
 // Dashboard leads; day-to-day work items (Tickets/Starred/Requests/Members,
@@ -40,7 +38,7 @@ type StaticNavItem = {
 // come next; Reports/Activity Log are insights, so they sit after those;
 // Organization management is always last.
 const primaryNavItems: StaticNavItem[] = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutGrid, permission: null },
+  { href: "/dashboard", label: "Dashboard", icon: LayoutGrid },
 ];
 
 export function Sidebar() {
@@ -122,16 +120,10 @@ export function Sidebar() {
     return collapsed ? <Tooltip label={label}>{node}</Tooltip> : node;
   }
 
-  function renderStaticNavItem({
-    href,
-    label,
-    icon: Icon,
-    permission,
-  }: StaticNavItem) {
-    const active =
-      href === "/dashboard"
-        ? pathname === href
-        : pathname.startsWith(`${href}/`) || pathname === href;
+  function renderStaticNavItem({ href, label, icon: Icon }: StaticNavItem) {
+    // The only entry in `primaryNavItems` is "/dashboard" itself, which
+    // is never a prefix of another route, so an exact match is enough.
+    const active = pathname === href;
 
     const link = withTooltip(
       label,
@@ -141,15 +133,7 @@ export function Sidebar() {
       </Link>,
     );
 
-    if (!permission) {
-      return <div key={href}>{link}</div>;
-    }
-
-    return (
-      <Can key={href} action={permission}>
-        {link}
-      </Can>
-    );
+    return <div key={href}>{link}</div>;
   }
 
   return (

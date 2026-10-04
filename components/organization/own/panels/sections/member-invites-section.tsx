@@ -48,7 +48,11 @@ export default function MemberInvitesSection({
     const existing = new Set(invites.map((i) => i.email.toLowerCase()));
     const newInvites: MemberInviteDetail[] = emails
       .filter((email) => !existing.has(email.toLowerCase()))
-      .map((email) => ({ id: Date.now(), email, roleId: defaultRoleId }));
+      .map((email, index) => ({
+        id: Date.now() + index,
+        email,
+        roleId: defaultRoleId,
+      }));
 
     if (newInvites.length === 0) return;
     setInvites((prev) => [...prev, ...newInvites]);
@@ -76,8 +80,8 @@ export default function MemberInvitesSection({
   // Actually persists the queued invites — this only saves the invite row
   // to the database (no email dispatch, no SES integration yet). Members
   // still find out about it some other way for now.
+  // The "Send Invite" button is disabled whenever invites.length === 0.
   async function handleSendInvites() {
-    if (invites.length === 0) return;
     setIsSending(true);
 
     const inviterName = currentUser
