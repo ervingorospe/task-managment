@@ -27,6 +27,15 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # Blocking on purpose: fails the job on any high/critical advisory in
+      # the dependencies actually shipped to production. --omit=dev drops
+      # the one residual finding (a `braces` DoS advisory with no fix
+      # published yet) that lives entirely inside eslint-config-next's own
+      # lint-tooling chain — it never reaches the app or its users, and
+      # there is no newer `braces` release to upgrade to.
+      - name: Security scan
+        run: npm audit --audit-level=high --omit=dev
+
       - name: Typecheck
         run: npx tsc --noEmit -p tsconfig.json
 
@@ -75,3 +84,17 @@ jobs:
         run: |
           url=$(vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN_TICKETING }})
           echo "production_url=$url" >> "$GITHUB_OUTPUT"
+
+      # Shallow post-deploy check, not a replacement for the unit suite:
+      # confirms the freshly deployed build actually serves traffic before
+      # trusting the deploy. Retries ride out the brief propagation window
+      # right after `vercel deploy` returns.
+      - name: Smoke test
+        run: |
+          url="${{ steps.deploy.outputs.production_url }}/login"
+          status=$(curl -s -o /dev/null -w "%{http_code}" --retry 5 --retry-delay 5 --retry-all-errors "$url")
+          echo "GET $url -> $status"
+          if [ "$status" -ge 400 ]; then
+            echo "Smoke test failed: $url returned $status"
+            exit 1
+          fi
