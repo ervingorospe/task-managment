@@ -79,10 +79,26 @@ jobs:
       - name: Build
         run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN_TICKETING }}
 
+      # `vercel deploy` itself already blocks until Vercel reports the
+      # deployment READY or ERROR (failing non-zero on ERROR) — this just
+      # makes that failure unmistakable in the Actions UI, and guards
+      # against a corrupted/empty URL slipping through as a false
+      # success.
       - name: Deploy to production
         id: deploy
         run: |
-          url=$(vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN_TICKETING }})
+          set -euo pipefail
+
+          if ! url=$(vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN_TICKETING }}); then
+            echo "::error::vercel deploy failed — see the command output above for Vercel's own error."
+            exit 1
+          fi
+
+          if [[ "$url" != https://* ]]; then
+            echo "::error::vercel deploy did not return a usable production URL. Got: $url"
+            exit 1
+          fi
+
           echo "production_url=$url" >> "$GITHUB_OUTPUT"
 
       # Shallow post-deploy check, not a replacement for the unit suite:
@@ -95,6 +111,6 @@ jobs:
           status=$(curl -s -o /dev/null -w "%{http_code}" --retry 5 --retry-delay 5 --retry-all-errors "$url")
           echo "GET $url -> $status"
           if [ "$status" -ge 400 ]; then
-            echo "Smoke test failed: $url returned $status"
+            echo "::error::Smoke test failed: $url returned $status"
             exit 1
           fi
