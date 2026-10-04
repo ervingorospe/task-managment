@@ -8,10 +8,16 @@ const nextConfig = {
   // to a page re-renders it server-side against current data, instead of
   // needing a router.refresh() call after every mutation that could affect
   // a page the user might navigate back to.
+  //
+  // Next.js 16 added a hard floor of 30s on staleTimes.static (dynamic can
+  // still be 0) — 0 is no longer accepted. This is the closest allowed
+  // value to the original intent; a statically-rendered page (e.g.
+  // /dashboard/tickets) can now show up to 30s-stale data on a back
+  // navigation right after a mutation, where before it was instant.
   experimental: {
     staleTimes: {
       dynamic: 0,
-      static: 0,
+      static: 30,
     },
   },
   images: {

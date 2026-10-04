@@ -1,6 +1,42 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+/* Design tokens — translated 1:1 from the old tailwind.config.ts (v3)
+   theme.extend. Light mode only; see CLAUDE.md. A bare "--color-x" is the
+   nested config's DEFAULT value; "--color-x-y" is its "y" sub-key, per
+   Tailwind v4's dash-namespaced @theme convention. */
+@theme {
+  --color-link: #0000ff;
+  --color-canvas: #f7f8f7;
+  --color-surface: #ffffff;
+
+  --color-ink: #0e241c;
+  --color-ink-muted: #5b6b65;
+  --color-ink-faint: #94a39d;
+
+  --color-line: #dce3e0;
+
+  --color-accent: #32cd32; /* was #00fa9a */
+  --color-accent-hover: #28a428; /* was #00c278 */
+  --color-accent-subtle: #e9f7e9; /* was #e2f8f0 */
+  --color-accent-text: #1e7b1e; /* was #007a4b */
+
+  --color-danger: #e5484d;
+  --color-danger-subtle: #fcebeb;
+
+  --color-warning: #e2a03f;
+  --color-warning-subtle: #faeeda;
+
+  --color-status-todo: #94a39d;
+  --color-status-progress: #3b82c4;
+  --color-status-done: #00c278;
+  --color-status-blocked: #e5484d;
+
+  --font-sans: var(--font-plex-sans), system-ui, sans-serif;
+  --font-mono: var(--font-plex-mono), monospace;
+
+  --radius-sm: 4px;
+  --radius: 6px;
+}
 
 .tiptap-editor {
   min-height: 150px;
