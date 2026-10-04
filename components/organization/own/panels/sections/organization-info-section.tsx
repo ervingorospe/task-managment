@@ -139,9 +139,9 @@ export default function OrganizationInfoSection({
     });
   }
 
+  // Only ever invoked as the cancel-transfer ConfirmDialog's onConfirm,
+  // which only renders once pendingTransfer is already set.
   async function handleCancelTransfer() {
-    if (!pendingTransfer) return;
-
     try {
       await cancelOwnershipTransfer(organization.id);
     } catch (error) {

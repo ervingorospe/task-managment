@@ -73,9 +73,10 @@ export default function TicketAttachmentsSection({
     }
   }
 
+  // Only ever invoked as the remove ConfirmDialog's onConfirm, which only
+  // opens once attachmentToRemove is already set.
   async function handleRemoveAttachment() {
-    if (!attachmentToRemove) return;
-    const target = attachmentToRemove;
+    const target = attachmentToRemove!;
     setAttachmentToRemove(null);
 
     setIsRemoving(true);

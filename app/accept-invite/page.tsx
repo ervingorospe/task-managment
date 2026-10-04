@@ -178,7 +178,10 @@ function AcceptInviteContent() {
     );
   }
 
-  if (!invite) return null;
+  // Only reachable once status is "ready", which is only ever set
+  // alongside setInvite(info) in the effect above — invite is guaranteed
+  // non-null here.
+  const info = invite!;
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-canvas px-4">
@@ -193,12 +196,12 @@ function AcceptInviteContent() {
           <div className="mt-5 text-center">
             <h1 className="text-lg font-semibold text-ink">You&apos;re invited</h1>
             <p className="mt-2 text-sm text-ink-muted">
-              Join <span className="font-medium text-ink">{invite.organizationName}</span>{" "}
-              as a <span className="font-medium text-ink">{invite.roleName}</span>.
+              Join <span className="font-medium text-ink">{info.organizationName}</span>{" "}
+              as a <span className="font-medium text-ink">{info.roleName}</span>.
             </p>
             <p className="mt-3">
               <span className="inline-block rounded-full border border-line bg-canvas px-3 py-1 text-sm font-medium text-ink">
-                {invite.email}
+                {info.email}
               </span>
             </p>
           </div>
@@ -210,7 +213,7 @@ function AcceptInviteContent() {
             </div>
           )}
 
-          {invite.requiresPassword ? (
+          {info.requiresPassword ? (
             <form onSubmit={handleSubmit(onSubmitForm)} className="mt-6 space-y-4">
               <div className="grid grid-cols-2 gap-3">
                 <Input
@@ -293,7 +296,7 @@ function AcceptInviteContent() {
         onClose={() => setShowDeclineConfirm(false)}
         onConfirm={handleDecline}
         title="Decline this invite?"
-        description={`You won't join ${invite.organizationName}, and the organization will be notified that you declined.`}
+        description={`You won't join ${info.organizationName}, and the organization will be notified that you declined.`}
         confirmLabel="Decline invite"
       />
     </div>

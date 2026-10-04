@@ -43,9 +43,9 @@ export default function InviteManager({
     invites.find((invite) => invite.id === activeInviteId) ?? null;
 
   function handleRoleConfirm(roleId: number) {
-    if (!activeInviteId) return;
-
-    onChangeRole(activeInviteId, roleId);
+    // Only ever invoked as SetRoleModal's onConfirm, and that modal only
+    // renders `open` (and thus clickable) once activeInviteId is set.
+    onChangeRole(activeInviteId!, roleId);
     setActiveInviteId(null);
   }
 

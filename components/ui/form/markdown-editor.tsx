@@ -89,21 +89,23 @@ export default function RichTextEditor<T extends FieldValues>({
     },
   });
 
+  // The Link button (like every toolbar button) is disabled whenever
+  // `!editor`, so this is only ever clickable once Tiptap has
+  // initialized.
   function setLink() {
-    if (!editor) return;
-
-    const currentUrl = editor.getAttributes("link").href;
+    const tiptap = editor!;
+    const currentUrl = tiptap.getAttributes("link").href;
 
     const url = window.prompt("Enter URL", currentUrl ?? "");
 
     if (url === null) return;
 
     if (url.trim() === "") {
-      editor.chain().focus().unsetLink().run();
+      tiptap.chain().focus().unsetLink().run();
       return;
     }
 
-    editor
+    tiptap
       .chain()
       .focus()
       .extendMarkRange("link")

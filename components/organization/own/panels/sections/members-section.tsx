@@ -116,8 +116,9 @@ export default function MembersSection({
   );
 
   const handleConfirm = useCallback(() => {
-    if (!pendingAction) return;
-    const { type, member } = pendingAction;
+    // Only ever invoked as ConfirmDialog's onConfirm, and that dialog is
+    // only rendered once pendingAction is already set.
+    const { type, member } = pendingAction!;
 
     if (type === "toggle") {
       const willActivate = !member.isActive;
@@ -178,37 +179,41 @@ export default function MembersSection({
 
   const handleConfirmRoleChange = useCallback(
     (roleId: number) => {
-      if (!activeRoleMember) return;
-      const roleName =
-        roles.find((r) => r.id === roleId)?.roleName ?? "a new role";
-      const previousRoleId = activeRoleMember.roleId;
+      // Only ever invoked as SetRoleModal's onConfirm, and that modal is
+      // only rendered once activeRoleMember is already set.
+      const member = activeRoleMember!;
+      // roleId always comes from one of SetRoleModal's radio options,
+      // which are built from this same `roles` array, so the lookup
+      // always succeeds.
+      const roleName = roles.find((r) => r.id === roleId)!.roleName;
+      const previousRoleId = member.roleId;
       setMembers((prev) =>
         prev.map((m) =>
-          m.id === activeRoleMember.id ? { ...m, roleId: roleId } : m,
+          m.id === member.id ? { ...m, roleId: roleId } : m,
         ),
       );
 
-      updateMemberRole(activeRoleMember.id, roleId)
+      updateMemberRole(member.id, roleId)
         .then(() => {
           logMemberActivity({
             orgId: Number(orgId),
             action: "role_changed",
-            entityId: activeRoleMember.id,
-            entityLabel: getMemberName(activeRoleMember),
-            involvedUserIds: [activeRoleMember.user?.id],
-            description: `changed ${getMemberName(activeRoleMember)}'s role to ${roleName}`,
+            entityId: member.id,
+            entityLabel: getMemberName(member),
+            involvedUserIds: [member.user?.id],
+            description: `changed ${getMemberName(member)}'s role to ${roleName}`,
           });
         })
         .catch((error) => {
           setMembers((prev) =>
             prev.map((m) =>
-              m.id === activeRoleMember.id ? { ...m, roleId: previousRoleId } : m,
+              m.id === member.id ? { ...m, roleId: previousRoleId } : m,
             ),
           );
           notifyApiError(
             toast,
             error,
-            `Failed to update ${getMemberName(activeRoleMember)}'s role`,
+            `Failed to update ${getMemberName(member)}'s role`,
           );
         });
 
@@ -243,6 +248,7 @@ export default function MembersSection({
             description:
               "They'll lose access to this organization immediately, but their account and history stay intact. You can reactivate them at any time.",
             danger: false,
+            permission: PERMISSIONS.MEMBER_SET_ACTIVE,
           }
         : {
             title: `Activate ${getMemberName(pendingAction.member)}?`,
@@ -250,6 +256,7 @@ export default function MembersSection({
             description:
               "They'll regain access to this organization with their existing role.",
             danger: false,
+            permission: PERMISSIONS.MEMBER_SET_ACTIVE,
           }
       : {
           title: `Remove ${getMemberName(pendingAction.member)}?`,
@@ -257,6 +264,7 @@ export default function MembersSection({
           description:
             "They'll lose access to this organization and will need a new invitation to rejoin.",
           danger: true,
+          permission: PERMISSIONS.MEMBER_REMOVE,
         }
     : null;
 
@@ -316,7 +324,7 @@ export default function MembersSection({
         />
 
         {dialogCopy && (
-          <Can action={PERMISSIONS.MEMBER_REMOVE}>
+          <Can action={dialogCopy.permission}>
             <ConfirmDialog
               open={pendingAction !== null}
               onClose={() => setPendingAction(null)}

@@ -37,10 +37,13 @@ export default function FileAttachmentInput<T extends FieldValues>({
   } = useController({ name, control, defaultValue: [] as any });
 
   const inputRef = useRef<HTMLInputElement>(null);
-  const files: File[] = field.value ?? [];
+  // defaultValue: [] above seeds this synchronously on first render.
+  const files: File[] = field.value;
 
-  function handleFilesSelected(selected: FileList | null) {
-    if (!selected) return;
+  // A real <input type="file">'s FileList is never null, even with zero
+  // files selected (its own `Array.from` below just yields an empty
+  // array in that case).
+  function handleFilesSelected(selected: FileList) {
     const incoming = Array.from(selected);
 
     // Reject at selection time too, not just on submit — better feedback
@@ -51,7 +54,9 @@ export default function FileAttachmentInput<T extends FieldValues>({
       .filter((f) => f.size <= MAX_FILE_SIZE);
 
     field.onChange([...files, ...accepted]);
-    if (inputRef.current) inputRef.current.value = "";
+    // The ref is attached to the file input as soon as this component
+    // mounts.
+    inputRef.current!.value = "";
   }
 
   function removeFile(index: number) {
@@ -84,7 +89,7 @@ export default function FileAttachmentInput<T extends FieldValues>({
         ref={inputRef}
         type="file"
         multiple
-        onChange={(e) => handleFilesSelected(e.target.files)}
+        onChange={(e) => handleFilesSelected(e.target.files!)}
         className="hidden"
       />
 

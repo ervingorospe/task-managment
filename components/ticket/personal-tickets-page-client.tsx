@@ -354,7 +354,6 @@ export default function PersonalTicketsPageClient({
             availableTags={tags}
             assignableMembers={[]}
             onChangeTag={handleChangeTag}
-            onAssign={() => {}}
             onToggleStar={handleToggleStar}
             hideAssign
             emptyTitle={

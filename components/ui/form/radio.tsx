@@ -134,11 +134,11 @@ function ControlledRadio<T extends FieldValues>({
         ref={field.ref}
         inputProps={props}
         onChange={(event) => {
-          if (event.target.checked) {
-            field.onChange(value);
-            onCheckedChange?.(true);
-          }
-
+          // A native radio input's onChange only fires when it becomes
+          // checked — selecting a different radio in the group fires
+          // that other input's change event, not an unchecking one here.
+          field.onChange(value);
+          onCheckedChange?.(true);
           onChange?.(event);
         }}
         onBlur={(event) => {
@@ -176,10 +176,8 @@ function UncontrolledRadio<T extends FieldValues>({
       checked={checked}
       inputProps={props}
       onChange={(event) => {
-        if (event.target.checked) {
-          onCheckedChange?.(true);
-        }
-
+        // Same reasoning as ControlledRadio above.
+        onCheckedChange?.(true);
         onChange?.(event);
       }}
       onBlur={onBlur}

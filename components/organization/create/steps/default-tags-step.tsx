@@ -10,7 +10,7 @@ export default function DefaultTagsStep() {
   const { tags: defaultTags, capacity } = useOrganizationDefaults();
   const { watch, setValue } = useStepForm(tagsSchema, { tags: defaultTags });
 
-  const tags = (watch("tags") as TagDetail[] | undefined) ?? defaultTags;
+  const tags = watch("tags") as TagDetail[];
 
   function addTag(name: string): string | undefined {
     if (tags.some((t) => t.tagName.toLowerCase() === name.toLowerCase())) {

@@ -20,8 +20,7 @@ export default function InvitePeopleStep() {
 
   const { formData } = useStepper();
 
-  const invites =
-    (watch("invites") as MemberInviteDetail[] | undefined) ?? EMPTY_INVITES;
+  const invites = watch("invites") as MemberInviteDetail[];
 
   const roles = (formData.roles as RoleDetail[] | undefined) ?? defaultRoles;
 
@@ -33,8 +32,8 @@ export default function InvitePeopleStep() {
 
       const newInvites: MemberInviteDetail[] = emails
         .filter((email) => !existing.has(email.toLowerCase()))
-        .map((email) => ({
-          id: Date.now(),
+        .map((email, index) => ({
+          id: Date.now() + index,
           email,
           roleId: 3,
         }));

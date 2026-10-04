@@ -56,7 +56,7 @@ function ActivityLogListComponent({
 
             <div className="flex shrink-0 items-center gap-2">
               <Avatar
-                firstName={entry.actorName.split(" ")[0] ?? "?"}
+                firstName={entry.actorName.split(" ")[0]}
                 lastName={entry.actorName.split(" ")[1]}
                 src={entry.actorAvatar ?? undefined}
                 size="sm"

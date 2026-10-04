@@ -66,7 +66,9 @@ export default function DeactivateOrganizationSection({
       setIsActive(true);
       toast(`"${organizationName}" activated`);
       await refreshCurrentUser();
-    } else if (pendingAction === "delete") {
+    } else {
+      // The only remaining possibility: PendingAction is a closed
+      // 3-literal union and this handler only runs with one already set.
       try {
         await deleteOrganization(orgId);
       } catch (error) {

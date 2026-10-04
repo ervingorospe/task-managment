@@ -65,24 +65,24 @@ export default function TagsSection({
     return undefined;
   }
 
+  // Only ever called with an id that already exists in `tags`, so this
+  // lookup always succeeds.
   function updateTagColor(id: number, color: string) {
-    const tag = tags.find((t) => t.id === id);
+    const tag = tags.find((t) => t.id === id)!;
     setTags((prev) => prev.map((t) => (t.id === id ? { ...t, color } : t)));
 
     updateTagApi(id, { color })
       .then(() => {
-        if (tag) {
-          logTagActivity({
-            orgId: Number(orgId),
-            action: "color_changed",
-            entityId: id,
-            entityLabel: tag.tagName,
-            description: `changed the color of tag "${tag.tagName}"`,
-          });
-        }
+        logTagActivity({
+          orgId: Number(orgId),
+          action: "color_changed",
+          entityId: id,
+          entityLabel: tag.tagName,
+          description: `changed the color of tag "${tag.tagName}"`,
+        });
       })
       .catch((error) => {
-        if (tag) setTags((prev) => prev.map((t) => (t.id === id ? tag : t)));
+        setTags((prev) => prev.map((t) => (t.id === id ? tag : t)));
         notifyApiError(toast, error, "Failed to update tag color");
       });
   }
@@ -96,8 +96,9 @@ export default function TagsSection({
       return `A tag named "${name}" already exists`;
     }
 
-    const previous = tags.find((t) => t.id === id);
-    const previousName = previous?.tagName ?? name;
+    // Only ever called with an id that already exists in `tags`, so this
+    // lookup always succeeds.
+    const previous = tags.find((t) => t.id === id)!;
     setTags((prev) => prev.map((t) => (t.id === id ? { ...t, tagName: name } : t)));
 
     updateTagApi(id, { tagName: name })
@@ -107,45 +108,40 @@ export default function TagsSection({
           action: "renamed",
           entityId: id,
           entityLabel: name,
-          description: `renamed tag "${previousName}" to "${name}"`,
+          description: `renamed tag "${previous.tagName}" to "${name}"`,
         });
         showAlert("Tag renamed");
       })
       .catch((error) => {
-        if (previous) {
-          setTags((prev) => prev.map((t) => (t.id === id ? previous : t)));
-        }
+        setTags((prev) => prev.map((t) => (t.id === id ? previous : t)));
         notifyApiError(toast, error, `Failed to rename tag to "${name}"`);
       });
 
     return undefined;
   }
 
+  // Only ever invoked as the delete ConfirmDialog's onConfirm, which only
+  // renders once deletingTagId is already set and always matches a tag
+  // already in `tags`.
   function handleConfirmDelete() {
-    if (!deletingTagId) return;
-    const removedTag = tags.find((t) => t.id === deletingTagId);
-    const removedId = deletingTagId;
+    const removedId = deletingTagId!;
+    const removedTag = tags.find((t) => t.id === removedId)!;
     setTags((prev) => prev.filter((t) => t.id !== removedId));
     setDeletingTagId(null);
 
     deleteTag(removedId)
       .then(() => {
-        if (removedTag) {
-          logTagActivity({
-            orgId: Number(orgId),
-            action: "removed",
-            entityId: removedTag.id,
-            entityLabel: removedTag.tagName,
-            description: `removed tag "${removedTag.tagName}"`,
-          });
-        }
-        showAlert(
-          removedTag ? `Tag "${removedTag.tagName}" removed` : "Tag removed",
-          "error",
-        );
+        logTagActivity({
+          orgId: Number(orgId),
+          action: "removed",
+          entityId: removedTag.id,
+          entityLabel: removedTag.tagName,
+          description: `removed tag "${removedTag.tagName}"`,
+        });
+        showAlert(`Tag "${removedTag.tagName}" removed`, "error");
       })
       .catch((error) => {
-        if (removedTag) setTags((prev) => [...prev, removedTag]);
+        setTags((prev) => [...prev, removedTag]);
         notifyApiError(toast, error, "Failed to delete tag");
       });
   }

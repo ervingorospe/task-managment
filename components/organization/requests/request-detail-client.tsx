@@ -133,9 +133,7 @@ export default function RequestDetailClient({
   const isClientRole = activeMembership?.role.roleName === "Client";
 
   const [request, setRequest] = useState(initialRequest);
-  const [tickets, setTickets] = useState<TicketDetail[]>(
-    organization.tickets ?? [],
-  );
+  const [tickets, setTickets] = useState<TicketDetail[]>(organization.tickets);
   const [approveOpen, setApproveOpen] = useState(false);
   const [rejectOpen, setRejectOpen] = useState(false);
   const [cancelOpen, setCancelOpen] = useState(false);

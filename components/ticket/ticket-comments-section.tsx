@@ -147,7 +147,9 @@ export default function TicketCommentsSection({
     value: string,
     selectionStart: number | null,
   ) {
-    const trigger = detectMentionTrigger(value, selectionStart ?? value.length);
+    // A <textarea>'s selectionStart is always a number at runtime (the
+    // DOM type only allows null for other input types).
+    const trigger = detectMentionTrigger(value, selectionStart!);
     setMentionState((prev) => {
       if (trigger) return { field, trigger };
       return prev?.field === field ? null : prev;
@@ -159,29 +161,33 @@ export default function TicketCommentsSection({
     updateMentionState("compose", e.target.value, e.target.selectionStart);
   }
 
+  // Only wired to the edit textarea, which only renders once
+  // editingCommentId is already set.
   function handleEditChange(e: ChangeEvent<HTMLTextAreaElement>) {
-    if (editingCommentId === null) return;
     setEditCommentDraft(e.target.value);
-    updateMentionState(editingCommentId, e.target.value, e.target.selectionStart);
+    updateMentionState(editingCommentId!, e.target.value, e.target.selectionStart);
   }
 
+  // Only callable by clicking a suggestion, which only renders once
+  // mentionState is already set.
   function selectMention(member: MemberDetail) {
-    if (!mentionState) return;
+    const state = mentionState!;
     const name = getMemberName(member);
 
-    if (mentionState.field === "compose") {
-      setCommentDraft((prev) => insertMention(prev, mentionState.trigger, name));
+    if (state.field === "compose") {
+      setCommentDraft((prev) => insertMention(prev, state.trigger, name));
     } else {
       setEditCommentDraft((prev) =>
-        insertMention(prev, mentionState.trigger, name),
+        insertMention(prev, state.trigger, name),
       );
     }
     setMentionState(null);
   }
 
+  // The Post button is disabled whenever the draft is empty, and the
+  // whole compose box is hidden with no currentUser.
   async function handlePostComment() {
     const text = commentDraft.trim();
-    if (!text || !currentUser) return;
 
     setCommentDraft("");
     setMentionState(null);
@@ -217,9 +223,9 @@ export default function TicketCommentsSection({
     setMentionState(null);
   }
 
+  // The Save button is disabled whenever the edit draft is empty.
   async function saveEditComment(commentId: number) {
     const text = editCommentDraft.trim();
-    if (!text) return;
 
     setEditingCommentId(null);
     setEditCommentDraft("");
@@ -250,9 +256,10 @@ export default function TicketCommentsSection({
     });
   }
 
+  // Only ever invoked as the delete ConfirmDialog's onConfirm, which only
+  // opens once commentToDelete is already set.
   async function handleDeleteComment() {
-    if (!commentToDelete) return;
-    const target = commentToDelete;
+    const target = commentToDelete!;
     setCommentToDelete(null);
 
     try {

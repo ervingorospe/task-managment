@@ -60,7 +60,9 @@ export default function AvatarUpload<T extends FieldValues>({
     }
 
     field.onChange(picked);
-    if (inputRef.current) inputRef.current.value = "";
+    // The ref is attached to the file input as soon as this component
+    // mounts, so it's always available here.
+    inputRef.current!.value = "";
   }
 
   return (

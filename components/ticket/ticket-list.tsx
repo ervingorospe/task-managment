@@ -23,7 +23,10 @@ interface TicketListProps {
   availableTags: TagDetail[];
   assignableMembers: MemberDetail[];
   onChangeTag: (ticketId: number, tag: TagDetail) => void;
-  onAssign: (ticketId: number, memberIds: number[]) => void;
+  /** Omit together with `hideAssign` for a context with no members to
+   * assign at all (e.g. personal tickets) — the assign column never
+   * renders, so this is never called. */
+  onAssign?: (ticketId: number, memberIds: number[]) => void;
   onToggleStar: (ticketId: number) => void;
   emptyTitle?: string;
   emptySubtitle?: string;
@@ -36,7 +39,9 @@ interface TicketListProps {
 
 function formatTimeframe(ticket: TicketDetail) {
   if (!ticket.dueDate) return null;
-  return `Due on ${formatDueDate(ticket.dueDate) ?? "—"}`;
+  // formatDueDate only returns null for a falsy date, already excluded
+  // above, so dueDate is always truthy here.
+  return `Due on ${formatDueDate(ticket.dueDate)}`;
 }
 
 function TicketListComponent({
@@ -168,7 +173,7 @@ function TicketListComponent({
                     {canAssign ? (
                       <MultiSelectDropdown
                         value={ticket.assignees.map((member) => member.id)}
-                        onChange={(memberIds) => onAssign(ticket.id, memberIds)}
+                        onChange={(memberIds) => onAssign?.(ticket.id, memberIds)}
                         options={assignableMembers.map((member) => ({
                           value: member.id,
                           label: `${member.user?.firstName ?? ""} ${
