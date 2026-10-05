@@ -21,8 +21,8 @@ const plexMono = IBM_Plex_Mono({
 
 export const metadata: Metadata = {
   title: {
-    template: "%s | Work Orders",
-    default: "Work Orders",
+    template: "%s | Relay",
+    default: "Relay",
   },
   description: "Ticketing, projects, and reporting for teams.",
 };

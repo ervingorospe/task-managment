@@ -26,6 +26,7 @@ import {
   REQUEST_OWN_PERMISSIONS,
 } from "@/lib/data/permissions";
 import Tooltip from "@/components/ui/tooltip";
+import { Logo } from "@/components/ui/logo";
 
 type StaticNavItem = {
   href: string;
@@ -145,8 +146,11 @@ export function Sidebar() {
     >
       <div className="flex h-14 items-center justify-between border-b border-line px-4">
         {!collapsed && (
-          <span className="truncate text-sm font-semibold text-ink">
-            Work Orders
+          <span className="flex items-center gap-2 overflow-hidden">
+            <Logo size={22} className="shrink-0 rounded-md" />
+            <span className="truncate text-sm font-semibold text-ink">
+              Relay
+            </span>
           </span>
         )}
         <button

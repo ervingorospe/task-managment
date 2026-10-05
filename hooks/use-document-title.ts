@@ -7,6 +7,6 @@ import { useEffect } from "react";
  * title immediately, so there's nothing to race. */
 export function useDocumentTitle(title: string | null | undefined) {
   useEffect(() => {
-    if (title) document.title = `${title} | Work Orders`;
+    if (title) document.title = `${title} | Relay`;
   }, [title]);
 }
