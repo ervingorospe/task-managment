@@ -16,7 +16,7 @@ jest.mock("@/components/ui/toaster", () => ({ Toaster: function MockToaster() {
 } }));
 
 it("exposes the page metadata", () => {
-  expect(metadata.title).toBe("Ticketing — Work Orders");
+  expect(metadata.title).toEqual({ template: "%s | Relay", default: "Relay" });
   expect(metadata.description).toBe("Ticketing, projects, and reporting for teams.");
 });
 
