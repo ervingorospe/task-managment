@@ -9,9 +9,11 @@ import { Can } from "@/components/auth/can";
 import { PERMISSIONS } from "@/lib/data/permissions";
 import EmptyState from "@/components/ui/empty-state";
 import OrganizationMembers from "@/components/organization/own/panels/organization-members";
+import { useDocumentTitle } from "@/hooks/use-document-title";
 import Loading from "./loading";
 
 export default function MembersPage() {
+  useDocumentTitle("Members");
   const { slug } = useParams<{ slug: string }>();
   const { organization, loading } = useOrganizationBySlug(slug);
   const membership = useMembershipBySlug(slug);

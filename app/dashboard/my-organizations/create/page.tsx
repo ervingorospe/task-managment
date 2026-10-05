@@ -14,6 +14,7 @@ import { OrganizationDefaultsProvider } from "@/providers/organization-defaults.
 import { CreateOrganizationClient } from "@/components/organization/create/create-organization-client";
 import BackButton from "@/components/ui/buttons/button-back";
 import { useAuth } from "@/providers/auth-provider";
+import { useDocumentTitle } from "@/hooks/use-document-title";
 import type { RoleDetail } from "@/lib/types/organization/role-detail.type";
 import type { TagDetail } from "@/lib/types/organization/tag-detail.type";
 import type { RuleCategory } from "@/lib/types/rule/rule-category.type";
@@ -33,6 +34,7 @@ interface DefaultsData {
 // page never carries it in production (only a real browser fetch,
 // credentials: "include", does). See hooks/use-organization-by-slug.ts.
 export default function CreateOrganizationPage() {
+  useDocumentTitle("Create Organization");
   const { currentUser, isInitializing } = useAuth();
   const [data, setData] = useState<DefaultsData | null>(null);
 

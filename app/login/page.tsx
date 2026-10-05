@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/buttons/button";
 import Input from "@/components/ui/form/input";
 import { loginSchema, LoginValues } from "@/lib/schemas/login.schema";
 import { API_BASE_URL } from "@/lib/api/client";
+import { useDocumentTitle } from "@/hooks/use-document-title";
 
 export default function LoginPage() {
   // useSearchParams() opts this page out of static rendering unless it's
@@ -24,6 +25,7 @@ export default function LoginPage() {
 }
 
 function LoginPageContent() {
+  useDocumentTitle("Log in");
   const router = useRouter();
   const searchParams = useSearchParams();
   const { login } = useAuth();

@@ -6,6 +6,7 @@ import { ArrowLeft, CheckCircle2, Mail, AlertCircle, RefreshCw } from "lucide-re
 import { Button } from "@/components/ui/buttons/button";
 import { ApiError } from "@/lib/api/client";
 import { resendVerification } from "@/lib/api/auth";
+import { useDocumentTitle } from "@/hooks/use-document-title";
 
 // Matches the backend's actual cooldown (see auth.constants.ts) — this is
 // just an optimistic local countdown to disable the button; the backend
@@ -14,6 +15,7 @@ import { resendVerification } from "@/lib/api/auth";
 const COOLDOWN_SECONDS = 5 * 60;
 
 function VerifyPendingContent() {
+  useDocumentTitle("Verify your email");
   const searchParams = useSearchParams();
   const email = searchParams.get("email") ?? "";
 

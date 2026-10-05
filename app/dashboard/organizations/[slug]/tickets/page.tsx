@@ -6,9 +6,11 @@ import { useMembershipBySlug } from "@/hooks/use-membership-by-slug";
 import MemberGuard from "@/components/auth/member-guard";
 import { MemberRemovedState } from "@/components/organization/member-removed-state";
 import TicketsPageClient from "@/components/ticket/tickets-page-client";
+import { useDocumentTitle } from "@/hooks/use-document-title";
 import Loading from "./loading";
 
 export default function TicketsPage() {
+  useDocumentTitle("Tickets");
   const { slug } = useParams<{ slug: string }>();
   const { organization, loading } = useOrganizationBySlug(slug);
   const membership = useMembershipBySlug(slug);

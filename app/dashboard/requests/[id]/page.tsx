@@ -5,6 +5,7 @@ import { useTicketRequestById } from "@/hooks/use-ticket-request-by-id";
 import MemberGuard from "@/components/auth/member-guard";
 import RequestAccessGuard from "@/components/auth/request-access-guard";
 import RequestDetailClient from "@/components/organization/requests/request-detail-client";
+import { useDocumentTitle } from "@/hooks/use-document-title";
 import Loading from "./loading";
 
 export default function RequestPage() {
@@ -13,6 +14,7 @@ export default function RequestPage() {
 
   const { request, organization, loading, notFound: requestNotFound } =
     useTicketRequestById(requestId);
+  useDocumentTitle(request?.title);
 
   if (!Number.isFinite(requestId)) notFound();
   if (loading) return <Loading />;

@@ -8,10 +8,12 @@ import OrganizationTabs from "@/components/organization/own/organization-tabs";
 import BackButton from "@/components/ui/buttons/button-back";
 import { OwnerGuard } from "@/components/auth/owner-guard";
 import { OrganizationInfoSkeleton } from "@/components/ui/skeletons";
+import { useDocumentTitle } from "@/hooks/use-document-title";
 
 export default function OrganizationPage() {
   const { slug } = useParams<{ slug: string }>();
   const { organization, loading: orgLoading } = useOrganizationBySlug(slug);
+  useDocumentTitle(organization?.organizationName);
   const { permissionOptions, ruleCategories, loading: refsLoading } =
     useOrgReferenceData();
 
