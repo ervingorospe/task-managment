@@ -28,7 +28,11 @@ export function MiniStatCard({
   return (
     <div className="relative overflow-hidden rounded border border-line bg-surface p-2.5">
       <div
-        className={accentColor ? "absolute inset-x-0 top-0 h-0.5" : `absolute inset-x-0 top-0 h-0.5 ${barColor}`}
+        className={
+          accentColor
+            ? "absolute inset-x-0 top-0 h-0.5"
+            : `absolute inset-x-0 top-0 h-0.5 ${barColor}`
+        }
         style={accentColor ? { backgroundColor: accentColor } : undefined}
       />
       <div className="flex items-center gap-2">

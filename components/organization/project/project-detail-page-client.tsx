@@ -156,8 +156,8 @@ export default function ProjectDetailPageClient({
               {project.assignees.map((member) => (
                 <Tooltip key={member.id} label={getMemberName(member)}>
                   <Avatar
-                    firstName={member.user?.firstName ?? "?"}
-                    lastName={member.user?.lastName}
+                    firstName={member.user?.firstName ?? member.firstName}
+                    lastName={member.user?.lastName ?? member.lastName}
                     size="sm"
                     className="ring-2 ring-surface"
                   />

@@ -125,8 +125,8 @@ function TicketFilterContent({
     usePermission(PERMISSIONS.TICKET_ASSIGN) && !hideMemberFilter;
 
   const filteredMembers = members.filter((member) => {
-    const name = `${member.user?.firstName ?? ""} ${
-      member.user?.lastName ?? ""
+    const name = `${member.user?.firstName ?? member.firstName} ${
+      member.user?.lastName ?? member.lastName
     }`.toLowerCase();
 
     return name.includes(memberSearch.trim().toLowerCase());
@@ -220,8 +220,8 @@ function TicketFilterContent({
                     key={member.id}
                     checked={draft.memberIds.includes(member.id)}
                     onChange={() => toggleMember(member.id)}
-                    label={`${member.user?.firstName ?? ""} ${
-                      member.user?.lastName ?? ""
+                    label={`${member.user?.firstName ?? member.firstName} ${
+                      member.user?.lastName ?? member.lastName
                     }`.trim()}
                     className="px-1 py-0.5"
                   />

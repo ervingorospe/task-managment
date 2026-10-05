@@ -111,13 +111,17 @@ function TicketListComponent({
                   <button
                     type="button"
                     onClick={() => onToggleStar(ticket.id)}
-                    aria-label={ticket.starred ? "Unstar ticket" : "Star ticket"}
+                    aria-label={
+                      ticket.starred ? "Unstar ticket" : "Star ticket"
+                    }
                     aria-pressed={ticket.starred}
                     className="text-ink-faint transition-colors hover:text-warning"
                   >
                     <Star
                       size={16}
-                      className={ticket.starred ? "fill-warning text-warning" : ""}
+                      className={
+                        ticket.starred ? "fill-warning text-warning" : ""
+                      }
                     />
                   </button>
                 </td>
@@ -173,12 +177,15 @@ function TicketListComponent({
                     {canAssign ? (
                       <MultiSelectDropdown
                         value={ticket.assignees.map((member) => member.id)}
-                        onChange={(memberIds) => onAssign?.(ticket.id, memberIds)}
+                        onChange={(memberIds) =>
+                          onAssign?.(ticket.id, memberIds)
+                        }
                         options={assignableMembers.map((member) => ({
                           value: member.id,
-                          label: `${member.user?.firstName ?? ""} ${
-                            member.user?.lastName ?? ""
-                          }`.trim(),
+                          label:
+                            `${member.user?.firstName ?? member.firstName} ${
+                              member.user?.lastName ?? member.lastName
+                            }`.trim(),
                         }))}
                         emptyMessage="No assignable members"
                         trigger={
@@ -191,13 +198,17 @@ function TicketListComponent({
                               {ticket.assignees.map((member) => (
                                 <Tooltip
                                   key={member.id}
-                                  label={`${member.user?.firstName ?? ""} ${
-                                    member.user?.lastName ?? ""
+                                  label={`${member.user?.firstName ?? member.firstName} ${
+                                    member.user?.lastName ?? member.lastName
                                   }`.trim()}
                                 >
                                   <Avatar
-                                    firstName={member.user?.firstName ?? "?"}
-                                    lastName={member.user?.lastName}
+                                    firstName={
+                                      member.user?.firstName ?? member.firstName
+                                    }
+                                    lastName={
+                                      member.user?.lastName ?? member.lastName
+                                    }
                                     size="sm"
                                     className="cursor-pointer ring-2 ring-surface transition-transform hover:z-10 hover:scale-110"
                                   />
@@ -214,13 +225,17 @@ function TicketListComponent({
                         {ticket.assignees.map((member) => (
                           <Tooltip
                             key={member.id}
-                            label={`${member.user?.firstName ?? ""} ${
-                              member.user?.lastName ?? ""
+                            label={`${member.user?.firstName ?? member.firstName} ${
+                              member.user?.lastName ?? member.lastName
                             }`.trim()}
                           >
                             <Avatar
-                              firstName={member.user?.firstName ?? "?"}
-                              lastName={member.user?.lastName}
+                              firstName={
+                                member.user?.firstName ?? member.firstName
+                              }
+                              lastName={
+                                member.user?.lastName ?? member.lastName
+                              }
                               size="sm"
                               className="ring-2 ring-surface"
                             />

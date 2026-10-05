@@ -22,7 +22,9 @@ export default function ProjectsPage() {
   // See organizations/[slug]/tickets/page.tsx's identical check.
   if (membership && !membership.isActive) {
     return (
-      <MemberRemovedState organizationName={membership.organization.organizationName} />
+      <MemberRemovedState
+        organizationName={membership.organization.organizationName}
+      />
     );
   }
   if (!organization) notFound();
