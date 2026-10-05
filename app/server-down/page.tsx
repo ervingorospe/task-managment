@@ -3,6 +3,7 @@
 import { ServerCrash, RotateCw } from "lucide-react";
 import { Button } from "@/components/ui/buttons/button";
 import { SERVER_DOWN_RETURN_TO_KEY } from "@/lib/api/client";
+import { useDocumentTitle } from "@/hooks/use-document-title";
 
 function retry() {
   const returnTo = sessionStorage.getItem(SERVER_DOWN_RETURN_TO_KEY);
@@ -10,6 +11,7 @@ function retry() {
 }
 
 export default function ServerDownPage() {
+  useDocumentTitle("Server unavailable");
   return (
     <div className="flex min-h-screen items-center justify-center bg-canvas px-4">
       <div className="w-full max-w-sm text-center">

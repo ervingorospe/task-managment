@@ -19,6 +19,7 @@ import type { TagDetail } from "@/lib/types/organization/tag-detail.type";
 import type { Rule } from "@/lib/types/rule/rule.type";
 import type { RuleCategory } from "@/lib/types/rule/rule-category.type";
 import type { OrgCapacity } from "@/lib/types/organization/organization-capacity.type";
+import { useDocumentTitle } from "@/hooks/use-document-title";
 
 interface OrgDefaults {
   roles: RoleDetail[];
@@ -75,6 +76,7 @@ function ChooseStep({ onChoose }: { onChoose: (choice: "personal" | "organizatio
 }
 
 export default function OnboardingPage() {
+  useDocumentTitle("Onboarding");
   const router = useRouter();
   const { currentUser, isInitializing, isAuthenticated, refreshCurrentUser } =
     useAuth();

@@ -27,6 +27,7 @@ import {
   acceptInviteSchema,
   type AcceptInviteValues,
 } from "@/lib/schemas/accept-invite.schema";
+import { useDocumentTitle } from "@/hooks/use-document-title";
 
 type Status =
   | "loading"
@@ -47,6 +48,7 @@ function CenteredCard({ children }: { children: ReactNode }) {
 }
 
 function AcceptInviteContent() {
+  useDocumentTitle("Accept invite");
   const router = useRouter();
   const searchParams = useSearchParams();
   const token = searchParams.get("token") ?? "";

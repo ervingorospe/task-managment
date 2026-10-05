@@ -1,7 +1,10 @@
+import type { Metadata } from "next";
 import ActivityLogClient from "@/components/activity/activity-log-client";
 import { Can } from "@/components/auth/can";
 import { PERMISSIONS } from "@/lib/data/permissions";
 import EmptyState from "@/components/ui/empty-state";
+
+export const metadata: Metadata = { title: "Activity Log" };
 
 export default function ActivityPage() {
   return (

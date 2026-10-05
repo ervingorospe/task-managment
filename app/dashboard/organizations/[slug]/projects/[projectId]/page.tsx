@@ -9,6 +9,7 @@ import { Can } from "@/components/auth/can";
 import { PERMISSIONS } from "@/lib/data/permissions";
 import EmptyState from "@/components/ui/empty-state";
 import ProjectDetailPageClient from "@/components/organization/project/project-detail-page-client";
+import { useDocumentTitle } from "@/hooks/use-document-title";
 import Loading from "./loading";
 
 export default function ProjectDetailPage() {
@@ -18,6 +19,9 @@ export default function ProjectDetailPage() {
   }>();
   const { organization, loading } = useOrganizationBySlug(slug);
   const membership = useMembershipBySlug(slug);
+  useDocumentTitle(
+    organization?.projects.find((p) => p.id === Number(projectId))?.name,
+  );
 
   if (loading) return <Loading />;
   // See organizations/[slug]/tickets/page.tsx's identical check.

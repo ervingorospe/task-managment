@@ -7,6 +7,7 @@ import TicketAccessGuard from "@/components/auth/ticket-access-guard";
 import PersonalTicketAccessGuard from "@/components/auth/personal-ticket-access-guard";
 import TicketDetailClient from "@/components/ticket/ticket-detail-client";
 import PersonalTicketDetailClient from "@/components/ticket/personal-ticket-detail-client";
+import { useDocumentTitle } from "@/hooks/use-document-title";
 import Loading from "./loading";
 
 export default function TicketPage() {
@@ -15,6 +16,7 @@ export default function TicketPage() {
 
   const { ticket, organization, loading, notFound: ticketNotFound } =
     useTicketById(ticketId);
+  useDocumentTitle(ticket?.title);
 
   if (!Number.isFinite(ticketId)) notFound();
   if (loading) return <Loading />;

@@ -11,11 +11,13 @@ import EmptyState from "@/components/ui/empty-state";
 import { fetchMyOwnOrganizations, type OwnedOrganization } from "@/lib/api/organizations";
 import { useAuth } from "@/providers/auth-provider";
 import { ListSkeleton } from "@/components/ui/skeletons";
+import { useDocumentTitle } from "@/hooks/use-document-title";
 
 // No server-side session yet, so this has to fetch client-side against
 // whoever useAuth() says is logged in — see auth-provider.tsx's own note
 // on why login doesn't set a cookie/token yet.
 export default function MyOrganizationsPage() {
+  useDocumentTitle("My Organizations");
   const { currentUser, isInitializing } = useAuth();
   const [organizations, setOrganizations] = useState<OwnedOrganization[] | null>(null);
 

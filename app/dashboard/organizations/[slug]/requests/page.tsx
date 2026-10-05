@@ -12,9 +12,11 @@ import {
 } from "@/lib/data/permissions";
 import EmptyState from "@/components/ui/empty-state";
 import RequestsPageClient from "@/components/organization/requests/requests-page-client";
+import { useDocumentTitle } from "@/hooks/use-document-title";
 import Loading from "./loading";
 
 export default function RequestsPage() {
+  useDocumentTitle("Requests");
   const { slug } = useParams<{ slug: string }>();
   const { organization, loading } = useOrganizationBySlug(slug);
   const membership = useMembershipBySlug(slug);

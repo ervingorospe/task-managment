@@ -1,0 +1,998 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <title>Relay — Ticketing System Documentation</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 96'%3E%3Crect width='96' height='96' rx='22' fill='%230e241c'/%3E%3Cpolyline points='30,26 54,48 30,70' fill='none' stroke='%2332cd32' stroke-width='10' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpolyline points='50,26 74,48 50,70' fill='none' stroke='%2332cd32' stroke-width='10' stroke-linecap='round' stroke-linejoin='round' opacity='0.55'/%3E%3C/svg%3E">
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap"
+    />
+    <style>
+      /* Layout concept: single-column document, max 840px, with a sticky
+     horizontally-scrolling pill-nav standing in for a sidebar at narrow
+     widths. Diagrams live in their own overflow-x:auto frames. */
+      :root {
+        --bg: #f6f7fa;
+        --surface: #ffffff;
+        --fg: #1a2230;
+        --fg-muted: #5c6678;
+        --fg-faint: #8891a0;
+        --border: #dde2ea;
+        --accent: #3454d1;
+        --accent-soft: #e8ecfb;
+        --mono-surface: #eef1f6;
+        --good: #1a7f4e;
+        --good-soft: #e3f5ec;
+        --shadow:
+          0 1px 2px rgba(20, 28, 46, 0.04), 0 8px 24px rgba(20, 28, 46, 0.05);
+        color-scheme: light;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root:not([data-theme="light"]) {
+          --bg: #10141c;
+          --surface: #161b25;
+          --fg: #e7eaf0;
+          --fg-muted: #9aa4b5;
+          --fg-faint: #6b7585;
+          --border: #2a3140;
+          --accent: #7c93ff;
+          --accent-soft: #212a47;
+          --mono-surface: #1c2230;
+          --good: #4fd394;
+          --good-soft: #163227;
+          --shadow:
+            0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 24px rgba(0, 0, 0, 0.35);
+          color-scheme: dark;
+        }
+      }
+      :root[data-theme="dark"] {
+        --bg: #10141c;
+        --surface: #161b25;
+        --fg: #e7eaf0;
+        --fg-muted: #9aa4b5;
+        --fg-faint: #6b7585;
+        --border: #2a3140;
+        --accent: #7c93ff;
+        --accent-soft: #212a47;
+        --mono-surface: #1c2230;
+        --good: #4fd394;
+        --good-soft: #163227;
+        --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 24px rgba(0, 0, 0, 0.35);
+        color-scheme: dark;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+      }
+      body {
+        background: var(--bg);
+        color: var(--fg);
+        font-family:
+          "IBM Plex Sans",
+          -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          sans-serif;
+        padding-inline: 16px;
+        line-height: 1.55;
+      }
+      h1,
+      h2,
+      h3 {
+        font-family: "IBM Plex Sans", sans-serif;
+        font-weight: 600;
+        text-wrap: balance;
+        letter-spacing: -0.01em;
+      }
+      code,
+      .mono {
+        font-family:
+          "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+      }
+      a {
+        color: var(--accent);
+      }
+
+      .page {
+        max-width: 840px;
+        margin: 0 auto;
+        padding-bottom: 64px;
+      }
+
+      header.hero {
+        padding-block: 28px 20px;
+      }
+      .eyebrow {
+        font-size: 12px;
+        font-weight: 600;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--accent);
+      }
+      h1.title {
+        font-size: clamp(26px, 5vw, 34px);
+        margin: 6px 0 8px;
+      }
+      .subtitle {
+        color: var(--fg-muted);
+        font-size: 15px;
+        max-width: 60ch;
+      }
+
+      nav.pillnav {
+        position: sticky;
+        top: env(safe-area-inset-top, 0px);
+        z-index: 5;
+        display: flex;
+        gap: 6px;
+        overflow-x: auto;
+        padding: 8px 0 12px;
+        margin-bottom: 8px;
+        background: var(--bg);
+        border-bottom: 1px solid var(--border);
+      }
+      nav.pillnav a {
+        flex: 0 0 auto;
+        font-size: 12.5px;
+        font-weight: 600;
+        color: var(--fg-muted);
+        text-decoration: none;
+        padding: 6px 12px;
+        border-radius: 999px;
+        border: 1px solid var(--border);
+        background: var(--surface);
+        white-space: nowrap;
+      }
+      nav.pillnav a:hover {
+        color: var(--accent);
+        border-color: var(--accent);
+      }
+
+      section {
+        padding-block: 28px;
+        border-bottom: 1px solid var(--border);
+      }
+      section:last-of-type {
+        border-bottom: none;
+      }
+
+      h2.section-title {
+        font-size: 20px;
+        display: flex;
+        align-items: baseline;
+        gap: 10px;
+        margin: 0 0 4px;
+      }
+      h2.section-title .num {
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 13px;
+        color: var(--accent);
+        font-weight: 600;
+      }
+      .section-sub {
+        color: var(--fg-muted);
+        font-size: 13.5px;
+        margin: 0 0 18px;
+      }
+
+      .grid-2 {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+      }
+      @media (max-width: 560px) {
+        .grid-2 {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      .feature {
+        border: 1px solid var(--border);
+        background: var(--surface);
+        border-radius: 10px;
+        padding: 14px 16px;
+      }
+      .feature h3 {
+        font-size: 14px;
+        margin: 0 0 4px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .feature h3 .dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 999px;
+        background: var(--accent);
+        flex: none;
+      }
+      .feature p {
+        font-size: 13px;
+        color: var(--fg-muted);
+        margin: 0;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13.5px;
+      }
+      th,
+      td {
+        text-align: left;
+        padding: 8px 10px;
+        border-bottom: 1px solid var(--border);
+        vertical-align: top;
+      }
+      th {
+        font-size: 11.5px;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: var(--fg-faint);
+        font-weight: 600;
+      }
+      td.mono-cell {
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 12.5px;
+        color: var(--accent);
+      }
+      .table-wrap {
+        overflow-x: auto;
+      }
+
+      .pill {
+        display: inline-block;
+        font-size: 11px;
+        font-weight: 600;
+        padding: 2px 8px;
+        border-radius: 999px;
+        background: var(--accent-soft);
+        color: var(--accent);
+      }
+      .pill.good {
+        background: var(--good-soft);
+        color: var(--good);
+      }
+
+      .diagram-frame {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 16px;
+        overflow-x: auto;
+        box-shadow: var(--shadow);
+      }
+      .diagram-caption {
+        font-size: 12.5px;
+        color: var(--fg-faint);
+        margin-top: 8px;
+      }
+      .diagram-frame .mermaid {
+        display: flex;
+        justify-content: center;
+      }
+      .diagram-frame svg {
+        max-width: 100%;
+      }
+
+      .flow-block {
+        margin-top: 26px;
+      }
+      .flow-block:first-of-type {
+        margin-top: 0;
+      }
+      .flow-title {
+        font-size: 15px;
+        font-weight: 600;
+        margin: 0 0 4px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .flow-title .step {
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 11px;
+        background: var(--mono-surface);
+        color: var(--fg-muted);
+        padding: 2px 7px;
+        border-radius: 6px;
+      }
+      .flow-desc {
+        font-size: 13px;
+        color: var(--fg-muted);
+        margin: 0 0 10px;
+        max-width: 68ch;
+      }
+
+      ul.compact {
+        margin: 6px 0 0;
+        padding-left: 20px;
+        font-size: 13.5px;
+        color: var(--fg-muted);
+      }
+      ul.compact li {
+        margin-bottom: 3px;
+      }
+
+      .repo-table a {
+        text-decoration: none;
+        font-weight: 600;
+      }
+
+      footer.page-footer {
+        padding-top: 28px;
+        font-size: 12px;
+        color: var(--fg-faint);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <header class="hero">
+        <div class="eyebrow">System Documentation</div>
+        <h1 class="title" style="display: flex; align-items: center; gap: 12px;">
+          <svg width="32" height="32" viewBox="0 0 96 96" style="flex: none; border-radius: 7px;">
+            <rect width="96" height="96" rx="22" fill="#0e241c" />
+            <polyline points="30,26 54,48 30,70" fill="none" stroke="#32cd32" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" />
+            <polyline points="50,26 74,48 50,70" fill="none" stroke="#32cd32" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" opacity="0.55" />
+          </svg>
+          Relay — Ticketing System
+        </h1>
+        <p class="subtitle">
+          A multi-tenant ticketing / work-order platform: Next.js frontend,
+          NestJS + PostgreSQL backend. This page covers what it does, its data
+          model, and its core user flows. Generated from the current schema and
+          services — re-check it against the code if those change.
+        </p>
+      </header>
+
+      <nav class="pillnav">
+        <a href="#summary">Summary</a>
+        <a href="#stack">Tech Stack</a>
+        <a href="#rbac">RBAC</a>
+        <a href="#erd">Data Model (ERD)</a>
+        <a href="#flows">Core Flows</a>
+        <a href="#deploy">Deployment</a>
+      </nav>
+
+      <section id="summary">
+        <h2 class="section-title">
+          <span class="num">01</span> What the system does
+        </h2>
+        <p class="section-sub">
+          A ticketing platform where every organization runs its own isolated
+          workspace — members, roles, tags, projects, and tickets never leak
+          across tenants.
+        </p>
+
+        <div class="grid-2">
+          <div class="feature">
+            <h3><span class="dot"></span>Dual-mode accounts</h3>
+            <p>
+              A user can work in "Personal" mode (their own standalone tickets,
+              no org) or create/join an Organization. Chosen once at onboarding.
+            </p>
+          </div>
+          <div class="feature">
+            <h3><span class="dot"></span>Real auth</h3>
+            <p>
+              Email/password signup with mandatory email verification, Google
+              OAuth, httpOnly JWT session cookie.
+            </p>
+          </div>
+          <div class="feature">
+            <h3><span class="dot"></span>Multi-tenant organizations</h3>
+            <p>
+              Each org has its own settings, seat/usage capacity limits, roles,
+              tags, and projects — fully isolated from every other org.
+            </p>
+          </div>
+          <div class="feature">
+            <h3><span class="dot"></span>Granular RBAC</h3>
+            <p>
+              Roles are a named bundle of fine-grained rules (e.g.
+              <code>ticket.view.included</code>) across 9 categories — not a
+              fixed admin/member split.
+            </p>
+          </div>
+          <div class="feature">
+            <h3><span class="dot"></span>Tickets &amp; requests</h3>
+            <p>
+              Org tickets, personal tickets, and client-submitted "requests"
+              that an org member reviews and either approves (becomes a real
+              ticket) or rejects.
+            </p>
+          </div>
+          <div class="feature">
+            <h3><span class="dot"></span>Invite-only membership</h3>
+            <p>
+              Members join only by invite (token + expiry, resend with
+              cooldown). An invited-only account can never create its own
+              organization.
+            </p>
+          </div>
+          <div class="feature">
+            <h3><span class="dot"></span>Activity &amp; notifications</h3>
+            <p>
+              Every mutation writes an append-only activity-log entry; a
+              notification bell streams live updates over SSE plus an unread
+              count.
+            </p>
+          </div>
+          <div class="feature">
+            <h3><span class="dot"></span>Attachments &amp; idempotency</h3>
+            <p>
+              Ticket/request attachments go straight to S3. Mutating requests
+              honor an <code>Idempotency-Key</code> header to make retries safe.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section id="stack">
+        <h2 class="section-title"><span class="num">02</span> Tech stack</h2>
+        <div class="table-wrap">
+          <table>
+            <tr>
+              <th>Layer</th>
+              <th>Choice</th>
+              <th>Notes</th>
+            </tr>
+            <tr>
+              <td>Frontend</td>
+              <td class="mono-cell">Next.js 14 (App Router)</td>
+              <td>TypeScript, Tailwind CSS</td>
+            </tr>
+            <tr>
+              <td>Backend</td>
+              <td class="mono-cell">NestJS</td>
+              <td>TypeScript, modular controllers/services</td>
+            </tr>
+            <tr>
+              <td>Database</td>
+              <td class="mono-cell">PostgreSQL + Prisma 7</td>
+              <td>
+                <code>pg_trgm</code> for title/reference-id search, GIN index
+                for array-contains lookups
+              </td>
+            </tr>
+            <tr>
+              <td>Auth</td>
+              <td class="mono-cell">Passport (Google OAuth2 + JWT)</td>
+              <td>bcrypt password hashing, httpOnly session cookie</td>
+            </tr>
+            <tr>
+              <td>File storage</td>
+              <td class="mono-cell">AWS S3</td>
+              <td>Ticket/request attachments, org logos, avatars</td>
+            </tr>
+            <tr>
+              <td>Email</td>
+              <td class="mono-cell">AWS SES</td>
+              <td>Verification, invites, invite-response notices</td>
+            </tr>
+            <tr>
+              <td>Hosting</td>
+              <td class="mono-cell">Vercel (frontend) · Render (backend)</td>
+              <td>Auto-deploy on push to <code>main</code></td>
+            </tr>
+            <tr>
+              <td>CI/CD</td>
+              <td class="mono-cell">GitHub Actions</td>
+              <td>
+                Lint, typecheck, unit tests + coverage gate, security audit,
+                build, then wait for the real deploy result
+              </td>
+            </tr>
+          </table>
+        </div>
+      </section>
+
+      <section id="rbac">
+        <h2 class="section-title">
+          <span class="num">03</span> Roles &amp; permission categories
+        </h2>
+        <p class="section-sub">
+          A <span class="pill">Role</span> is just a named set of
+          <span class="pill">Rules</span>. Every org gets its own roles (cloned
+          from org-less templates), so "Superadmin" in one org is a separate,
+          independently-editable row from "Superadmin" in another.
+        </p>
+        <div class="table-wrap">
+          <table>
+            <tr>
+              <th>Category</th>
+              <th>Example rules</th>
+            </tr>
+            <tr>
+              <td>Organization</td>
+              <td class="mono-cell">
+                organization.update.basicInfo · organization.change.ownership
+              </td>
+            </tr>
+            <tr>
+              <td>Member</td>
+              <td class="mono-cell">
+                member.invite · member.update.role · member.view.owner
+              </td>
+            </tr>
+            <tr>
+              <td>Role</td>
+              <td class="mono-cell">role.add · role.update · role.remove</td>
+            </tr>
+            <tr>
+              <td>Tag</td>
+              <td class="mono-cell">tag.add · tag.update · tag.remove</td>
+            </tr>
+            <tr>
+              <td>Project</td>
+              <td class="mono-cell">project.add · project.view.own</td>
+            </tr>
+            <tr>
+              <td>Ticket</td>
+              <td class="mono-cell">
+                ticket.view.all · ticket.view.included · ticket.assign ·
+                ticket.change.tag
+              </td>
+            </tr>
+            <tr>
+              <td>Request</td>
+              <td class="mono-cell">
+                request.own.create · request.all.approve · request.all.reject
+              </td>
+            </tr>
+            <tr>
+              <td>Report</td>
+              <td class="mono-cell">
+                report.view.all · report.view.own · report.download
+              </td>
+            </tr>
+            <tr>
+              <td>Activity Log</td>
+              <td class="mono-cell">
+                activity.log.view.all · activity.log.view.included
+              </td>
+            </tr>
+          </table>
+        </div>
+        <p class="diagram-caption">
+          Full list:
+          <code
+            >../ticketing-backend/src/common/permissions/permissions.constant.ts</code
+          >
+        </p>
+      </section>
+
+      <section id="erd">
+        <h2 class="section-title">
+          <span class="num">04</span> Data model (ERD)
+        </h2>
+        <p class="section-sub">
+          From <code>../ticketing-backend/prisma/schema.prisma</code> —
+          attribute lists are trimmed to the fields that matter for the
+          relationships; see the schema file for the full column set.
+        </p>
+        <div class="diagram-frame">
+          <pre class="mermaid">
+erDiagram
+    USER {
+        int id PK
+        string email
+        string passwordHash
+        string googleId
+        bool isVerified
+        bool hasOnboarded
+        bool createdViaInvite
+    }
+    ORGANIZATION {
+        int id PK
+        int ownerId FK
+        string organizationName
+        bool isDeleted
+    }
+    ORGANIZATION_SETTINGS {
+        int orgId FK
+        string slug
+        string timezone
+        string inviteExpiration
+    }
+    ORGANIZATION_CAPACITY {
+        int orgId FK
+        int members
+        int tickets
+        int projects
+    }
+    ROLE {
+        int id PK
+        int orgId FK
+        string roleName
+        bool isDefault
+        bool isLocked
+    }
+    RULE {
+        int id PK
+        string action
+        int categoryId FK
+    }
+    RULE_CATEGORY {
+        int id PK
+        string name
+    }
+    TAG {
+        int id PK
+        int orgId FK
+        string tagName
+        bool isDefault
+    }
+    PROJECT {
+        int id PK
+        int orgId FK
+        int clientId FK
+        string name
+    }
+    MEMBER {
+        int id PK
+        int orgId FK
+        int userId FK
+        int roleId FK
+        string email
+        bool isActive
+    }
+    MEMBER_INVITE {
+        int id PK
+        int orgId FK
+        int roleId FK
+        string email
+        string token
+        string status
+        datetime expiry
+    }
+    TICKET {
+        int id PK
+        int orgId FK
+        int ownerId FK
+        int projectId FK
+        int tagId FK
+        int clientId FK
+        string referenceId
+        datetime dueDate
+        bool starred
+    }
+    TICKET_ATTACHMENT {
+        int id PK
+        int ticketId FK
+        string name
+        string url
+    }
+    TICKET_COMMENT {
+        int id PK
+        int ticketId FK
+        int userId FK
+        string comment
+    }
+    TICKET_REQUEST {
+        int id PK
+        int orgId FK
+        int clientId FK
+        int ticketId FK
+        string status
+        string remarks
+    }
+    REQUEST_ATTACHMENT {
+        int id PK
+        int requestId FK
+        string name
+    }
+    ACTIVITY_LOG_ENTRY {
+        int id PK
+        int orgId FK
+        string module
+        string action
+        int actorId
+        int[] involvedUserIds
+    }
+
+    USER ||--o{ ORGANIZATION : owns
+    USER ||--o{ MEMBER : "is user behind"
+    USER ||--o{ TICKET : "owns personal"
+    USER ||--o{ TICKET_COMMENT : writes
+
+    ORGANIZATION ||--|| ORGANIZATION_SETTINGS : configures
+    ORGANIZATION ||--|| ORGANIZATION_CAPACITY : limits
+    ORGANIZATION ||--o{ ROLE : defines
+    ORGANIZATION ||--o{ TAG : defines
+    ORGANIZATION ||--o{ MEMBER : has
+    ORGANIZATION ||--o{ MEMBER_INVITE : issues
+    ORGANIZATION ||--o{ TICKET : has
+    ORGANIZATION ||--o{ TICKET_REQUEST : receives
+    ORGANIZATION ||--o{ PROJECT : runs
+
+    ROLE }o--o{ RULE : grants
+    RULE }o--|| RULE_CATEGORY : "grouped under"
+    ROLE ||--o{ MEMBER : "assigned to"
+    ROLE ||--o{ MEMBER_INVITE : "offered as"
+
+    MEMBER ||--o{ MEMBER_INVITE : sent
+    MEMBER }o--o{ TICKET : "assigned to"
+    MEMBER ||--o{ TICKET : "is client for"
+    MEMBER ||--o{ TICKET_REQUEST : "is client for"
+    MEMBER }o--o{ PROJECT : "assigned to"
+    MEMBER ||--o{ PROJECT : "is client for"
+
+    PROJECT ||--o{ TICKET : groups
+    TAG ||--o{ TICKET : "status of"
+
+    TICKET ||--o{ TICKET_ATTACHMENT : has
+    TICKET ||--o{ TICKET_COMMENT : has
+    TICKET ||--o| TICKET_REQUEST : "originated from"
+    TICKET_REQUEST ||--o{ REQUEST_ATTACHMENT : has
+</pre
+          >
+        </div>
+        <p class="diagram-caption">
+          Not pictured: <code>IdempotencyKey</code> — a standalone table (no
+          relations) backing the Idempotency-Key header pattern.
+        </p>
+      </section>
+
+      <section id="flows">
+        <h2 class="section-title"><span class="num">05</span> Core flows</h2>
+        <p class="section-sub">
+          The five user journeys that define how the system actually gets used,
+          in the order a new org typically hits them.
+        </p>
+
+        <div class="flow-block">
+          <div class="flow-title">
+            <span class="step">Flow 1</span> Signup, verification &amp;
+            onboarding
+          </div>
+          <p class="flow-desc">
+            Covers both password signup and Google OAuth — both land on the same
+            "verify, then onboard" path. Login is folded in at the bottom.
+          </p>
+          <div class="diagram-frame">
+            <pre class="mermaid">
+flowchart TD
+    A["Visitor: /signup"] --> B["Submits email, name, password"]
+    B --> C["POST /auth/signup"]
+    C --> D[("User row created<br/>isVerified = false")]
+    D --> E["Verification email sent"]
+    E --> F["Clicks link in email"]
+    F --> G["GET /auth/verify-email?token=..."]
+    G --> H{"Token valid<br/>and not expired?"}
+    H -- No --> I["Redirect to /login<br/>with error"]
+    H -- Yes --> J["isVerified = true<br/>session cookie issued"]
+    J --> K{"hasOnboarded?"}
+    K -- No --> L["/onboarding"]
+    K -- Yes --> M["/dashboard"]
+    L --> N{"Choice"}
+    N -- Personal --> O["hasOnboarded = true<br/>Personal-mode dashboard"]
+    N -- "Create Organization" --> P["Org creation wizard (Flow 2)"]
+    P --> M
+    O --> M
+
+    Q["Clicks 'Continue with Google'"] --> R["GET /auth/google"]
+    R --> S["Google consent screen"]
+    S --> T["GET /auth/google/callback"]
+    T --> U{"Existing user by<br/>googleId or email?"}
+    U -- "New" --> D
+    U -- "Existing, verified" --> J
+
+    V["Returning user: /login"] --> W["POST /auth/login"]
+    W --> X{"isVerified?"}
+    X -- No --> Y["403 UNVERIFIED<br/>-> /verify-pending"]
+    X -- Yes --> J
+</pre>
+          </div>
+        </div>
+
+        <div class="flow-block">
+          <div class="flow-title">
+            <span class="step">Flow 2</span> Organization creation wizard
+          </div>
+          <p class="flow-desc">
+            One multi-step form, one transaction. A failed invite email never
+            blocks the org itself from being created.
+          </p>
+          <div class="diagram-frame">
+            <pre class="mermaid">
+flowchart TD
+    A["Step 1: Name + description"] --> B["Step 2: Roles + Rules<br/>(must include Superadmin)"]
+    B --> C["Step 3: Tags"]
+    C --> D["Step 4: Invite teammates<br/>(email + role)"]
+    D --> E["POST /organizations"]
+    E --> F["Transaction: create Organization,<br/>Settings, Capacity"]
+    F --> G["Create each Role + attach Rules"]
+    G --> H{"Superadmin role<br/>included?"}
+    H -- No --> I["Rollback -> 400 Bad Request"]
+    H -- Yes --> J["Create owner's Member row<br/>(role = Superadmin)"]
+    J --> K["Create each Tag"]
+    K --> L["For each invite: generate<br/>token + expiry"]
+    L --> M["Send invite email"]
+    M --> N{"Send failed?"}
+    N -- Yes --> O["Skip this invite,<br/>log warning, continue"]
+    N -- No --> P["Persist MemberInvite row"]
+    O --> Q["hasOnboarded = true"]
+    P --> Q
+    Q --> R["Owner lands in new org's dashboard"]
+</pre>
+          </div>
+        </div>
+
+        <div class="flow-block">
+          <div class="flow-title">
+            <span class="step">Flow 3</span> Member invite — accept or decline
+          </div>
+          <p class="flow-desc">
+            An invited account skips verification and onboarding entirely — the
+            invite email <em>is</em> the verification, and it can never create
+            its own org.
+          </p>
+          <div class="diagram-frame">
+            <pre class="mermaid">
+flowchart TD
+    A["Member with member.invite<br/>invites a teammate"] --> B["POST /members/invite"]
+    B --> C["Generate token + expiry<br/>MemberInvite.status = PENDING"]
+    C --> D["Send invite email<br/>with accept-invite link"]
+    D --> E["Invitee opens link"]
+    E --> F["GET /auth/invite/:token"]
+    F --> G{"Valid and<br/>not expired?"}
+    G -- No --> H["Show expired / invalid"]
+    G -- Yes --> I{"Existing user<br/>for that email?"}
+    I -- No --> J["Show signup form<br/>(password optional for Gmail)"]
+    I -- Yes --> K["Show 'log in to accept'"]
+    J --> L["POST /auth/accept-invite"]
+    K --> L
+    L --> M["Create/link User<br/>isVerified = true, hasOnboarded = true,<br/>createdViaInvite = true"]
+    M --> N["Create Member row<br/>(role from invite)"]
+    N --> O["MemberInvite.status = ACCEPTED"]
+    O --> P["Session cookie issued"]
+    P --> Q["Straight to org dashboard —<br/>no verification, no onboarding step"]
+
+    E --> R["Invitee declines instead"]
+    R --> S["POST /auth/decline-invite"]
+    S --> T["MemberInvite.status = REJECTED"]
+    T --> U["Owner / inviter notified by email"]
+</pre>
+          </div>
+        </div>
+
+        <div class="flow-block">
+          <div class="flow-title">
+            <span class="step">Flow 4</span> Ticket lifecycle
+          </div>
+          <p class="flow-desc">
+            Tags double as status (see the schema's own note on
+            <code>Ticket.tagId</code>) — there's no separate status field.
+          </p>
+          <div class="diagram-frame">
+            <pre class="mermaid">
+flowchart TD
+    A["Member creates a ticket"] --> B["POST /tickets"]
+    B --> C["referenceId generated;<br/>tag, assignees, dueDate set"]
+    C --> D["Ticket exists<br/>(tag = its current status)"]
+    D --> E{"Work happens"}
+    E --> F["Comments added"]
+    E --> G["Tag (status) changed"]
+    E --> H["Assignees updated"]
+    E --> I["Attachments added"]
+    F --> J["ActivityLogEntry written"]
+    G --> J
+    H --> J
+    I --> J
+    J --> K["Notification bell:<br/>SSE push + unread count"]
+    E --> L["Tag set to a 'resolved'-style tag"]
+    L --> M["Ticket kept for history<br/>(isDeleted stays false)"]
+</pre>
+          </div>
+        </div>
+
+        <div class="flow-block">
+          <div class="flow-title">
+            <span class="step">Flow 5</span> Ticket request → approval
+          </div>
+          <p class="flow-desc">
+            A "request" is how someone without ticket-create rights (or an
+            external client) gets a ticket started — an org member with approval
+            rights decides.
+          </p>
+          <div class="diagram-frame">
+            <pre class="mermaid">
+flowchart TD
+    A["Client/Member submits a request"] --> B["POST /ticket-requests"]
+    B --> C["TicketRequest.status = PENDING"]
+    C --> D["Reviewer with<br/>request.all.approve looks at it"]
+    D --> E{"Decision"}
+    E -- Approve --> F["POST /ticket-requests/:id/approve"]
+    F --> G["Transaction: create a real Ticket,<br/>copy title/description/client"]
+    G --> H["TicketRequest.status = APPROVED,<br/>linked to the new Ticket"]
+    H --> I["Ticket enters Flow 4's lifecycle"]
+    E -- Reject --> J["POST /ticket-requests/:id/reject<br/>+ remarks"]
+    J --> K["TicketRequest.status = REJECTED"]
+    D --> L{"Requester cancels<br/>before a decision"}
+    L -- Yes --> M["TicketRequest.status = CANCELLED"]
+</pre>
+          </div>
+        </div>
+      </section>
+
+      <section id="deploy">
+        <h2 class="section-title">
+          <span class="num">06</span> Deployment &amp; CI/CD
+        </h2>
+        <ul class="compact">
+          <li>
+            <strong>Frontend</strong> — <span class="pill good">Vercel</span>,
+            Auto-Deploy on push to <code>main</code>. GitHub Actions runs
+            lint/typecheck/tests/build, then calls the Vercel CLI, which blocks
+            until the deploy is actually ready and fails the job if it isn't.
+          </li>
+          <li>
+            <strong>Backend</strong> — <span class="pill good">Render</span>,
+            Auto-Deploy on push to <code>main</code>. GitHub Actions runs the
+            same gate (security audit, typecheck, lint, unit tests with a
+            coverage threshold, build), then polls Render's API for
+            <em>that exact commit's</em> deploy until it's <code>live</code> —
+            or fails the job with Render's real error if it isn't.
+          </li>
+          <li>
+            <strong>Database</strong> — PostgreSQL, migrated via
+            <code>prisma migrate deploy</code>.
+          </li>
+          <li>
+            <strong>Attachments</strong> — uploaded directly to S3; the backend
+            never stores files on its own disk (a Render free-tier redeploy
+            wipes local disk).
+          </li>
+        </ul>
+        <div class="table-wrap" style="margin-top: 14px">
+          <table class="repo-table">
+            <tr>
+              <th>Repo</th>
+              <th>What's in it</th>
+            </tr>
+            <tr>
+              <td><a href=".">ticketing-app/</a></td>
+              <td>
+                Next.js 14 (App Router) frontend — TypeScript, Tailwind. Deploys
+                to Vercel. (this repo)
+              </td>
+            </tr>
+            <tr>
+              <td><a href="../ticketing-backend">ticketing-backend/</a></td>
+              <td>
+                NestJS + Prisma 7 + PostgreSQL backend. Deploys to Render.
+              </td>
+            </tr>
+          </table>
+        </div>
+      </section>
+
+      <footer class="page-footer">
+        Generated from the current <code>prisma/schema.prisma</code>,
+        controllers/services, and CI workflows — not a static design doc, so
+        re-check it against the code if the schema or flows change. See
+        <code>docs.md</code> in this repo for the plain-Markdown version.
+      </footer>
+    </div>
+
+    <script type="module">
+      import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
+      mermaid.initialize({
+        startOnLoad: true,
+        theme: "neutral",
+        securityLevel: "loose",
+      });
+    </script>
+  </body>
+</html>

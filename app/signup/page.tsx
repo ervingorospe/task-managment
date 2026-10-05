@@ -10,11 +10,13 @@ import Input from "@/components/ui/form/input";
 import { ApiError, API_BASE_URL } from "@/lib/api/client";
 import { signup } from "@/lib/api/auth";
 import { signupSchema, type SignupValues } from "@/lib/schemas/signup.schema";
+import { useDocumentTitle } from "@/hooks/use-document-title";
 
 export default function SignupPage() {
   const router = useRouter();
   const [formError, setFormError] = useState<string | null>(null);
   const [checkEmailFor, setCheckEmailFor] = useState<string | null>(null);
+  useDocumentTitle(checkEmailFor ? "Check your email" : "Sign up");
 
   const {
     control,
