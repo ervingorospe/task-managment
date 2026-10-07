@@ -26,6 +26,7 @@ import { useLogActivity } from "@/hooks/use-log-activity";
 import { useInlineAlert } from "@/hooks/use-inline-alert";
 import { InlineAlert } from "@/components/ui/inline-alert";
 import { useTicketListQueryState } from "@/hooks/use-ticket-list-query-state";
+import { useResourceEvents } from "@/hooks/use-resource-events";
 import {
   createTicket,
   updateTicketTag,
@@ -156,6 +157,15 @@ export default function TicketsPageClient({
   useEffect(() => {
     loadCounts();
   }, [loadCounts]);
+
+  // Live push — another member creating/updating/removing an org ticket
+  // (or changing its star) refetches this exact list and its stat tiles,
+  // without the viewer having to reload.
+  const handleTicketsChanged = useCallback(() => {
+    loadTickets();
+    loadCounts();
+  }, [loadTickets, loadCounts]);
+  useResourceEvents(organization.id, "TICKET", handleTicketsChanged);
 
   const statTiles: MiniStat[] = useMemo(() => {
     const totalTickets = countNumbers?.totalTickets ?? 0;

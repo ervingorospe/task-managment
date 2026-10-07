@@ -68,6 +68,7 @@ import { PERMISSIONS } from "@/lib/data/permissions";
 import type { OrganizationDetail } from "@/lib/types/organization/organization-detail.type";
 import type { ProjectDetail } from "@/lib/types/organization/project-detail.type";
 import type { MemberDetail } from "@/lib/types/organization/member-detail.type";
+import { installMockEventSource } from "@/test/mock-event-source";
 
 jest.mock("@/providers/auth-provider", () => {
   const actual = jest.requireActual("@/providers/auth-provider");
@@ -80,6 +81,7 @@ jest.mock("@/lib/api/projects", () => ({
   createProject: jest.fn(),
   updateProject: jest.fn(),
   deleteProject: jest.fn(),
+  fetchProjectsByOrg: jest.fn(),
 }));
 
 const mockedUseAuth = useAuth as jest.Mock;
@@ -161,6 +163,7 @@ function withPermissions(actions: string[]) {
 
 beforeEach(() => {
   jest.clearAllMocks();
+  installMockEventSource();
   withPermissions([PERMISSIONS.PROJECT_VIEW, PERMISSIONS.PROJECT_ADD, PERMISSIONS.PROJECT_UPDATE, PERMISSIONS.PROJECT_REMOVE]);
   mockedUseToast.mockReturnValue(toast);
   mockedUseLogActivity.mockReturnValue(logActivity);

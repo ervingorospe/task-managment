@@ -101,6 +101,7 @@ import {
   fetchTicketCountNumbers,
 } from "@/lib/api/tickets";
 import { emptyTicketFilter } from "./ticket-filter-dropdown";
+import { installMockEventSource } from "@/test/mock-event-source";
 import { PERMISSIONS } from "@/lib/data/permissions";
 import type { TicketDetail } from "@/lib/types/ticket/ticket-detail.type";
 import type { TagDetail } from "@/lib/types/organization/tag-detail.type";
@@ -225,6 +226,7 @@ let queryState: ReturnType<typeof useTicketListQueryState>;
 
 beforeEach(() => {
   jest.clearAllMocks();
+  installMockEventSource();
   withPermissions([PERMISSIONS.TICKET_CREATE, PERMISSIONS.TICKET_VIEW_ALL]);
   mockedUseToast.mockReturnValue(toast);
   mockedUseLogActivity.mockReturnValue(logActivity);

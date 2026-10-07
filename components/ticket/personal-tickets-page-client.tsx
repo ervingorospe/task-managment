@@ -19,6 +19,7 @@ import { useLogActivity } from "@/hooks/use-log-activity";
 import { useInlineAlert } from "@/hooks/use-inline-alert";
 import { InlineAlert } from "@/components/ui/inline-alert";
 import { useTicketListQueryState } from "@/hooks/use-ticket-list-query-state";
+import { useResourceEvents } from "@/hooks/use-resource-events";
 import {
   createPersonalTicket,
   updateTicketTag,
@@ -129,6 +130,16 @@ export default function PersonalTicketsPageClient({
   useEffect(() => {
     loadCounts();
   }, [loadCounts]);
+
+  // Live push — another of this user's own tabs creating/updating/
+  // removing a personal ticket refetches this list, same as the org
+  // version above. The backend resolves the owner from the session, so
+  // this doesn't need to wait on userId being loaded first.
+  const handleTicketsChanged = useCallback(() => {
+    loadTickets();
+    loadCounts();
+  }, [loadTickets, loadCounts]);
+  useResourceEvents(null, "TICKET", handleTicketsChanged);
 
   const statTiles: MiniStat[] = useMemo(() => {
     const totalTickets = countNumbers?.totalTickets ?? 0;

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import { Plus, FolderKanban, FolderOpen } from "lucide-react";
 import { Can } from "@/components/auth/can";
@@ -21,8 +21,10 @@ import {
   createProject,
   updateProject as updateProjectApi,
   deleteProject,
+  fetchProjectsByOrg,
 } from "@/lib/api/projects";
 import { notifyApiError } from "@/lib/helper/api-error-toast";
+import { useResourceEvents } from "@/hooks/use-resource-events";
 
 const ProjectFormModal = dynamic(
   () =>
@@ -51,6 +53,19 @@ export default function ProjectsPageClient({
   const [projects, setProjects] = useState<ProjectDetail[]>(
     organization.projects,
   );
+
+  // Live push — same reasoning as RequestsPageClient: this page's data
+  // starts from the org-detail payload passed in as a prop, so a signal
+  // re-fetches just the projects list directly.
+  const refetchProjects = useCallback(() => {
+    fetchProjectsByOrg(organization.id)
+      .then(setProjects)
+      .catch((error) => {
+        notifyApiError(toast, error, "Failed to refresh projects");
+      });
+  }, [organization.id, toast]);
+  useResourceEvents(organization.id, "PROJECT", refetchProjects);
+
   const [search, setSearch] = useState("");
   const [formModalOpen, setFormModalOpen] = useState(false);
   const [editingProject, setEditingProject] = useState<

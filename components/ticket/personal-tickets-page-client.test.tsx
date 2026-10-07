@@ -78,6 +78,7 @@ import { getDefaultTags } from "@/lib/data/organizations";
 import { emptyTicketFilter } from "./ticket-filter-dropdown";
 import type { TicketDetail } from "@/lib/types/ticket/ticket-detail.type";
 import type { TagDetail } from "@/lib/types/organization/tag-detail.type";
+import { installMockEventSource } from "@/test/mock-event-source";
 
 jest.mock("@/providers/auth-provider", () => ({ useAuth: jest.fn() }));
 jest.mock("@/providers/toast-provider", () => ({ useToast: jest.fn() }));
@@ -139,6 +140,7 @@ let queryState: ReturnType<typeof useTicketListQueryState>;
 
 beforeEach(() => {
   jest.clearAllMocks();
+  installMockEventSource();
   mockedUseAuth.mockReturnValue({ currentUser: { id: 1 } });
   mockedUseToast.mockReturnValue(toast);
   mockedUseLogActivity.mockReturnValue(logActivity);

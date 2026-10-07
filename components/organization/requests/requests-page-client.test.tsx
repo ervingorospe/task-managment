@@ -94,6 +94,7 @@ import type { MemberDetail } from "@/lib/types/organization/member-detail.type";
 import type { OrganizationDetail } from "@/lib/types/organization/organization-detail.type";
 import type { TicketDetail } from "@/lib/types/ticket/ticket-detail.type";
 import type { TagDetail } from "@/lib/types/organization/tag-detail.type";
+import { installMockEventSource } from "@/test/mock-event-source";
 
 jest.mock("next/navigation", () => ({ useRouter: jest.fn() }));
 jest.mock("@/providers/auth-provider", () => {
@@ -109,6 +110,7 @@ jest.mock("@/lib/api/ticket-requests", () => ({
   rejectTicketRequest: jest.fn(),
   approveTicketRequest: jest.fn(),
   cancelTicketRequest: jest.fn(),
+  fetchAllTicketRequests: jest.fn(),
 }));
 
 const mockedUseRouter = useRouter as jest.Mock;
@@ -212,6 +214,7 @@ let queryState: ReturnType<typeof useRequestListQueryState>;
 
 beforeEach(() => {
   jest.clearAllMocks();
+  installMockEventSource();
   mockedUseRouter.mockReturnValue({ push });
   mockedUseToast.mockReturnValue(toast);
   mockedUseLogActivity.mockReturnValue(logActivity);

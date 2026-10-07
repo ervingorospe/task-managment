@@ -24,11 +24,13 @@ import { useToast } from "@/providers/toast-provider";
 import { notifyApiError } from "@/lib/helper/api-error-toast";
 import { useLogActivity } from "@/hooks/use-log-activity";
 import { useRequestListQueryState } from "@/hooks/use-request-list-query-state";
+import { useResourceEvents } from "@/hooks/use-resource-events";
 import {
   createTicketRequest,
   rejectTicketRequest,
   approveTicketRequest,
   cancelTicketRequest,
+  fetchAllTicketRequests,
 } from "@/lib/api/ticket-requests";
 import type { OrganizationDetail } from "@/lib/types/organization/organization-detail.type";
 import type { TicketRequest } from "@/lib/types/ticket/ticket-request.type";
@@ -60,6 +62,19 @@ export default function RequestsPageClient({
     organization.ticketRequests,
   );
   const [tickets, setTickets] = useState<TicketDetail[]>(organization.tickets);
+
+  // Live push — unlike the org tickets list, this page's data comes from
+  // the org-detail payload passed in as a prop, not its own paginated
+  // fetch, so a signal re-fetches just the requests list directly rather
+  // than re-running a query-state-driven load function.
+  const refetchRequests = useCallback(() => {
+    fetchAllTicketRequests(organization.id)
+      .then(setRequests)
+      .catch((error) => {
+        notifyApiError(toast, error, "Failed to refresh requests");
+      });
+  }, [organization.id, toast]);
+  useResourceEvents(organization.id, "REQUEST", refetchRequests);
 
   const {
     page,
