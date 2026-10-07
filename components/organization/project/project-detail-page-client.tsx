@@ -7,7 +7,7 @@ import { ArrowLeft, Pencil, User } from "lucide-react";
 import { Can } from "@/components/auth/can";
 import { PERMISSIONS } from "@/lib/data/permissions";
 import { Button } from "@/components/ui/buttons/button";
-import Avatar from "@/components/ui/avatar";
+import MemberAvatar from "@/components/organization/member/member-avatar";
 import Tooltip from "@/components/ui/tooltip";
 import { InlineAlert } from "@/components/ui/inline-alert";
 import { useInlineAlert } from "@/hooks/use-inline-alert";
@@ -155,9 +155,8 @@ export default function ProjectDetailPageClient({
             <div className="mt-2 flex -space-x-2">
               {project.assignees.map((member) => (
                 <Tooltip key={member.id} label={getMemberName(member)}>
-                  <Avatar
-                    firstName={member.user?.firstName ?? member.firstName}
-                    lastName={member.user?.lastName ?? member.lastName}
+                  <MemberAvatar
+                    member={member}
                     size="sm"
                     className="ring-2 ring-surface"
                   />

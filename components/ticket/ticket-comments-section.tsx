@@ -4,6 +4,7 @@ import { useMemo, useState, type ChangeEvent } from "react";
 import { MessageSquare } from "lucide-react";
 
 import Avatar from "@/components/ui/avatar";
+import MemberAvatar from "@/components/organization/member/member-avatar";
 import { Button } from "@/components/ui/buttons/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { useAuth } from "@/providers/auth-provider";
@@ -67,11 +68,7 @@ function MentionSuggestions({
           onClick={() => onSelect(member)}
           className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-sm text-ink hover:bg-canvas"
         >
-          <Avatar
-            firstName={member.user?.firstName ?? member.firstName}
-            lastName={member.user?.lastName ?? member.lastName}
-            size="sm"
-          />
+          <MemberAvatar member={member} size="sm" />
           {getMemberName(member)}
         </button>
       ))}

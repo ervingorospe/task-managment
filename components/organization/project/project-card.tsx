@@ -7,7 +7,7 @@ import { ProjectDetail } from "@/lib/types/organization/project-detail.type";
 import { PERMISSIONS } from "@/lib/data/permissions";
 import { Can } from "@/components/auth/can";
 import { IconButton } from "@/components/ui/buttons";
-import Avatar from "@/components/ui/avatar";
+import MemberAvatar from "@/components/organization/member/member-avatar";
 import Tooltip from "@/components/ui/tooltip";
 import { toPlainText } from "@/lib/helper/render-description";
 import { getMemberName } from "@/lib/helper/member-name";
@@ -86,9 +86,8 @@ function ProjectCard({ project, orgSlug, onEdit, onDelete }: ProjectCardProps) {
         <div className="mt-2 flex -space-x-2">
           {project.assignees.map((member) => (
             <Tooltip key={member.id} label={getMemberName(member)}>
-              <Avatar
-                firstName={member.user?.firstName ?? member.firstName}
-                lastName={member.user?.lastName ?? member.lastName}
+              <MemberAvatar
+                member={member}
                 size="sm"
                 className="ring-2 ring-surface"
               />

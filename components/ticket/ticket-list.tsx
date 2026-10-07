@@ -3,7 +3,7 @@
 import { memo, type ReactNode } from "react";
 import Link from "next/link";
 import Tooltip from "@/components/ui/tooltip";
-import Avatar from "@/components/ui/avatar";
+import MemberAvatar from "@/components/organization/member/member-avatar";
 import EmptyState from "@/components/ui/empty-state";
 import { Star, UserPlus } from "lucide-react";
 import { TagPicker } from "./tag-picker";
@@ -202,13 +202,8 @@ function TicketListComponent({
                                     member.user?.lastName ?? member.lastName
                                   }`.trim()}
                                 >
-                                  <Avatar
-                                    firstName={
-                                      member.user?.firstName ?? member.firstName
-                                    }
-                                    lastName={
-                                      member.user?.lastName ?? member.lastName
-                                    }
+                                  <MemberAvatar
+                                    member={member}
                                     size="sm"
                                     className="cursor-pointer ring-2 ring-surface transition-transform hover:z-10 hover:scale-110"
                                   />
@@ -229,13 +224,8 @@ function TicketListComponent({
                               member.user?.lastName ?? member.lastName
                             }`.trim()}
                           >
-                            <Avatar
-                              firstName={
-                                member.user?.firstName ?? member.firstName
-                              }
-                              lastName={
-                                member.user?.lastName ?? member.lastName
-                              }
+                            <MemberAvatar
+                              member={member}
                               size="sm"
                               className="ring-2 ring-surface"
                             />

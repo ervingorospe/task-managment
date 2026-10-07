@@ -2,7 +2,7 @@
 
 import { UserPlus } from "lucide-react";
 
-import Avatar from "@/components/ui/avatar";
+import MemberAvatar from "@/components/organization/member/member-avatar";
 import Card from "@/components/ui/card";
 import MultiSelectDropdown from "@/components/ui/form/multi-select-dropdown";
 import PropertyRow from "@/components/ui/property-row";
@@ -180,11 +180,7 @@ export default function TicketDetailsCard({
                           key={member.id}
                           className="flex items-center gap-1.5 rounded-full bg-canvas py-0.5 pl-0.5 pr-2.5 text-xs text-ink"
                         >
-                          <Avatar
-                            firstName={member.user?.firstName ?? member.firstName}
-                            lastName={member.user?.lastName ?? member.lastName}
-                            size="sm"
-                          />
+                          <MemberAvatar member={member} size="sm" />
                           {getMemberName(member)}
                         </span>
                       ))}
@@ -201,11 +197,7 @@ export default function TicketDetailsCard({
                     key={member.id}
                     className="flex items-center gap-1.5 rounded-full bg-canvas py-0.5 pl-0.5 pr-2.5 text-xs text-ink"
                   >
-                    <Avatar
-                      firstName={member.user?.firstName ?? member.firstName}
-                      lastName={member.user?.lastName ?? member.lastName}
-                      size="sm"
-                    />
+                    <MemberAvatar member={member} size="sm" />
                     {getMemberName(member)}
                   </span>
                 ))}
@@ -217,11 +209,7 @@ export default function TicketDetailsCard({
         <PropertyRow label="Client">
           {client ? (
             <div className="flex items-center gap-2 text-sm text-ink">
-              <Avatar
-                firstName={client.user?.firstName ?? client.firstName}
-                lastName={client.user?.lastName ?? client.lastName}
-                size="sm"
-              />
+              <MemberAvatar member={client} size="sm" />
               {getMemberName(client)}
             </div>
           ) : (
