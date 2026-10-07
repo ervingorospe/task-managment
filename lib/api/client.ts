@@ -85,7 +85,11 @@ export function isNotFoundOrForbidden(error: unknown): boolean {
   );
 }
 
-async function request<T>(path: string, init?: RequestInit): Promise<T> {
+async function request<T>(
+  path: string,
+  init?: RequestInit,
+  options?: { skipServerDownRedirect?: boolean },
+): Promise<T> {
   const method = (init?.method ?? "GET").toUpperCase();
   // FormData (file uploads) must NOT get a manual Content-Type — the
   // browser sets one itself with the multipart boundary the server needs.
@@ -129,12 +133,12 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
       credentials: "include",
     });
   } catch {
-    handleServerUnreachable();
+    if (!options?.skipServerDownRedirect) handleServerUnreachable();
     throw new ServerUnreachableError();
   }
 
   if (GATEWAY_DOWN_STATUSES.has(res.status)) {
-    handleServerUnreachable();
+    if (!options?.skipServerDownRedirect) handleServerUnreachable();
     throw new ServerUnreachableError();
   }
 
@@ -148,7 +152,8 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 export const api = {
-  get: <T>(path: string) => request<T>(path),
+  get: <T>(path: string, options?: { skipServerDownRedirect?: boolean }) =>
+    request<T>(path, undefined, options),
   post: <T>(path: string, body?: unknown) =>
     request<T>(path, {
       method: "POST",

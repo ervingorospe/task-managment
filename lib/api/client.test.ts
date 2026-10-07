@@ -194,4 +194,12 @@ describe("api (request internals)", () => {
     (global.fetch as jest.Mock).mockResolvedValue(fakeResponse(500));
     await expect(api.get("/things/1")).rejects.toBeInstanceOf(ApiError);
   });
+
+  it("still throws ServerUnreachableError but skips the redirect/sessionStorage when skipServerDownRedirect is set", async () => {
+    (global.fetch as jest.Mock).mockRejectedValue(new TypeError("Failed to fetch"));
+    await expect(
+      api.get("/things/1", { skipServerDownRedirect: true }),
+    ).rejects.toThrow(ServerUnreachableError);
+    expect(sessionStorage.getItem(SERVER_DOWN_RETURN_TO_KEY)).toBeNull();
+  });
 });

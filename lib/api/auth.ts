@@ -54,9 +54,11 @@ export async function logout(): Promise<void> {
 /** Returns null if there's no active session (never logged in, or the
  * session expired/was cleared) instead of throwing — callers treat that
  * as the normal "logged out" state, not an error. */
-export async function fetchCurrentUser(): Promise<CurrentUser | null> {
+export async function fetchCurrentUser(options?: {
+  skipServerDownRedirect?: boolean;
+}): Promise<CurrentUser | null> {
   try {
-    const user = await api.get<RawCurrentUser>("/auth/me");
+    const user = await api.get<RawCurrentUser>("/auth/me", options);
     return adaptCurrentUser(user);
   } catch (error) {
     if (error instanceof ApiError && error.status === 401) return null;

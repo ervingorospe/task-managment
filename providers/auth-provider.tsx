@@ -145,10 +145,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Restores the session on first load — the httpOnly cookie the backend
   // set on login isn't readable from JS at all, so this just always asks
   // the backend "who am I" and takes null (a 401) as "not logged in"
-  // rather than checking for a cookie's presence first.
+  // rather than checking for a cookie's presence first. This fires on
+  // every page, including the public marketing pages, which don't need
+  // the backend at all — skipServerDownRedirect keeps a down/unreachable
+  // backend from hard-redirecting a visitor off a page that never
+  // actually needed it; they just render as logged-out instead.
   useEffect(() => {
     let cancelled = false;
-    fetchCurrentUser()
+    fetchCurrentUser({ skipServerDownRedirect: true })
       .then((user) => {
         if (cancelled || !user) return;
         setCurrentUser(user);
