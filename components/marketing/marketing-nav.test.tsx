@@ -73,6 +73,14 @@ it("closes the mobile menu when the mobile Dashboard CTA is clicked", async () =
   expect(screen.getAllByRole("link", { name: "Home" })).toHaveLength(1);
 });
 
+it("closes the mobile menu when the mobile Log in CTA is clicked", async () => {
+  render(<MarketingNav />);
+  await userEvent.click(screen.getByRole("button", { name: "Open menu" }));
+  const loginLinks = screen.getAllByRole("link", { name: "Log in" });
+  await userEvent.click(loginLinks[loginLinks.length - 1]);
+  expect(screen.getAllByRole("link", { name: "Home" })).toHaveLength(1);
+});
+
 it("closes the mobile menu when the mobile Get started CTA is clicked", async () => {
   render(<MarketingNav />);
   await userEvent.click(screen.getByRole("button", { name: "Open menu" }));
