@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/buttons/button";
 import { AuthSplitLayout } from "@/components/auth/auth-split-layout";
 import Input from "@/components/ui/form/input";
 import { loginSchema, LoginValues } from "@/lib/schemas/login.schema";
-import { API_BASE_URL } from "@/lib/api/client";
+import { GOOGLE_AUTH_URL } from "@/lib/api/client";
 import { useDocumentTitle } from "@/hooks/use-document-title";
 
 export default function LoginPage() {
@@ -67,7 +67,7 @@ function LoginPageContent() {
   }
 
   function handleGoogleLogin() {
-    window.location.href = `${API_BASE_URL}/auth/google`;
+    window.location.href = GOOGLE_AUTH_URL;
   }
 
   return (

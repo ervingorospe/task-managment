@@ -19,6 +19,13 @@ export function toAbsoluteApiUrl(path: string): string {
   return /^https?:\/\//.test(path) ? path : `${BACKEND_ORIGIN}${path}`;
 }
 
+// The Google OAuth kickoff route is deliberately version-neutral (see
+// auth.controller.ts's googleLogin() comment) — its callback URL is a
+// fixed string registered in Google Cloud Console, so it can never move
+// under /v1. Building it from API_BASE_URL would 404 instead of
+// redirecting to Google.
+export const GOOGLE_AUTH_URL = `${BACKEND_ORIGIN}/auth/google`;
+
 const MUTATING_METHODS = new Set(["POST", "PATCH", "PUT", "DELETE"]);
 
 // GET caching is OFF for now (was a short-revalidate window — see git

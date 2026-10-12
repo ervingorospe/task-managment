@@ -8,7 +8,7 @@ import { Mail, Lock, User } from "lucide-react";
 import { Button } from "@/components/ui/buttons/button";
 import { AuthSplitLayout } from "@/components/auth/auth-split-layout";
 import Input from "@/components/ui/form/input";
-import { ApiError, API_BASE_URL } from "@/lib/api/client";
+import { ApiError, GOOGLE_AUTH_URL } from "@/lib/api/client";
 import { signup } from "@/lib/api/auth";
 import { signupSchema, type SignupValues } from "@/lib/schemas/signup.schema";
 import { useDocumentTitle } from "@/hooks/use-document-title";
@@ -47,7 +47,7 @@ export default function SignupPage() {
   }
 
   function handleGoogleSignup() {
-    window.location.href = `${API_BASE_URL}/auth/google`;
+    window.location.href = GOOGLE_AUTH_URL;
   }
 
   if (checkEmailFor) {

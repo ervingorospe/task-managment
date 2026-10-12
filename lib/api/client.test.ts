@@ -4,6 +4,7 @@ import {
   ServerUnreachableError,
   isNotFoundOrForbidden,
   toAbsoluteApiUrl,
+  GOOGLE_AUTH_URL,
   SERVER_DOWN_RETURN_TO_KEY,
 } from "./client";
 
@@ -48,6 +49,17 @@ describe("toAbsoluteApiUrl", () => {
     expect(toAbsoluteApiUrl("/uploads/f.pdf")).toBe(
       "http://localhost:3001/uploads/f.pdf",
     );
+  });
+});
+
+describe("GOOGLE_AUTH_URL", () => {
+  // The backend registers this route as version-neutral (no /v1 prefix —
+  // see auth.controller.ts's googleLogin() comment), since its callback
+  // URL is a fixed string registered in Google Cloud Console. Building
+  // it from the versioned API_BASE_URL instead would 404 against the
+  // backend rather than redirecting to Google.
+  it("points at the backend origin without a /v1 prefix", () => {
+    expect(GOOGLE_AUTH_URL).toBe("http://localhost:3001/auth/google");
   });
 });
 
