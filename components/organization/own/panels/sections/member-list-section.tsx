@@ -11,7 +11,7 @@ import { RoleDetail } from "@/lib/types/organization/role-detail.type";
 import { getMemberEmail, getMemberName } from "@/lib/helper/member-name";
 import { PERMISSIONS } from "@/lib/data/permissions";
 import { Can } from "@/components/auth/can";
-import { usePermission } from "@/providers/auth-provider";
+import { useAuth, usePermission } from "@/providers/auth-provider";
 
 interface MemberListProps {
   members: MemberDetail[];
@@ -35,6 +35,7 @@ function MemberListSection({
   emptyAction,
 }: MemberListProps) {
   const canUpdateRole = usePermission(PERMISSIONS.MEMBER_UPDATE_ROLE);
+  const { currentUser } = useAuth();
 
   if (members.length === 0) {
     return (
@@ -51,6 +52,11 @@ function MemberListSection({
           const role = roles.find((item) => item.id === member.roleId);
           const name = getMemberName(member);
           const email = getMemberEmail(member);
+          // No one edits their own role, deactivates, or removes
+          // themselves from here — those are things only someone else
+          // with the right permission should be able to do to you.
+          const isSelf =
+            currentUser != null && member.user?.id === currentUser.id;
 
           return (
             <List.ListItem
@@ -59,13 +65,14 @@ function MemberListSection({
               title={
                 <span className="flex items-center gap-2">
                   {name}
+                  {isSelf && <MetaBadge>You</MetaBadge>}
                   {!member.isActive && <MetaBadge>Deactivated</MetaBadge>}
                 </span>
               }
               subtitle={email}
               trailing={
                 <div className="flex items-center gap-2">
-                  {canUpdateRole ? (
+                  {canUpdateRole && !isSelf ? (
                     <button
                       type="button"
                       onClick={() => onChangeRole(member)}
@@ -80,45 +87,49 @@ function MemberListSection({
                     </span>
                   )}
 
-                  <Can
-                    allOf={[
-                      PERMISSIONS.MEMBER_VIEW_MEMBERS,
-                      PERMISSIONS.MEMBER_SET_ACTIVE,
-                    ]}
-                  >
-                    <button
-                      type="button"
-                      onClick={() => onToggleActive(member)}
-                      className="rounded p-1.5 text-ink-faint hover:bg-canvas hover:text-ink"
-                      aria-label={
-                        member.isActive
-                          ? `Deactivate ${name}`
-                          : `Activate ${name}`
-                      }
+                  {!isSelf && (
+                    <Can
+                      allOf={[
+                        PERMISSIONS.MEMBER_VIEW_MEMBERS,
+                        PERMISSIONS.MEMBER_SET_ACTIVE,
+                      ]}
                     >
-                      {member.isActive ? (
-                        <UserX size={15} />
-                      ) : (
-                        <UserCheck size={15} />
-                      )}
-                    </button>
-                  </Can>
+                      <button
+                        type="button"
+                        onClick={() => onToggleActive(member)}
+                        className="rounded p-1.5 text-ink-faint hover:bg-canvas hover:text-ink"
+                        aria-label={
+                          member.isActive
+                            ? `Deactivate ${name}`
+                            : `Activate ${name}`
+                        }
+                      >
+                        {member.isActive ? (
+                          <UserX size={15} />
+                        ) : (
+                          <UserCheck size={15} />
+                        )}
+                      </button>
+                    </Can>
+                  )}
 
-                  <Can
-                    allOf={[
-                      PERMISSIONS.MEMBER_VIEW_MEMBERS,
-                      PERMISSIONS.MEMBER_REMOVE,
-                    ]}
-                  >
-                    <button
-                      type="button"
-                      onClick={() => onRemove(member)}
-                      className="rounded p-1.5 text-ink-faint hover:bg-danger-subtle hover:text-danger"
-                      aria-label={`Remove ${name}`}
+                  {!isSelf && (
+                    <Can
+                      allOf={[
+                        PERMISSIONS.MEMBER_VIEW_MEMBERS,
+                        PERMISSIONS.MEMBER_REMOVE,
+                      ]}
                     >
-                      <Trash2 size={15} />
-                    </button>
-                  </Can>
+                      <button
+                        type="button"
+                        onClick={() => onRemove(member)}
+                        className="rounded p-1.5 text-ink-faint hover:bg-danger-subtle hover:text-danger"
+                        aria-label={`Remove ${name}`}
+                      >
+                        <Trash2 size={15} />
+                      </button>
+                    </Can>
+                  )}
                 </div>
               }
             />

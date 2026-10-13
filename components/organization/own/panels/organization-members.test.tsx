@@ -63,10 +63,12 @@ const organization = {
   ],
 } as unknown as OrganizationDetail;
 
-it("excludes the owner's row and the current viewer's own row from the member list", () => {
+it("excludes the owner's row but keeps the current viewer's own row in the member list", () => {
   withUser({ id: 2 }, [PERMISSIONS.MEMBER_VIEW_MEMBERS]);
   render(<OrganizationMembers organization={organization} />);
-  expect(screen.getByText("MembersSection(orgId=6001, members=12)")).toBeInTheDocument();
+  expect(
+    screen.getByText("MembersSection(orgId=6001, members=11,12)"),
+  ).toBeInTheDocument();
 });
 
 it("hides the invite sections when showInvites is false", () => {

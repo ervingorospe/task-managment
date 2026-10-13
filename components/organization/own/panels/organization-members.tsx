@@ -9,7 +9,6 @@ import { OrganizationDetail } from "@/lib/types/organization/organization-detail
 import { MemberInviteDetail } from "@/lib/types/organization/member-invite-detail.type";
 import { Can } from "@/components/auth/can";
 import { PERMISSIONS } from "@/lib/data/permissions";
-import { useAuth } from "@/providers/auth-provider";
 
 interface OrganizationMembersProps {
   organization: OrganizationDetail;
@@ -23,8 +22,6 @@ export default function OrganizationMembers({
   organization,
   showInvites = true,
 }: OrganizationMembersProps) {
-  const { currentUser } = useAuth();
-
   // Owned here rather than in either child, so a newly sent invite (or one
   // just removed) is reflected the instant the API call resolves —
   // MemberInvitesSection appends what the backend just created,
@@ -37,16 +34,14 @@ export default function OrganizationMembers({
   );
 
   // The owner's own Member row (Superadmin, per how org creation works —
-  // see permissions.constant.ts's header comment) and the viewer's own row
-  // don't belong in a list of "other people in this organization".
+  // see permissions.constant.ts's header comment) doesn't belong in a
+  // list of "members of this organization" — they're surfaced separately
+  // via the org's own `owner` field. The viewer's own row, if they're a
+  // regular member, DOES belong here — MemberListSection just disables
+  // self-actions on it (see its own isSelf check).
   const visibleMembers = useMemo(
-    () =>
-      organization.members.filter(
-        (m) =>
-          m.user?.id !== organization.ownerId &&
-          m.user?.id !== currentUser?.id,
-      ),
-    [organization.members, organization.ownerId, currentUser?.id],
+    () => organization.members.filter((m) => m.user?.id !== organization.ownerId),
+    [organization.members, organization.ownerId],
   );
 
   return (
